@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>ドクターカー活動記録 v2.7 (2025/12/06) - タブ版</title>
+<title>ドクターカー活動記録 v2.8 (2025/12/06) - タブ版</title>
 <style>
 :root{
   --ink:#111827;--muted:#6b7280;--bg:#f2f2f7;--card:#fff;
@@ -14,7 +14,8 @@
   --safe-top:env(safe-area-inset-top);
   --safe-bottom:env(safe-area-inset-bottom);
 }
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* キーボード問題を修正するため、-webkit-tap-highlight-color: transparent を削除 */
+*{box-sizing:border-box;}
 html,body{margin:0;padding:0;overscroll-behavior:none}
 body{
   font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;
@@ -206,7 +207,12 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   overscroll-behavior:contain;
 }
 .dial-overlay.show{display:flex}
-body.dial-open{overflow:hidden;position:fixed;width:100%;}
+/* iOSキーボード問題を修正するため、position:fixedを削除し、vhで高さを固定 */
+body.dial-open{
+  height: 100vh;
+  overflow: hidden;
+  /* position: fixed; を削除 */
+} 
 .dial-container{
   background:#fff;
   border-radius:16px 16px 0 0;
@@ -460,7 +466,7 @@ main {
 <body>
 <header>
   <h1>🚗 ドクターカー</h1>
-  <div class="version">v2.7 (2025/12/06)</div>
+  <div class="version">v2.8 (2025/12/06)</div>
 </header>
 
 <main>
@@ -1447,8 +1453,8 @@ function closeDial(e) {
   $('#dialOverlay').classList.remove('show');
   // 背景スクロール復元
   document.body.classList.remove('dial-open');
-  document.body.style.top = '';
-  window.scrollTo(0, scrollPosition);
+  // スクロール位置を復元
+  window.scrollTo(0, scrollPosition); 
 }
 
 function confirmDial() {
@@ -1459,8 +1465,8 @@ function confirmDial() {
   $('#dialOverlay').classList.remove('show');
   // 背景スクロール復元
   document.body.classList.remove('dial-open');
-  document.body.style.top = '';
-  window.scrollTo(0, scrollPosition);
+  // スクロール位置を復元
+  window.scrollTo(0, scrollPosition); 
 }
 
 // 共通レンジ生成
