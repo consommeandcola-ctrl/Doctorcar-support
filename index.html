@@ -1180,18 +1180,31 @@ const $$ = s => document.querySelectorAll(s);
 
 // グローバルスコープに関数を定義して、インラインイベントハンドラからアクセスできるようにする
 window.switchTab = (tab) => {
+  if (!tab) return;
+  
   $$('.tab-content').forEach(el => el.classList.remove('active'));
   $$('.tab-bar-item').forEach(el => el.classList.remove('active'));
   const content = $(`.tab-content[data-tab="${tab}"]`);
   const navItem = $(`.tab-bar-item[data-tab="${tab}"]`);
-  if (content) content.classList.add('active');
-  if (navItem) {
-    navItem.classList.add('active');
-    // タブバーのアクティブなタブが画面内に表示されるようにスクロール
-    setTimeout(() => {
-      navItem.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    }, 50);
+  
+  if (!content) {
+    console.warn(`Tab content not found for: ${tab}`);
+    return;
   }
+  
+  if (!navItem) {
+    console.warn(`Tab bar item not found for: ${tab}`);
+    return;
+  }
+  
+  content.classList.add('active');
+  navItem.classList.add('active');
+  
+  // タブバーのアクティブなタブが画面内に表示されるようにスクロール
+  setTimeout(() => {
+    navItem.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }, 50);
+  
   if (tab === 'output') render();
   
   // ヘッダーのタイトルを更新
@@ -4966,7 +4979,7 @@ function init() {
   if (mainElement) {
     let touchStartX = 0;
     let touchEndX = 0;
-    const tabs = ['patient', 'car-time', 'ems', 'doctor', 'exam', 'assess', 'consider', 'output'];
+    const tabs = ['patient', 'car-time', 'ems', 'doctor', 'exam', 'assess', 'consider', 'symptom', 'output'];
     
     function getCurrentTabIndex() {
       const activeTab = $('.tab-bar-item.active');
