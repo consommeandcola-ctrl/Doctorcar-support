@@ -478,7 +478,10 @@ main {
 <div class="card">
     <div class="card-header">
       <span>📞 要請情報</span>
-      <button class="btn ghost" onclick="resetData()" style="padding:6px 12px;font-size:12px;color:#dc2626;width:auto;flex-shrink:0">🗑 リセット</button>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn ghost" onclick="reloadApp()" style="padding:6px 12px;font-size:12px;color:#2563eb;width:auto;flex-shrink:0">🔄 更新</button>
+        <button class="btn ghost" onclick="resetData()" style="padding:6px 12px;font-size:12px;color:#dc2626;width:auto;flex-shrink:0">🗑 リセット</button>
+      </div>
     </div>
     <div class="card-body">
       <label>要請方法</label>
@@ -1110,6 +1113,7 @@ main {
   <button class="btn" id="copyOut" style="flex:1;min-width:120px">📋 コピー</button>
   <button class="btn ghost" onclick="saveData()" style="flex:1;min-width:120px">💾 保存</button>
   <button class="btn ghost" onclick="loadData()" style="flex:1;min-width:120px">📂 読込</button>
+  <button class="btn ghost" onclick="reloadApp()" style="flex:1;min-width:120px;color:#2563eb">🔄 アプリを更新</button>
   <button class="btn ghost" onclick="resetData()" style="flex:1;min-width:120px;color:#dc2626">🗑 リセット</button>
 </div>
     </div>
@@ -3418,23 +3422,43 @@ window.openIVStartDial = (drugName) => {
 
 // タブ・UI制御関数群 (toggleAbgを修正)
 function setupExamTabs(prefix) {
-  $$(`#${prefix}_examTabs .exam-tab`).forEach(tab => {
-    tab.onclick = () => {
-      $$(`#${prefix}_examTabs .exam-tab`).forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      const examType = tab.dataset.exam;
-      state[prefix].exam_tab = examType;
-      const card = tab.closest('.card');
+  const container = $(`#${prefix}_examTabs`);
+  if (!container) {
+    console.warn(`setupExamTabs: Container not found for prefix "${prefix}"`);
+    return;
+  }
+  
+  const tabs = container.querySelectorAll('.exam-tab');
+  if (!tabs || tabs.length === 0) {
+    console.warn(`setupExamTabs: No tabs found for prefix "${prefix}"`);
+    return;
+  }
+  
+  if (!state[prefix]) {
+    console.warn(`setupExamTabs: state[${prefix}] is not defined`);
+    return;
+  }
+  
+  tabs.forEach(tab => {
+    tab.onclick = function() {
+      container.querySelectorAll('.exam-tab').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+      const examType = this.dataset.exam;
+      if (state[prefix]) {
+        state[prefix].exam_tab = examType;
+      }
+      const card = this.closest('.card');
       if (card) {
         card.querySelectorAll('.exam-pane').forEach(p => p.classList.remove('active'));
-        card.querySelector(`.exam-pane[data-pane="${examType}"]`)?.classList.add('active');
+        const pane = card.querySelector(`.exam-pane[data-pane="${examType}"]`);
+        if (pane) pane.classList.add('active');
       }
       
       // CPAタブ選択時にバイタル初期値をCPA用に設定（確認ダイアログ付き）
       if(prefix === 'cardr' && examType === 'cpa') {
         setCpaVitalDefaults();
         // 心停止イベントが空の場合は自動的に追加
-        if(state.cardr.cpaEvents.length === 0) {
+        if(state.cardr && state.cardr.cpaEvents && state.cardr.cpaEvents.length === 0) {
           addCpaEvent();
           // 追加後、少し待ってからスクロール
           setTimeout(() => {
@@ -4386,6 +4410,17 @@ window.loadData = () => { // グローバル化
   input.click();
 };
 
+// アプリを更新（キャッシュをクリアしてリロード）
+window.reloadApp = () => {
+  if(!confirm('アプリを最新版に更新しますか？\n\n入力データは保持されますが、ページがリロードされます。')) return;
+  
+  // キャッシュをクリアしてリロード
+  // クエリパラメータにタイムスタンプを追加してキャッシュを回避
+  const url = new URL(window.location.href);
+  url.searchParams.set('_t', Date.now());
+  window.location.href = url.toString();
+};
+
 window.resetData = () => { // グローバル化
   if(!confirm('すべての入力データをリセットしますか？\n\nこの操作は取り消せません。')) return;
   
@@ -4570,6 +4605,36 @@ function restoreUI() {
   renderHospitalChips();
   bindMemos();
   
+  // 身体所見タブの復元
+  if (state.cardr && state.cardr.exam_tab) {
+    const examTab = $(`#cardr_examTabs .exam-tab[data-exam="${state.cardr.exam_tab}"]`);
+    if (examTab) {
+      $$('#cardr_examTabs .exam-tab').forEach(t => t.classList.remove('active'));
+      examTab.classList.add('active');
+      const card = examTab.closest('.card');
+      if (card) {
+        card.querySelectorAll('.exam-pane').forEach(p => p.classList.remove('active'));
+        const pane = card.querySelector(`.exam-pane[data-pane="${state.cardr.exam_tab}"]`);
+        if (pane) pane.classList.add('active');
+      }
+    }
+  }
+  
+  // EMS身体所見タブの復元
+  if (state.ems && state.ems.exam_tab) {
+    const examTab = $(`#ems_examTabs .exam-tab[data-exam="${state.ems.exam_tab}"]`);
+    if (examTab) {
+      $$('#ems_examTabs .exam-tab').forEach(t => t.classList.remove('active'));
+      examTab.classList.add('active');
+      const card = examTab.closest('.card');
+      if (card) {
+        card.querySelectorAll('.exam-pane').forEach(p => p.classList.remove('active'));
+        const pane = card.querySelector(`.exam-pane[data-pane="${state.ems.exam_tab}"]`);
+        if (pane) pane.classList.add('active');
+      }
+    }
+  }
+  
   if(state.ems.procedures['酸素投与']) {
     const o2AmountEl = $('#ems_o2_amount');
     if (o2AmountEl) {
@@ -4611,6 +4676,8 @@ function initializeStateDataStructure() {
     if (!state.cardr.exam_texts) state.cardr.exam_texts = {ucg:'', us_abd:'', us_lung:'', us_neck:'', ecg:'', fast:'', efast:''};
     if (!state.cardr.abg_data) state.cardr.abg_data = [];
     if (!state.cardr.cpaEvents) state.cardr.cpaEvents = [];
+    if (!state.cardr.exam_tab) state.cardr.exam_tab = 'general';
+    if (!state.ems.exam_tab) state.ems.exam_tab = 'general';
 
     if (!state.cardr.stroke) state.cardr.stroke = {};
     if (state.cardr.stroke.pupilL === undefined) state.cardr.stroke.pupilL = 3.0;
@@ -5010,20 +5077,38 @@ function init() {
   renderTriageChips();
   renderSeverityChips();
   // 症状詳記のデータリスト初期化
-  const triggerOpts = MedicalReasonGenerator.triggers.map(t => `<option value="${t}">`).join('');
+  // triggersとsuspicionsはオブジェクト構造なので、すべての値を取得してフラット化
+  const allTriggers = [];
+  Object.values(MedicalReasonGenerator.triggers).forEach(category => {
+    Object.values(category).forEach(items => {
+      items.forEach(item => {
+        if (!allTriggers.includes(item)) {
+          allTriggers.push(item);
+        }
+      });
+    });
+  });
+  const triggerOpts = allTriggers.map(t => `<option value="${t}">`).join('');
   const triggerList = $('#triggerList');
   if(triggerList) triggerList.innerHTML = triggerOpts;
   
-  const suspOpts = MedicalReasonGenerator.suspicions.map(s => `<option value="${s}">`).join('');
+  const allSuspicions = [];
+  Object.values(MedicalReasonGenerator.suspicions).forEach(category => {
+    Object.values(category).forEach(items => {
+      items.forEach(item => {
+        if (!allSuspicions.includes(item)) {
+          allSuspicions.push(item);
+        }
+      });
+    });
+  });
+  const suspOpts = allSuspicions.map(s => `<option value="${s}">`).join('');
   const suspicionList = $('#suspicionList');
   if(suspicionList) suspicionList.innerHTML = suspOpts;
   
   renderAbgPills();
   renderNihss();
   bindMemos();
-  
-  setupExamTabs('ems');
-  setupExamTabs('cardr');
   
   const transportMethodEl = $('#transport_method');
   if (transportMethodEl) transportMethodEl.onchange = toggleTransportTimes;
@@ -5117,6 +5202,11 @@ function init() {
   
   // 4. UI状態の復元と描画
   restoreUI();
+  
+  // 身体所見タブのイベントリスナーを設定（restoreUIの後）
+  setupExamTabs('ems');
+  setupExamTabs('cardr');
+  
   render();
   
   // 初期タブのヘッダーを更新
