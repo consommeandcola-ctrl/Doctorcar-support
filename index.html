@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>ドクターカー活動記録 v2.8 (2025/12/06) - タブ版</title>
+<title>ドクターカー活動記録 v3.0 (2026/01/19) - タブ版</title>
 <style>
 :root{
   --ink:#111827;--muted:#6b7280;--bg:#f2f2f7;--card:#fff;
@@ -40,6 +40,9 @@ main{padding:12px}
   padding:14px 16px 10px;
   font-size:15px;font-weight:600;
   border-bottom:0.5px solid var(--line);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 .card-body{padding:12px 16px}
 h3{margin:12px 0 8px;font-size:13px;color:var(--muted);font-weight:500}
@@ -65,11 +68,12 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .chip{
   background:var(--chip);border:1.5px solid transparent;
   border-radius:20px;padding:8px 14px;
-  font-size:14px;font-weight:500;
+  font-size:12px;font-weight:500;
   user-select:none;cursor:pointer;
   transition:all 0.15s;
 }
 .chip:active{transform:scale(0.95)}
+.chip.active{background:var(--brand);color:#fff;border-color:var(--brand)}
 .chip[data-state="on"]{background:#dcfce7;border-color:#4ade80;color:#15803d}
 .chip[data-state="+"]{background:#fee2e2;border-color:#f87171;color:#b91c1c}
 .chip[data-state="-"]{background:#dcfce7;border-color:#4ade80;color:#15803d}
@@ -466,13 +470,16 @@ main {
 <body>
 <header>
   <h1>🚗 ドクターカー</h1>
-  <div class="version">v2.8 (2025/12/06)</div>
+  <div class="version">v3.0 (2026/01/19)</div>
 </header>
 
 <main>
 <div class="tab-content active" data-tab="patient">
 <div class="card">
-    <div class="card-header">📞 要請情報</div>
+    <div class="card-header">
+      <span>📞 要請情報</span>
+      <button class="btn ghost" onclick="resetData()" style="padding:6px 12px;font-size:12px;color:#dc2626;width:auto;flex-shrink:0">🗑 リセット</button>
+    </div>
     <div class="card-body">
       <label>要請方法</label>
       <select id="request_type">
@@ -480,16 +487,43 @@ main {
         <option value="キーワード要請">キーワード要請</option>
         <option value="現着後要請">現着後要選項</option>
       </select>
+      <label>年代</label>
+      <div class="chips" id="patient_age_chips"></div>
+      <label>性別</label>
+      <div class="chips" id="patient_sex_chips"></div>
+      <label>先行救急隊</label>
+      <div class="chips" id="ems_team_chips"></div>
       <label>要請内容</label>
+      <div class="chips" id="request_content_chips"></div>
       <textarea id="request_detail" placeholder="要請の詳細内容を記載"></textarea>
       
       <h3>患者情報</h3>
       <label>既往歴</label>
+      <div class="chips" id="patient_history_chips"></div>
       <textarea id="patient_history" placeholder="既往歴を記載" style="min-height:60px"></textarea>
       <label>常用薬</label>
+      <div class="chips" id="patient_medication_chips"></div>
+      <div id="anticoagulant_accordion" style="display:none;margin-top:8px;margin-bottom:8px">
+        <details style="background:#f8fafc;border-radius:10px;padding:12px;border:1px solid var(--line)">
+          <summary style="font-weight:600;cursor:pointer">抗凝固薬選択</summary>
+          <div class="chips" id="anticoagulant_drugs" style="margin-top:8px"></div>
+        </details>
+      </div>
+      <div id="antiplatelet_accordion" style="display:none;margin-top:8px;margin-bottom:8px">
+        <details style="background:#f8fafc;border-radius:10px;padding:12px;border:1px solid var(--line)" open>
+          <summary style="font-weight:600;cursor:pointer">抗血小板薬選択（複数選択可）</summary>
+          <div class="chips" id="antiplatelet_drugs" style="margin-top:8px"></div>
+        </details>
+      </div>
       <textarea id="patient_medication" placeholder="常用薬を記載" style="min-height:60px"></textarea>
       <label>アレルギー</label>
+      <div class="chips" id="patient_allergy_chips"></div>
       <textarea id="patient_allergy" placeholder="アレルギーを記載" style="min-height:60px"></textarea>
+      <label>最終健常</label>
+      <div class="time-row">
+        <input type="time" id="last_well_time">
+        <button class="time-btn" onclick="setNow('last_well_time')">Now</button>
+      </div>
       <label>最終食事時刻</label>
       <div class="time-row">
         <input type="time" id="last_meal_time">
@@ -509,8 +543,8 @@ main {
         <div>
           <label>要請</label>
           <div class="time-row">
-            <input type="time" id="request_time">
-            <button class="time-btn" onclick="setNow('request_time')">Now</button>
+            <input type="time" id="cardr_request_time">
+            <button class="time-btn" onclick="setNow('cardr_request_time')">Now</button>
           </div>
         </div>
         <div>
@@ -569,6 +603,20 @@ main {
           <div class="time-row">
             <input type="time" id="ems_contact">
             <button class="time-btn" onclick="setNow('ems_contact')">Now</button>
+          </div>
+        </div>
+        <div>
+          <label>収容</label>
+          <div class="time-row">
+            <input type="time" id="ems_pickup">
+            <button class="time-btn" onclick="setNow('ems_pickup')">Now</button>
+          </div>
+        </div>
+        <div>
+          <label>現発</label>
+          <div class="time-row">
+            <input type="time" id="ems_departure">
+            <button class="time-btn" onclick="setNow('ems_departure')">Now</button>
           </div>
         </div>
         <div>
@@ -885,16 +933,7 @@ main {
 <div class="card">
     <div class="card-header">🧪 検査・処置・薬剤</div>
     <div class="card-body">
-      <div class="checkline">
-        <label><input type="checkbox" id="exam_bs" onchange="toggleExam('bs')"> 血糖</label>
-        <label><input type="checkbox" id="exam_ucg" onchange="toggleExam('ucg')"> UCG</label>
-        <label><input type="checkbox" id="exam_us_abd" onchange="toggleExam('us_abd')"> 腹部US</label>
-        <label><input type="checkbox" id="exam_us_lung" onchange="toggleExam('us_lung')"> 肺US</label>
-        <label><input type="checkbox" id="exam_us_neck" onchange="toggleExam('us_neck')"> 頸部血管US</label>
-        <label><input type="checkbox" id="exam_ecg" onchange="toggleExam('ecg')"> 12誘導心電図</label>
-        <label><input type="checkbox" id="exam_fast" onchange="toggleExam('fast')"> FAST</label>
-        <label><input type="checkbox" id="exam_efast" onchange="toggleExam('efast')"> eFAST</label>
-      </div>
+      <div class="chips" id="exam_chips"></div>
       <div id="exam_bs_area" style="display:none;margin-top:8px">
         <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer;display:inline-block;min-width:100px" onclick="openBsDial()">
           <div class="vital-value" id="cardr_bs_display">120</div>
@@ -960,6 +999,17 @@ main {
       <textarea id="consideration" placeholder="病態生理や臨床推論"></textarea>
     </div>
   </div>
+  
+<div class="card">
+  <div class="card-header">📊 JTAS / NACA</div>
+  <div class="card-body">
+    <h3>JTAS</h3>
+    <div class="chips" id="triage_chips"></div>
+    
+    <h3>NACA</h3>
+    <div class="chips" id="severity_chips"></div>
+  </div>
+</div>
 </div>
 
 <div class="tab-content" data-tab="consider">
@@ -1004,6 +1054,50 @@ main {
       </div>
     </div>
   </div>
+</div>
+
+<div class="tab-content" data-tab="symptom">
+<div class="card">
+  <div class="card-header">📝 症状詳記</div>
+  <div class="card-body">
+    <label>① 要請理由・キーワード</label>
+    <input type="text" id="inputTrigger" placeholder="選択または入力" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:14px;margin-bottom:8px">
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="btn ghost" onclick="toggleTriggerCategory('trauma')" id="trigger_trauma_btn" style="flex:1">外傷</button>
+      <button class="btn ghost" onclick="toggleTriggerCategory('internal')" id="trigger_internal_btn" style="flex:1">内因</button>
+    </div>
+    <div id="trigger_chips_container" style="display:none"></div>
+
+    <label style="margin-top:12px">② 疑い病態・診断名</label>
+    <input type="text" id="inputSuspicion" placeholder="選択または入力" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:14px;margin-bottom:8px">
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="btn ghost" onclick="toggleSuspicionCategory('trauma')" id="suspicion_trauma_btn" style="flex:1">外傷</button>
+      <button class="btn ghost" onclick="toggleSuspicionCategory('internal')" id="suspicion_internal_btn" style="flex:1">内因</button>
+    </div>
+    <div id="suspicion_chips_container" style="display:none"></div>
+
+    <label style="margin-top:12px">③ 監視の主な目的（リスク）</label>
+    <select id="selectRisk" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:#fff">
+      <option value="general">汎用（状態不良・急変リスク）</option>
+      <option value="shock_hemorrhagic">ショック・大量出血</option>
+      <option value="shock_cardiogenic">心停止・致死的不整脈</option>
+      <option value="shock_anaphylaxis">アナフィラキシー</option>
+      <option value="resp_failure">呼吸不全・気道管理</option>
+      <option value="resp_sedation">鎮静・鎮痛下の管理</option>
+      <option value="neuro_icp">脳卒中・脳圧管理</option>
+      <option value="neuro_seizure">痙攣・てんかん</option>
+      <option value="pain_control">疼痛管理・外傷搬送</option>
+      <option value="pediatric">小児・乳幼児</option>
+      <option value="maternal">妊婦・胎児管理</option>
+      <option value="agitation">不穏・精神科救急</option>
+    </select>
+
+    <button onclick="updateReason()" class="btn" style="margin-top:12px;width:100%">文章生成</button>
+    
+    <label style="margin-top:12px">出力結果（コピー可）</label>
+    <textarea id="outputReason" rows="4" placeholder="生成された文章が表示されます" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:14px;min-height:100px"></textarea>
+  </div>
+</div>
 </div>
 
 <div class="tab-content" data-tab="output">
@@ -1053,6 +1147,10 @@ main {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
     <span>搬送先</span>
   </div>
+  <div class="tab-bar-item" data-tab="symptom">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-6m-7-1a3 3 0 110-6 3 3 0 010 6z"/></svg>
+    <span>症状詳記</span>
+  </div>
   <div class="tab-bar-item" data-tab="output">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
     <span>出力</span>
@@ -1085,6 +1183,269 @@ window.switchTab = (tab) => {
   if (content) content.classList.add('active');
   if (navItem) navItem.classList.add('active');
   if (tab === 'output') render();
+  
+  // ヘッダーのタイトルを更新
+  const tabNames = {
+    'patient': '患者',
+    'car-time': 'カー時刻',
+    'ems': '救急隊',
+    'doctor': '所見',
+    'exam': '検査',
+    'assess': '評価',
+    'consider': '搬送先',
+    'symptom': '症状詳記',
+    'output': '出力'
+  };
+  const headerTitle = $('header h1');
+  if (headerTitle && tabNames[tab]) {
+    headerTitle.textContent = `🚗 ドクターカー - ${tabNames[tab]}`;
+  }
+  
+  // 症状詳記タブが表示された時の処理（特に必要な処理なし）
+};
+
+// 症状詳記ジェネレーターモジュール
+const MedicalReasonGenerator = {
+  riskTypes: {
+    shock_hemorrhagic: {
+      label: "出血性ショック・外傷",
+      text: "活動性出血による循環血液量減少性ショックへの移行や急激なバイタル変動を早期に探知し、輸液・輸血管理を行うために厳重な全身監視が必要であった。"
+    },
+    shock_cardiogenic: {
+      label: "心原性ショック・不整脈",
+      text: "致死的不整脈の出現や心停止に至るリスクが極めて高く、除細動器装着下での即時処置および循環作動薬の反応を監視するために持続モニタリングが必要であった。"
+    },
+    shock_anaphylaxis: {
+      label: "アナフィラキシー",
+      text: "気道閉塞や急激な血圧低下が進行するリスクがあり、アドレナリン投与後の再燃（二相性反応）を含めた呼吸循環の厳重な監視が必要であった。"
+    },
+    resp_failure: {
+      label: "呼吸不全・気道緊急",
+      text: "呼吸状態の悪化やSpO2低下に対し、酸素投与や気道確保（挿管・外科的気道確保等）の介入を遅滞なく行うため、持続的な呼吸循環監視が必要であった。"
+    },
+    resp_sedation: {
+      label: "鎮静・鎮痛下",
+      text: "搬送の安全確保のために実施した鎮静・鎮痛薬による呼吸抑制や血圧低下の副作用を監視し、気道管理を継続するために常時モニタリングが必要であった。"
+    },
+    neuro_icp: {
+      label: "脳圧亢進・脳卒中",
+      text: "脳ヘルニアの進行や再出血を防ぐため、搬送中の厳格な降圧管理および意識レベルの推移を病院到着まで監視する必要があった。"
+    },
+    neuro_seizure: {
+      label: "痙攣・てんかん",
+      text: "搬送中の痙攣再発や重積化のリスクがあり、抗痙攣薬投与後の呼吸抑制監視および誤嚥防止のために持続的な全身管理が必要であった。"
+    },
+    pain_control: {
+      label: "疼痛管理・中等症外傷",
+      text: "疼痛による迷走神経反射やショックの誘発を防ぎ、鎮痛処置後の反応を観察しながら安全に搬送するために監視が必要であった。"
+    },
+    pediatric: {
+      label: "小児・乳幼児",
+      text: "小児特有の急激な代償不全（Shock index等の変動）や低体温のリスクがあり、成人と比較してより厳密なバイタルサインの持続監視が必要であった。"
+    },
+    maternal: {
+      label: "妊婦・産科救急",
+      text: "母体のショックが胎児機能不全に直結するため、左側臥位保持等の体位管理と併せて、母体の呼吸循環動態を厳重に監視する必要があった。"
+    },
+    agitation: {
+      label: "不穏・精神科救急",
+      text: "著しい不穏状態により自身や周囲への危険が及ぶ可能性があり、鎮静処置および身体拘束下での安全な搬送を行うために、呼吸循環の常時監視が必要であった。"
+    },
+    general: {
+      label: "汎用・状態不良",
+      text: "搬送中の急変リスクが高く、状態変化に対し即座に医師による介入を行えるよう、病院到着まで持続的な呼吸循環監視が必要であった。"
+    }
+  },
+  triggers: {
+    trauma: {
+      head: ["頭部打撲", "顔面外傷", "高所転落", "高エネルギー外傷"],
+      neck: ["頸部外傷", "頸部打撲"],
+      chest: ["胸壁外傷", "交通外傷(車内)", "交通外傷(歩行者)", "バイク事故"],
+      abdomen: ["腹部外傷", "挟まれ・巻き込まれ"],
+      pelvis: ["骨盤外傷", "骨盤骨折疑い"],
+      limb: ["四肢の変形", "刺創・切創", "開放創"],
+      other: ["広範囲熱傷", "溺水", "低体温"]
+    },
+    internal: {
+      head: ["突然の意識消失", "激しい頭痛", "麻痺・構語障害", "痙攣発作", "CPA(蘇生後)", "小児の意識障害"],
+      chest: ["激しい胸痛", "背部痛", "呼吸困難", "喘鳴", "喀血"],
+      abdomen: ["吐血・下血", "激しい腹痛"],
+      other: ["薬物過量内服(OD)", "アナフィラキシー疑い", "熱中症疑い", "分娩進行・破水"]
+    }
+  },
+  suspicions: {
+    trauma: {
+      head: ["脳挫傷・急性硬膜下血腫", "急性硬膜外血腫", "頭蓋骨骨折", "顔面骨骨折"],
+      neck: ["頸椎損傷", "脊髄損傷"],
+      chest: ["肺挫傷", "血胸", "緊張性気胸", "気道熱傷", "肋骨骨折", "胸骨骨折"],
+      abdomen: ["腹腔内出血(肝・脾損傷)", "消化管穿孔", "腎損傷"],
+      pelvis: ["骨盤骨折", "膀胱損傷", "尿道損傷"],
+      limb: ["大腿骨骨折", "開放骨折", "クラッシュ症候群", "四肢切断"],
+      spine: ["脊椎・脊髄損傷"]
+    },
+    internal: {
+      head: ["脳出血・くも膜下出血", "脳梗塞", "てんかん重積", "脳炎・髄膜炎"],
+      chest: ["急性冠症候群(ACS)", "急性心不全", "致死的不整脈", "大動脈解離", "肺塞栓症", "心タンポナーデ", "COPD増悪", "重症喘息発作", "窒息・気道異物"],
+      abdomen: ["消化管出血", "腸閉塞", "急性膵炎", "急性腹膜炎"],
+      other: ["敗血症性ショック", "低血糖昏睡", "DKA/HHS", "急性薬物中毒", "重症脱水症", "深部体温異常"]
+    }
+  },
+  generate: function(trigger, suspicion, riskKey) {
+    const risk = this.riskTypes[riskKey] || this.riskTypes['general'];
+    return `${trigger}で要請され、初期評価にて${suspicion}の可能性が考えられたため、${risk.text}`;
+  }
+};
+
+// 要請理由カテゴリー切り替え
+let currentTriggerCategory = null;
+window.toggleTriggerCategory = function(category) {
+  currentTriggerCategory = category;
+  const traumaBtn = $('#trigger_trauma_btn');
+  const internalBtn = $('#trigger_internal_btn');
+  const container = $('#trigger_chips_container');
+  
+  if(traumaBtn && internalBtn) {
+    traumaBtn.classList.remove('active');
+    internalBtn.classList.remove('active');
+    if(category === 'trauma') {
+      traumaBtn.classList.add('active');
+    } else {
+      internalBtn.classList.add('active');
+    }
+  }
+  
+  if(container && MedicalReasonGenerator.triggers[category]) {
+    container.innerHTML = '';
+    container.style.display = 'block';
+    
+    const categories = MedicalReasonGenerator.triggers[category];
+    const categoryNames = {
+      head: '頭部',
+      neck: '頸部',
+      chest: '胸部',
+      abdomen: '腹部',
+      pelvis: '骨盤',
+      limb: '四肢',
+      spine: '脊椎',
+      other: 'その他'
+    };
+    
+    Object.keys(categories).forEach(key => {
+      if(categories[key].length > 0) {
+        const h4 = document.createElement('h4');
+        h4.textContent = categoryNames[key] || key;
+        h4.style.marginTop = '12px';
+        h4.style.marginBottom = '8px';
+        h4.style.fontSize = '14px';
+        h4.style.fontWeight = '600';
+        container.appendChild(h4);
+        
+        const chipsDiv = document.createElement('div');
+        chipsDiv.className = 'chips';
+        categories[key].forEach(item => {
+          const chip = document.createElement('button');
+          chip.className = 'chip';
+          chip.textContent = item;
+          chip.onclick = () => {
+            $('#inputTrigger').value = item;
+            container.style.display = 'none';
+            traumaBtn.classList.remove('active');
+            internalBtn.classList.remove('active');
+            currentTriggerCategory = null;
+            updateState();
+          };
+          chipsDiv.appendChild(chip);
+        });
+        container.appendChild(chipsDiv);
+      }
+    });
+  }
+};
+
+// 疑い病態カテゴリー切り替え
+let currentSuspicionCategory = null;
+window.toggleSuspicionCategory = function(category) {
+  currentSuspicionCategory = category;
+  const traumaBtn = $('#suspicion_trauma_btn');
+  const internalBtn = $('#suspicion_internal_btn');
+  const container = $('#suspicion_chips_container');
+  
+  if(traumaBtn && internalBtn) {
+    traumaBtn.classList.remove('active');
+    internalBtn.classList.remove('active');
+    if(category === 'trauma') {
+      traumaBtn.classList.add('active');
+    } else {
+      internalBtn.classList.add('active');
+    }
+  }
+  
+  if(container && MedicalReasonGenerator.suspicions[category]) {
+    container.innerHTML = '';
+    container.style.display = 'block';
+    
+    const categories = MedicalReasonGenerator.suspicions[category];
+    const categoryNames = {
+      head: '頭部',
+      neck: '頸部',
+      chest: '胸部',
+      abdomen: '腹部',
+      pelvis: '骨盤',
+      limb: '四肢',
+      spine: '脊椎',
+      other: 'その他'
+    };
+    
+    Object.keys(categories).forEach(key => {
+      if(categories[key].length > 0) {
+        const h4 = document.createElement('h4');
+        h4.textContent = categoryNames[key] || key;
+        h4.style.marginTop = '12px';
+        h4.style.marginBottom = '8px';
+        h4.style.fontSize = '14px';
+        h4.style.fontWeight = '600';
+        container.appendChild(h4);
+        
+        const chipsDiv = document.createElement('div');
+        chipsDiv.className = 'chips';
+        categories[key].forEach(item => {
+          const chip = document.createElement('button');
+          chip.className = 'chip';
+          chip.textContent = item;
+          chip.onclick = () => {
+            $('#inputSuspicion').value = item;
+            container.style.display = 'none';
+            traumaBtn.classList.remove('active');
+            internalBtn.classList.remove('active');
+            currentSuspicionCategory = null;
+            updateState();
+          };
+          chipsDiv.appendChild(chip);
+        });
+        container.appendChild(chipsDiv);
+      }
+    });
+  }
+};
+
+// 症状詳記生成関数
+window.updateReason = function() {
+  const trigger = $('#inputTrigger')?.value || '';
+  const suspicion = $('#inputSuspicion')?.value || '';
+  const riskKey = $('#selectRisk')?.value || 'general';
+  
+  if(!trigger || !suspicion) {
+    alert("要請理由と疑い病態を入力してください");
+    return;
+  }
+
+  const text = MedicalReasonGenerator.generate(trigger, suspicion, riskKey);
+  const outputEl = $('#outputReason');
+  if(outputEl) {
+    outputEl.value = text;
+    state.symptom_detail = text;
+    updateState();
+  }
 };
 
 // 所見定義
@@ -1147,11 +1508,11 @@ const CARDR_CPA_GROUPS = {
 
 // 状態
 let state = {
-  request: {type:'', detail:'', time:''},
-  patient: {history:'', medication:'', allergy:'', lastMeal:'', hospital:''},
-  car: {departure:'', scene_arrival:'', cardr_contact:'', activity_place:'', scene_departure:'', hospital_arrival:'', transport_method:'Uターン'},
+  request: {type:'', detail:'', age:'', sex:'', ems_team:'', content:''},
+  patient: {history:'', medication:'', allergy:'', lastWell:'', lastMeal:'', hospital:'', history_chips:{}, anticoagulant:'', anticoagulant_drugs:[], antiplatelet:'', antiplatelet_drugs:[], food_allergy:'', drug_allergy:''},
+  car: {request_time:'', departure:'', scene_arrival:'', cardr_contact:'', activity_place:'', scene_departure:'', hospital_arrival:'', transport_method:'Uターン'},
   ems: {
-    aware:'', arrival:'', contact:'', rp:'',
+    aware:'', arrival:'', contact:'', pickup:'', departure:'', rp:'',
     vitals: [],
     exam_tab: 'general',
     chips: {},
@@ -1181,7 +1542,7 @@ let state = {
     procedure_detail:'',
     drugs: {},
     // 薬剤マスタを更新
-    drugs_items: ['アドレナリン','ミダゾラム','ジアゼパム','アトロピン','ロクロニウム','メイロン','レペタン','トランサミン','アセリオ','メトクロプラミド','エスラックス','生食','ソルアセトF','ブドウ糖液'],
+    drugs_items: ['生食','ソルアセトF','アドレナリン','ミダゾラム','ジアゼパム','アトロピン','ロクロニウム','メイロン','レペタン','トランサミン','アセリオ','メトクロプラミド','エスラックス','ブドウ糖液'],
     drug_detail:'',
     intubation: {time: '', size: '7.0'},
     // 薬剤投与の詳細情報を格納。キーは薬剤名。値は {time: 'HH:mm', amount: 'X.X'} の配列。
@@ -1189,6 +1550,9 @@ let state = {
   },
   problems: [],
   consideration: '',
+  triage: null,
+  severity: null,
+  symptom_detail: '',
   destination: {hospital:'', custom:'', reason:''},
   hospitals: {
     '鹿児島市': ['鹿児島市立病院','鹿児島大学病院','鹿児島医療センター','米盛病院','いまきいれ総合病院','今村総合病院','中央病院','鹿児島徳洲会病院','南風病院','鹿児島生協病院','厚地脳神経外科病院','池田病院','いじゅういん脳神経外科','上町いまきいれ病院','いづろ今村病院','岩尾病院','植村病院','大勝病院','小田代病院','鹿児島厚生連病院','鹿児島こども病院','鹿児島市医師会病院','鹿児島赤十字病院','河井脳神経外科','かわはら脳神経外科クリニック','木村外科内科','共立病院','キラメキテラスヘルスケアホスピタル','馬場病院','健翔会病院','済生会鹿児島病院','桜島病院','三愛病院','新成病院','豊島病院','中野脳神経外科','新村病院','林内科胃腸科病院','日高病院','増田整形外科病院','三船病院','三宅病院','みらいリハビリテーション病院']
@@ -2339,9 +2703,13 @@ function renderProcedureChips(containerId, items, stateObj) {
         // 気管挿管は複数回ないのでそのまま
         chipText = `${item} ${state.cardr.intubation.time} (${state.cardr.intubation.size}mm)`;
     }
-    chip.textContent = chipText;
-    
-    if(stateObj[item]) chip.dataset.state = 'proc';
+    // 選択されている場合はチェックマークを追加
+    if(stateObj[item]) {
+      chip.textContent = `✓ ${chipText}`;
+      chip.dataset.state = 'proc';
+    } else {
+      chip.textContent = chipText;
+    }
     
     chip.onclick = () => {
       // 薬剤チップ（点滴/その他）
@@ -2427,6 +2795,592 @@ function renderProcedureChips(containerId, items, stateObj) {
     };
     c.appendChild(chip);
   });
+}
+
+// 既往歴のテキストからチップ状態を同期する関数
+function syncHistoryChipsFromText() {
+  if (!state.patient.history_chips) {
+    state.patient.history_chips = {};
+  }
+  
+  const historyTextarea = $('#patient_history');
+  if (!historyTextarea) return;
+  
+  const historyItems = ['高血圧', '糖尿病', '脂質異常症', '虚血性心疾患', '脳血管障害', '喘息', 'COPD', '悪性腫瘍', 'てんかん', '緑内障'];
+  const currentValue = historyTextarea.value || state.patient.history || '';
+  
+  if (currentValue) {
+    const items = currentValue.split('、').map(item => item.trim());
+    historyItems.forEach(item => {
+      state.patient.history_chips[item] = items.includes(item);
+    });
+  } else {
+    // テキストが空の場合はすべてfalse
+    historyItems.forEach(item => {
+      state.patient.history_chips[item] = false;
+    });
+  }
+}
+
+// 既往歴チップレンダリング関数
+function renderHistoryChips() {
+  const c = $('#patient_history_chips');
+  if (!c) return;
+  
+  c.innerHTML = '';
+  
+  const historyItems = ['高血圧', '糖尿病', '脂質異常症', '虚血性心疾患', '脳血管障害', '喘息', 'COPD', '悪性腫瘍', 'てんかん', '緑内障'];
+  
+  if (!state.patient.history_chips) {
+    state.patient.history_chips = {};
+  }
+  
+  historyItems.forEach(item => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    
+    const isSelected = state.patient.history_chips[item] || false;
+    if (isSelected) chip.classList.add('on');
+    chip.textContent = item;
+    
+    chip.onclick = () => {
+      // トグル処理
+      const currentState = state.patient.history_chips[item] || false;
+      state.patient.history_chips[item] = !currentState;
+      
+      // チップの表示を更新
+      if (state.patient.history_chips[item]) {
+        chip.classList.add('on');
+      } else {
+        chip.classList.remove('on');
+      }
+      
+      // テキストエリアに反映
+      updateHistoryTextarea();
+      updateState();
+    };
+    
+    c.appendChild(chip);
+  });
+}
+
+// 既往歴テキストエリアを更新する関数
+function updateHistoryTextarea() {
+  const historyTextarea = $('#patient_history');
+  if (!historyTextarea) return;
+  
+  const historyItems = ['高血圧', '糖尿病', '脂質異常症', '虚血性心疾患', '脳血管障害', '喘息', 'COPD', '悪性腫瘍', 'てんかん', '緑内障'];
+  
+  // 選択されているチップのリストを取得
+  const selectedItems = Object.keys(state.patient.history_chips || {})
+    .filter(key => state.patient.history_chips[key]);
+  
+  // テキストエリアの現在の値を取得
+  const currentValue = historyTextarea.value || '';
+  
+  // 既存の値からチップ項目を抽出（手動入力された項目を保持）
+  const existingItems = currentValue.split('、').map(item => item.trim()).filter(item => item);
+  const manualItems = existingItems.filter(item => !historyItems.includes(item));
+  
+  // 選択されたチップ項目と手動入力項目を結合
+  const allItems = [...new Set([...selectedItems, ...manualItems])];
+  const newValue = allItems.join('、');
+  
+  historyTextarea.value = newValue;
+  
+  // stateも更新
+  state.patient.history = newValue;
+}
+
+// 抗凝固薬・抗血小板薬チップレンダリング関数
+function renderMedicationChips() {
+  const c = $('#patient_medication_chips');
+  if (!c) return;
+  
+  c.innerHTML = '';
+  
+  if (!state.patient.anticoagulant) state.patient.anticoagulant = '';
+  if (!state.patient.antiplatelet) state.patient.antiplatelet = '';
+  if (!state.patient.anticoagulant_drugs) state.patient.anticoagulant_drugs = [];
+  if (!state.patient.antiplatelet_drugs) state.patient.antiplatelet_drugs = [];
+  
+  // 抗凝固薬チップ
+  const anticoagulantChip = document.createElement('div');
+  anticoagulantChip.className = 'chip';
+  const anticoagulantState = state.patient.anticoagulant || '';
+  if (anticoagulantState === 'なし') {
+    // 緑点灯
+    anticoagulantChip.classList.add('on');
+  } else if (anticoagulantState === 'あり') {
+    // 赤点灯
+    anticoagulantChip.style.background = '#fee2e2';
+    anticoagulantChip.style.borderColor = '#f87171';
+    anticoagulantChip.style.color = '#b91c1c';
+  }
+  anticoagulantChip.textContent = '抗凝固薬' + (anticoagulantState ? `(${anticoagulantState})` : '');
+  anticoagulantChip.onclick = () => {
+    // 初期 -> なし -> あり -> 初期の3状態トグル
+    const current = state.patient.anticoagulant || '';
+    if (current === '') {
+      state.patient.anticoagulant = 'なし';
+      state.patient.anticoagulant_drugs = [];
+    } else if (current === 'なし') {
+      state.patient.anticoagulant = 'あり';
+      state.patient.anticoagulant_drugs = [];
+    } else {
+      state.patient.anticoagulant = '';
+      state.patient.anticoagulant_drugs = [];
+    }
+    renderMedicationChips();
+    updateMedicationTextarea();
+    updateState();
+  };
+  c.appendChild(anticoagulantChip);
+  
+  // 抗血小板薬チップ
+  const antiplateletChip = document.createElement('div');
+  antiplateletChip.className = 'chip';
+  const antiplateletState = state.patient.antiplatelet || '';
+  if (antiplateletState === 'なし') {
+    // 緑点灯
+    antiplateletChip.classList.add('on');
+  } else if (antiplateletState === 'あり') {
+    // 赤点灯
+    antiplateletChip.style.background = '#fee2e2';
+    antiplateletChip.style.borderColor = '#f87171';
+    antiplateletChip.style.color = '#b91c1c';
+  }
+  antiplateletChip.textContent = '抗血小板薬' + (antiplateletState ? `(${antiplateletState})` : '');
+  antiplateletChip.onclick = () => {
+    // 初期 -> なし -> あり -> 初期の3状態トグル
+    const current = state.patient.antiplatelet || '';
+    if (current === '') {
+      state.patient.antiplatelet = 'なし';
+      state.patient.antiplatelet_drugs = [];
+    } else if (current === 'なし') {
+      state.patient.antiplatelet = 'あり';
+      state.patient.antiplatelet_drugs = [];
+    } else {
+      state.patient.antiplatelet = '';
+      state.patient.antiplatelet_drugs = [];
+    }
+    renderMedicationChips();
+    updateMedicationTextarea();
+    updateState();
+  };
+  c.appendChild(antiplateletChip);
+  
+  // 抗凝固薬アコーディオンの表示/非表示
+  const anticoagulantAccordion = $('#anticoagulant_accordion');
+  if (anticoagulantAccordion) {
+    anticoagulantAccordion.style.display = state.patient.anticoagulant === 'あり' ? 'block' : 'none';
+  }
+  
+  // 抗血小板薬アコーディオンの表示/非表示
+  const antiplateletAccordion = $('#antiplatelet_accordion');
+  if (antiplateletAccordion) {
+    antiplateletAccordion.style.display = state.patient.antiplatelet === 'あり' ? 'block' : 'none';
+  }
+  
+  // 抗凝固薬の薬剤チップをレンダリング
+  if (state.patient.anticoagulant === 'あり') {
+    renderAnticoagulantDrugs();
+  }
+  
+  // 抗血小板薬の薬剤チップをレンダリング
+  if (state.patient.antiplatelet === 'あり') {
+    renderAntiplateletDrugs();
+  }
+}
+
+// 抗凝固薬の薬剤チップをレンダリング
+function renderAnticoagulantDrugs() {
+  const c = $('#anticoagulant_drugs');
+  if (!c) return;
+  
+  c.innerHTML = '';
+  
+  const drugs = ['ワーファリン', 'イグザレルト', 'エリキュース', 'リクシアナ', 'プラザキサ'];
+  
+  drugs.forEach(drug => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    const isSelected = state.patient.anticoagulant_drugs.includes(drug);
+    if (isSelected) chip.classList.add('on');
+    chip.textContent = drug;
+    
+    chip.onclick = () => {
+      // 抗凝固薬は単一選択
+      if (state.patient.anticoagulant_drugs.includes(drug)) {
+        state.patient.anticoagulant_drugs = [];
+      } else {
+        state.patient.anticoagulant_drugs = [drug];
+      }
+      renderAnticoagulantDrugs();
+      updateMedicationTextarea();
+      updateState();
+    };
+    
+    c.appendChild(chip);
+  });
+}
+
+// 抗血小板薬の薬剤チップをレンダリング
+function renderAntiplateletDrugs() {
+  const c = $('#antiplatelet_drugs');
+  if (!c) return;
+  
+  c.innerHTML = '';
+  
+  const drugs = ['バイアスピリン', 'プラビックス', 'エフィエント', 'チクロピジン', 'プレタール', 'アンプラーグ', 'プロレナール', 'コンプラビン配合錠'];
+  
+  drugs.forEach(drug => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    const isSelected = state.patient.antiplatelet_drugs.includes(drug);
+    if (isSelected) chip.classList.add('on');
+    chip.textContent = drug;
+    
+    chip.onclick = () => {
+      // 抗血小板薬は複数選択可能
+      const index = state.patient.antiplatelet_drugs.indexOf(drug);
+      if (index > -1) {
+        state.patient.antiplatelet_drugs.splice(index, 1);
+      } else {
+        state.patient.antiplatelet_drugs.push(drug);
+      }
+      renderAntiplateletDrugs();
+      updateMedicationTextarea();
+      updateState();
+    };
+    
+    c.appendChild(chip);
+  });
+}
+
+// 常用薬テキストエリアを更新する関数
+window.updateMedicationTextarea = function() {
+  const medicationTextarea = $('#patient_medication');
+  if (!medicationTextarea) return;
+  
+  const items = [];
+  
+  // 抗凝固薬の処理
+  if (state.patient.anticoagulant === 'あり') {
+    if (state.patient.anticoagulant_drugs.length > 0) {
+      items.push(`抗凝固薬 ${state.patient.anticoagulant_drugs.join('、')}`);
+    } else {
+      items.push('抗凝固薬 あり');
+    }
+  } else if (state.patient.anticoagulant === 'なし') {
+    items.push('抗凝固薬 なし');
+  }
+  
+  // 抗血小板薬の処理
+  if (state.patient.antiplatelet === 'あり') {
+    if (state.patient.antiplatelet_drugs.length > 0) {
+      items.push(`抗血小板薬 ${state.patient.antiplatelet_drugs.join('、')}`);
+    } else {
+      items.push('抗血小板薬 あり');
+    }
+  } else if (state.patient.antiplatelet === 'なし') {
+    items.push('抗血小板薬 なし');
+  }
+  
+  const chipText = items.join('、');
+  const currentValue = medicationTextarea.value || '';
+  
+  // 既存の値からチップ項目を抽出（手動入力された項目を保持）
+  const existingItems = currentValue.split('、').map(item => item.trim()).filter(item => item);
+  const manualItems = existingItems.filter(item => 
+    !item.startsWith('抗凝固薬 ') && !item.startsWith('抗血小板薬 ')
+  );
+  
+  // 選択されたチップ項目と手動入力項目を結合
+  const allItems = [...new Set([...items, ...manualItems])];
+  const newValue = allItems.join('、');
+  
+  medicationTextarea.value = newValue;
+  
+  // stateも更新
+  state.patient.medication = newValue;
+}
+
+// アレルギーチップレンダリング関数
+function renderAllergyChips() {
+  const c = $('#patient_allergy_chips');
+  if (!c) return;
+  
+  c.innerHTML = '';
+  
+  if (!state.patient.food_allergy) state.patient.food_allergy = '';
+  if (!state.patient.drug_allergy) state.patient.drug_allergy = '';
+  
+  // 食物アレルギーチップ
+  const foodAllergyChip = document.createElement('div');
+  foodAllergyChip.className = 'chip';
+  const foodAllergyState = state.patient.food_allergy || '';
+  if (foodAllergyState === 'なし') {
+    // 緑点灯
+    foodAllergyChip.classList.add('on');
+  } else if (foodAllergyState === 'あり') {
+    // 赤点灯
+    foodAllergyChip.style.background = '#fee2e2';
+    foodAllergyChip.style.borderColor = '#f87171';
+    foodAllergyChip.style.color = '#b91c1c';
+  }
+  foodAllergyChip.textContent = '食物アレルギー' + (foodAllergyState ? `(${foodAllergyState})` : '');
+  foodAllergyChip.onclick = () => {
+    // 初期 -> なし -> あり -> 初期の3状態トグル
+    const current = state.patient.food_allergy || '';
+    if (current === '') {
+      state.patient.food_allergy = 'なし';
+    } else if (current === 'なし') {
+      state.patient.food_allergy = 'あり';
+    } else {
+      state.patient.food_allergy = '';
+    }
+    renderAllergyChips();
+    updateAllergyTextarea();
+    updateState();
+  };
+  c.appendChild(foodAllergyChip);
+  
+  // 薬剤アレルギーチップ
+  const drugAllergyChip = document.createElement('div');
+  drugAllergyChip.className = 'chip';
+  const drugAllergyState = state.patient.drug_allergy || '';
+  if (drugAllergyState === 'なし') {
+    // 緑点灯
+    drugAllergyChip.classList.add('on');
+  } else if (drugAllergyState === 'あり') {
+    // 赤点灯
+    drugAllergyChip.style.background = '#fee2e2';
+    drugAllergyChip.style.borderColor = '#f87171';
+    drugAllergyChip.style.color = '#b91c1c';
+  }
+  drugAllergyChip.textContent = '薬剤アレルギー' + (drugAllergyState ? `(${drugAllergyState})` : '');
+  drugAllergyChip.onclick = () => {
+    // 初期 -> なし -> あり -> 初期の3状態トグル
+    const current = state.patient.drug_allergy || '';
+    if (current === '') {
+      state.patient.drug_allergy = 'なし';
+    } else if (current === 'なし') {
+      state.patient.drug_allergy = 'あり';
+    } else {
+      state.patient.drug_allergy = '';
+    }
+    renderAllergyChips();
+    updateAllergyTextarea();
+    updateState();
+  };
+  c.appendChild(drugAllergyChip);
+}
+
+// アレルギーテキストエリアを更新する関数
+window.updateAllergyTextarea = function() {
+  const allergyTextarea = $('#patient_allergy');
+  if (!allergyTextarea) return;
+  
+  const items = [];
+  
+  // 食物アレルギーの処理
+  if (state.patient.food_allergy === 'あり') {
+    items.push('食物アレルギー あり');
+  } else if (state.patient.food_allergy === 'なし') {
+    items.push('食物アレルギー なし');
+  }
+  
+  // 薬剤アレルギーの処理
+  if (state.patient.drug_allergy === 'あり') {
+    items.push('薬剤アレルギー あり');
+  } else if (state.patient.drug_allergy === 'なし') {
+    items.push('薬剤アレルギー なし');
+  }
+  
+  const chipText = items.join('、');
+  const currentValue = allergyTextarea.value || '';
+  
+  // 既存の値からチップ項目を抽出（手動入力された項目を保持）
+  const existingItems = currentValue.split('、').map(item => item.trim()).filter(item => item);
+  const manualItems = existingItems.filter(item => 
+    !item.startsWith('食物アレルギー ') && !item.startsWith('薬剤アレルギー ')
+  );
+  
+  // 選択されたチップ項目と手動入力項目を結合
+  const allItems = [...new Set([...items, ...manualItems])];
+  const newValue = allItems.join('、');
+  
+  allergyTextarea.value = newValue;
+  
+  // stateも更新
+  state.patient.allergy = newValue;
+}
+
+// 年代・性別・先行救急隊チップレンダリング関数
+function renderRequestInfoChips() {
+  // 年代チップ
+  const ageChips = $('#patient_age_chips');
+  if (ageChips) {
+    ageChips.innerHTML = '';
+    const ageOptions = ['10代', '20代', '30代', '40代', '50代', '60代', '70代', '80代', '90代以上'];
+    ageOptions.forEach(age => {
+      const chip = document.createElement('div');
+      chip.className = 'chip' + (state.request.age === age ? ' active' : '');
+      chip.textContent = age;
+      chip.onclick = () => {
+        state.request.age = state.request.age === age ? '' : age;
+        renderRequestInfoChips();
+        updateState();
+      };
+      ageChips.appendChild(chip);
+    });
+  }
+  
+  // 性別チップ
+  const sexChips = $('#patient_sex_chips');
+  if (sexChips) {
+    sexChips.innerHTML = '';
+    const sexOptions = ['男性', '女性', '不明'];
+    sexOptions.forEach(sex => {
+      const chip = document.createElement('div');
+      chip.className = 'chip' + (state.request.sex === sex ? ' active' : '');
+      chip.textContent = sex;
+      chip.onclick = () => {
+        state.request.sex = state.request.sex === sex ? '' : sex;
+        renderRequestInfoChips();
+        updateState();
+      };
+      sexChips.appendChild(chip);
+    });
+  }
+  
+  // 先行救急隊チップ
+  const emsTeamChips = $('#ems_team_chips');
+  if (emsTeamChips) {
+    emsTeamChips.innerHTML = '';
+    const emsTeams = [
+      { "id": "chuo", "name": "中央救急隊" },
+      { "id": "nanrinji", "name": "南林寺救急隊" },
+      { "id": "uemachi", "name": "上町救急隊" },
+      { "id": "konan", "name": "甲南救急隊" },
+      { "id": "yoshino", "name": "吉野救急隊" },
+      { "id": "yoshida", "name": "吉田救急隊" },
+      { "id": "sakurajima_e", "name": "桜島東救急隊" },
+      { "id": "sakurajima_w", "name": "桜島西救急隊" },
+      { "id": "nishi", "name": "西本署" },
+      { "id": "ishiki", "name": "伊敷救急隊" },
+      { "id": "matsumoto", "name": "松元救急隊" },
+      { "id": "koriyama", "name": "郡山救急隊" },
+      { "id": "minami", "name": "南本署" },
+      { "id": "taniyama", "name": "谷山救急隊" },
+      { "id": "taniyama_kita", "name": "谷山北救急隊" },
+      { "id": "korimoto", "name": "郡元救急隊" },
+      { "id": "kiire", "name": "喜入救急隊" }
+    ];
+    
+    // 選択されている場合は選択されたチップだけを表示
+    if (state.request.ems_team) {
+      const selectedTeam = emsTeams.find(t => t.id === state.request.ems_team);
+      if (selectedTeam) {
+        const chip = document.createElement('div');
+        chip.className = 'chip active';
+        chip.textContent = selectedTeam.name;
+        chip.onclick = () => {
+          state.request.ems_team = '';
+          renderRequestInfoChips();
+          updateState();
+        };
+        emsTeamChips.appendChild(chip);
+        
+        // 変更ボタンを追加
+        const changeBtn = document.createElement('div');
+        changeBtn.className = 'chip';
+        changeBtn.style.cssText = 'background:#f3f4f6;color:#6b7280;border:1.5px solid #d1d5db';
+        changeBtn.textContent = '変更';
+        changeBtn.onclick = () => {
+          state.request.ems_team = '';
+          renderRequestInfoChips();
+          updateState();
+        };
+        emsTeamChips.appendChild(changeBtn);
+      }
+    } else {
+      // 選択されていない場合は全チップを表示
+      emsTeams.forEach(team => {
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+        chip.textContent = team.name;
+        chip.onclick = () => {
+          state.request.ems_team = team.id;
+          renderRequestInfoChips();
+          updateState();
+        };
+        emsTeamChips.appendChild(chip);
+      });
+    }
+  }
+}
+
+function renderRequestContentChips() {
+  const contentChips = $('#request_content_chips');
+  if (!contentChips) return;
+  
+  contentChips.innerHTML = '';
+  
+  const contentItems = [
+    '心肺停止',
+    '窒息',
+    '呼吸困難',
+    '胸痛',
+    '意識消失',
+    '意識障害',
+    '胸背部痛',
+    '交通外傷',
+    '転落外傷',
+    'けいれん'
+  ];
+  
+  // 選択されている場合は選択されたチップだけを表示
+  if (state.request.content) {
+    const chip = document.createElement('div');
+    chip.className = 'chip active';
+    chip.textContent = state.request.content;
+    chip.onclick = () => {
+      state.request.content = '';
+      $('#request_detail').value = '';
+      renderRequestContentChips();
+      updateState();
+    };
+    contentChips.appendChild(chip);
+    
+    // 変更ボタンを追加
+    const changeBtn = document.createElement('div');
+    changeBtn.className = 'chip';
+    changeBtn.style.cssText = 'background:#f3f4f6;color:#6b7280;border:1.5px solid #d1d5db';
+    changeBtn.textContent = '変更';
+    changeBtn.onclick = () => {
+      state.request.content = '';
+      $('#request_detail').value = '';
+      renderRequestContentChips();
+      updateState();
+    };
+    contentChips.appendChild(changeBtn);
+  } else {
+    // 選択されていない場合は全チップを表示
+    contentItems.forEach(item => {
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.textContent = item;
+      chip.onclick = () => {
+        state.request.content = item;
+        $('#request_detail').value = item;
+        renderRequestContentChips();
+        updateState();
+      };
+      contentChips.appendChild(chip);
+    });
+  }
 }
 
 // 点滴・輸液開始時刻ダイヤル
@@ -2708,10 +3662,7 @@ function renderAbgPills() {
 }
 
 window.toggleExam = (type) => { // グローバル化
-  const checkbox = $(`#exam_${type}`);
-  if (!checkbox) return;
-  
-  state.cardr.exams[type] = checkbox.checked;
+  state.cardr.exams[type] = !state.cardr.exams[type];
   
   if(type === 'bs') {
     const bsArea = $('#exam_bs_area');
@@ -2720,8 +3671,46 @@ window.toggleExam = (type) => { // グローバル化
     const txtArea = $(`#exam_${type}_txt`);
     if (txtArea) txtArea.style.display = state.cardr.exams[type] ? 'block' : 'none';
   }
+  
+  // チップを再レンダリング
+  renderExamChips();
   updateState();
 };
+
+function renderExamChips() {
+  const c = $('#exam_chips');
+  if (!c) return;
+  
+  c.innerHTML = '';
+  
+  const examItems = [
+    { id: 'bs', name: '血糖' },
+    { id: 'ucg', name: 'UCG' },
+    { id: 'us_abd', name: '腹部US' },
+    { id: 'us_lung', name: '肺US' },
+    { id: 'us_neck', name: '頸部血管US' },
+    { id: 'ecg', name: '12誘導心電図' },
+    { id: 'fast', name: 'FAST' },
+    { id: 'efast', name: 'eFAST' }
+  ];
+  
+  examItems.forEach(item => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = item.name;
+    
+    // 選択されている場合は点灯（背景色変更）
+    if(state.cardr.exams[item.id]) {
+      chip.dataset.state = 'proc';
+    }
+    
+    chip.onclick = () => {
+      toggleExam(item.id);
+    };
+    
+    c.appendChild(chip);
+  });
+}
 
 // プロブレム関数群
 window.addProblem = () => { // グローバル化
@@ -2747,8 +3736,84 @@ function renderProblems() {
   `).join('');
 }
 
+// トリアージ・重症度分類チップレンダリング関数
+function renderTriageChips() {
+  const c = $('#triage_chips');
+  if (!c) return;
+  
+  c.innerHTML = '';
+  
+  const triageOptions = [
+    { "value": 1, "label": "Lv1: 蘇生 (直ちに)", "color": "#ff0000" },
+    { "value": 2, "label": "Lv2: 緊急 (15分以内)", "color": "#ff8800" },
+    { "value": 3, "label": "Lv3: 準緊急 (30分以内)", "color": "#ffff00" },
+    { "value": 4, "label": "Lv4: 低緊急 (60分以内)", "color": "#00ff00" },
+    { "value": 5, "label": "Lv5: 非緊急 (120分以内)", "color": "#ffffff" }
+  ];
+  
+  triageOptions.forEach(option => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = option.label;
+    
+    // 選択されている場合は点灯
+    if(state.triage === option.value) {
+      chip.classList.add('active');
+      chip.style.background = option.color;
+      chip.style.borderColor = option.color;
+      chip.style.color = option.value === 5 ? '#000' : '#fff';
+    }
+    
+    chip.onclick = () => {
+      state.triage = state.triage === option.value ? null : option.value;
+      renderTriageChips();
+      updateState();
+    };
+    
+    c.appendChild(chip);
+  });
+}
+
+function renderSeverityChips() {
+  const c = $('#severity_chips');
+  if (!c) return;
+  
+  c.innerHTML = '';
+  
+  const severityOptions = [
+    { "value": 0, "label": "0: 傷病なし" },
+    { "value": 1, "label": "I: 軽微 (医療不要)" },
+    { "value": 2, "label": "II: 軽症 (外来レベル)" },
+    { "value": 3, "label": "III: 中等症 (要入院・生命危機なし)" },
+    { "value": 4, "label": "IV: 重症 (生命危機の可能性あり)" },
+    { "value": 5, "label": "V: 重篤 (生命危機切迫)" },
+    { "value": 6, "label": "VI: 蘇生 (CPA・蘇生後)" },
+    { "value": 7, "label": "VII: 死亡" }
+  ];
+  
+  severityOptions.forEach(option => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = option.label;
+    
+    // 選択されている場合は点灯
+    if(state.severity === option.value) {
+      chip.classList.add('active');
+    }
+    
+    chip.onclick = () => {
+      state.severity = state.severity === option.value ? null : option.value;
+      renderSeverityChips();
+      updateState();
+    };
+    
+    c.appendChild(chip);
+  });
+}
+
 // 病院選択関数群 (変更なし)
 let selectedRegion = '鹿児島市';
+let hospitalsShowAll = {}; // 地域ごとの表示状態を管理
 
 function renderHospitalChips() {
   const container = $('#destination_chips');
@@ -2775,14 +3840,14 @@ function renderHospitalChips() {
   container.appendChild(regionTabs);
   
   // 医療機関チップ
+  const hospitals = state.hospitals[selectedRegion] || [];
+  const initialShowCount = 10;
+  const isAllShown = hospitalsShowAll[selectedRegion] || false;
+  const hospitalsToShow = isAllShown ? hospitals : hospitals.slice(0, initialShowCount);
+  
   const hospitalsContainer = document.createElement('div');
   hospitalsContainer.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px';
   hospitalsContainer.id = 'hospitals_container';
-  
-  const hospitals = state.hospitals[selectedRegion] || [];
-  const initialShowCount = 10;
-  const isAllShown = hospitalsContainer.dataset?.showAll === 'true';
-  const hospitalsToShow = isAllShown ? hospitals : hospitals.slice(0, initialShowCount);
   
   hospitalsToShow.forEach(h => {
     const chip = document.createElement('div');
@@ -2799,7 +3864,7 @@ function renderHospitalChips() {
     moreBtn.style.cssText = 'background:#e0f2fe;color:#0369a1;font-weight:600;border:1.5px solid #0ea5e9';
     moreBtn.textContent = `その他 (${hospitals.length - initialShowCount})`;
     moreBtn.onclick = () => {
-      hospitalsContainer.dataset.showAll = 'true';
+      hospitalsShowAll[selectedRegion] = true;
       renderHospitalChips();
     };
     hospitalsContainer.appendChild(moreBtn);
@@ -2840,10 +3905,11 @@ function updateDestinationDisplay() {
 function updateState() {
   state.request.type = $('#request_type')?.value || '';
   state.request.detail = $('#request_detail')?.value || '';
-  state.request.time = $('#request_time')?.value || '';
+  state.car.request_time = $('#cardr_request_time')?.value || '';
   state.patient.history = $('#patient_history')?.value || '';
   state.patient.medication = $('#patient_medication')?.value || '';
   state.patient.allergy = $('#patient_allergy')?.value || '';
+  state.patient.lastWell = $('#last_well_time')?.value || '';
   state.patient.lastMeal = $('#last_meal_time')?.value || '';
   state.patient.hospital = $('#patient_hospital')?.value || '';
   state.car.departure = $('#car_departure')?.value || '';
@@ -2856,6 +3922,8 @@ function updateState() {
   state.ems.aware = $('#ems_aware')?.value || '';
   state.ems.arrival = $('#ems_arrival')?.value || '';
   state.ems.contact = $('#ems_contact')?.value || '';
+  state.ems.pickup = $('#ems_pickup')?.value || '';
+  state.ems.departure = $('#ems_departure')?.value || '';
   state.ems.rp = $('#ems_rp')?.value || '';
   state.ems.o2_flow = $('#ems_o2_flow')?.value || '';
   state.ems.procedures_detail = $('#ems_procedures_detail')?.value || '';
@@ -2865,15 +3933,11 @@ function updateState() {
   state.cardr.procedure_detail = $('#cardr_procedure_detail')?.value || '';
   state.cardr.drug_detail = $('#cardr_drug_detail')?.value || '';
   
-  // 検査チェックボックスとテキストエリア
+  // 検査テキストエリア（状態はtoggleExamで管理）
   ['ucg','us_abd','us_lung','us_neck','ecg','fast','efast'].forEach(t => { 
     const txtEl = $(`#exam_${t}_txt`);
     if(txtEl) state.cardr.exam_texts[t] = txtEl.value; 
-    const chkEl = $(`#exam_${t}`);
-    if(chkEl) state.cardr.exams[t] = chkEl.checked;
   });
-  
-  if($('#exam_bs')) state.cardr.exams.bs = $('#exam_bs').checked;
 
   // 脳卒中情報（state.cardr.stroke の存在を保証）
   if($('#plrL')) {
@@ -2890,6 +3954,7 @@ function updateState() {
   }
   
   state.consideration = $('#consideration')?.value || '';
+  state.symptom_detail = $('#outputReason')?.value || '';
   
   const customHospital = $('#destination_custom')?.value.trim() || '';
   if(customHospital) {
@@ -2937,42 +4002,59 @@ function generateReport() {
   
   r += '【要請情報】\n';
   r += `要請方法：${state.request.type || '（未選択）'}\n`;
-  if(state.request.time) r += `要請時刻：${state.request.time}\n`;
+  if(state.request.age) r += `年代：${state.request.age}\n`;
+  if(state.request.sex) r += `性別：${state.request.sex}\n`;
+  if(state.request.ems_team) {
+    const emsTeams = [
+      { "id": "chuo", "name": "中央救急隊" },
+      { "id": "nanrinji", "name": "南林寺救急隊" },
+      { "id": "uemachi", "name": "上町救急隊" },
+      { "id": "konan", "name": "甲南救急隊" },
+      { "id": "yoshino", "name": "吉野救急隊" },
+      { "id": "yoshida", "name": "吉田救急隊" },
+      { "id": "sakurajima_e", "name": "桜島東救急隊" },
+      { "id": "sakurajima_w", "name": "桜島西救急隊" },
+      { "id": "nishi", "name": "西本署" },
+      { "id": "ishiki", "name": "伊敷救急隊" },
+      { "id": "matsumoto", "name": "松元救急隊" },
+      { "id": "koriyama", "name": "郡山救急隊" },
+      { "id": "minami", "name": "南本署" },
+      { "id": "taniyama", "name": "谷山救急隊" },
+      { "id": "taniyama_kita", "name": "谷山北救急隊" },
+      { "id": "korimoto", "name": "郡元救急隊" },
+      { "id": "kiire", "name": "喜入救急隊" }
+    ];
+    const team = emsTeams.find(t => t.id === state.request.ems_team);
+    if (team) r += `先行救急隊：${team.name}\n`;
+  }
   if(state.request.detail) r += `要請内容：${state.request.detail}\n`;
   r += '\n';
   
   // 患者情報
-  const hasPatientInfo = state.patient?.history || state.patient?.medication || state.patient?.allergy || state.patient?.lastMeal || state.patient?.hospital;
+  const hasPatientInfo = state.patient?.history || state.patient?.medication || state.patient?.allergy || state.patient?.lastWell || state.patient?.lastMeal || state.patient?.hospital;
   if(hasPatientInfo) {
     r += '【患者情報】\n';
     if(state.patient.history) r += `既往歴：${state.patient.history}\n`;
     if(state.patient.medication) r += `常用薬：${state.patient.medication}\n`;
     if(state.patient.allergy) r += `アレルギー：${state.patient.allergy}\n`;
+    if(state.patient.lastWell) r += `最終健常：${state.patient.lastWell}\n`;
     if(state.patient.lastMeal) r += `最終食事：${state.patient.lastMeal}\n`;
     if(state.patient.hospital) r += `かかりつけ：${state.patient.hospital}\n`;
     r += '\n';
   }
   
-  r += '【タイムライン】\n';
-  if(state.request.time) r += `要請：${state.request.time}\n`;
-  if(state.ems.aware) r += `救急隊覚知：${state.ems.aware}\n`;
-  if(state.ems.arrival) r += `救急隊現着：${state.ems.arrival}\n`;
-  if(state.ems.contact) r += `救急隊接触：${state.ems.contact}\n`;
-  if(state.car.departure) r += `ドクターカー出動：${state.car.departure}\n`;
-  if(state.car.scene_arrival) r += `現場/RP到着：${state.car.scene_arrival}\n`;
-  if(state.car.cardr_contact) r += `ドクターカーチーム接触：${state.car.cardr_contact}\n`;
-  if(state.ems.rp && state.car.activity_place === 'RP（ランデブーポイント）') r += `救急隊RP着：${state.ems.rp}\n`;
-  if(state.car.activity_place) r += `活動場所：${state.car.activity_place}\n`;
-  r += `搬送方法：${state.car.transport_method || '（未選択）'}\n`;
-  
-  // Iターン以外は現場出発と病院着を記載
-  if(state.car.transport_method !== 'Iターン') {
-    if(state.car.scene_departure) r += `現場出発：${state.car.scene_departure}\n`;
-    if(state.car.hospital_arrival) r += `病院着：${state.car.hospital_arrival}\n`;
-  }
-  r += '\n';
-  
   r += '【先行救急隊活動】\n';
+  // 救急隊のタイムライン
+  if(state.ems.aware || state.ems.arrival || state.ems.contact || state.ems.pickup || state.ems.departure || (state.ems.rp && state.car.activity_place === 'RP（ランデブーポイント）')) {
+    r += '＜タイムライン＞\n';
+    if(state.ems.aware) r += `覚知：${state.ems.aware}\n`;
+    if(state.ems.arrival) r += `現着：${state.ems.arrival}\n`;
+    if(state.ems.contact) r += `接触：${state.ems.contact}\n`;
+    if(state.ems.pickup) r += `収容：${state.ems.pickup}\n`;
+    if(state.ems.departure) r += `現発：${state.ems.departure}\n`;
+    if(state.ems.rp && state.car.activity_place === 'RP（ランデブーポイント）') r += `RP到着：${state.ems.rp}\n`;
+    r += '\n';
+  }
   if(state.ems.vitals.length > 0) {
     r += '＜バイタル＞\n';
     state.ems.vitals.forEach(v => {
@@ -2980,7 +4062,7 @@ function generateReport() {
       const gcsSum = v.gcs.v === 'T' ? `${v.gcs.e + parseInt(v.gcs.m)}T` : (v.gcs.e + parseInt(v.gcs.v) + parseInt(v.gcs.m));
       const gcs = `E${v.gcs.e}V${gcsV}M${v.gcs.m}(${gcsSum})`;
       const spo2 = v.spo2 === 0 ? '測定不能' : `${v.spo2}%`;
-      r += `[${v.time}] BP:${v.sbp}/${v.dbp} HR:${v.hr} RR:${v.rr} SpO₂:${spo2} BT:${v.bt}℃ GCS:${gcs} JCS:${v.jcs}\n`;
+      r += `[${v.time}] BP:${v.sbp}/${v.dbp} HR:${v.hr} RR:${v.rr} SpO2:${spo2} BT:${v.bt}℃ GCS:${gcs} JCS:${v.jcs}\n`;
     });
   }
   
@@ -3025,6 +4107,17 @@ function generateReport() {
   r += '\n';
   
   r += '【ドクターカーチーム活動】\n';
+  // ドクターカーのタイムライン
+  if(state.car.request_time || state.car.departure || state.car.scene_arrival || state.car.cardr_contact || state.car.activity_place) {
+    r += '＜タイムライン＞\n';
+    if(state.car.request_time) r += `要請時刻：${state.car.request_time}\n`;
+    if(state.car.departure) r += `ドクターカー出動：${state.car.departure}\n`;
+    if(state.car.scene_arrival) r += `現場/RP到着：${state.car.scene_arrival}\n`;
+    if(state.car.cardr_contact) r += `ドクターカーチーム接触：${state.car.cardr_contact}\n`;
+    if(state.car.activity_place) r += `活動場所：${state.car.activity_place}\n`;
+    r += '\n';
+  }
+  
   if(state.cardr.vitals.length > 0) {
     r += '＜バイタル＞\n';
     state.cardr.vitals.forEach(v => {
@@ -3032,7 +4125,7 @@ function generateReport() {
       const gcsSum = v.gcs.v === 'T' ? `${v.gcs.e + parseInt(v.gcs.m)}T` : (v.gcs.e + parseInt(v.gcs.v) + parseInt(v.gcs.m));
       const gcs = `E${v.gcs.e}V${gcsV}M${v.gcs.m}(${gcsSum})`;
       const spo2 = v.spo2 === 0 ? '測定不能' : `${v.spo2}%`;
-      r += `[${v.time}] BP:${v.sbp}/${v.dbp} HR:${v.hr} RR:${v.rr} SpO₂:${spo2} BT:${v.bt}℃ GCS:${gcs} JCS:${v.jcs}\n`;
+      r += `[${v.time}] BP:${v.sbp}/${v.dbp} HR:${v.hr} RR:${v.rr} SpO2:${spo2} BT:${v.bt}℃ GCS:${gcs} JCS:${v.jcs}\n`;
     });
   }
   
@@ -3215,12 +4308,35 @@ function generateReport() {
     state.problems.forEach((p, i) => r += `#${i+1} ${p}\n`);
   }
   if(state.consideration) r += `＜考察＞\n${state.consideration}\n`;
+  if(state.triage !== null) {
+    r += `JTAS${state.triage}\n`;
+  }
+  if(state.severity !== null) {
+    r += `NACA${state.severity}\n`;
+  }
   r += '\n';
   
   r += '【搬送先】\n';
   const hospitalName = state.destination.custom || state.destination.hospital || '（未選択）';
   r += `医療機関：${hospitalName}\n`;
   if(state.destination.reason) r += `選定理由：${state.destination.reason}\n`;
+  // 搬送方法から病院着までのタイムライン情報
+  if(state.car.transport_method || state.car.scene_departure || state.car.hospital_arrival) {
+    r += `搬送方法：${state.car.transport_method || '（未選択）'}\n`;
+    // Iターン以外は現場出発と病院着を記載
+    if(state.car.transport_method !== 'Iターン') {
+      if(state.car.scene_departure) r += `現場出発：${state.car.scene_departure}\n`;
+      if(state.car.hospital_arrival) r += `病院着：${state.car.hospital_arrival}\n`;
+    }
+  }
+  r += '\n';
+  
+  // 症状詳記
+  if(state.symptom_detail) {
+    r += '【呼吸循環監視　詳記】\n';
+    r += state.symptom_detail + '\n';
+  }
+  
   r += '\n━━━━━━━━━━━━━━━━━━━━\n';
   r += '記録作成：' + new Date().toLocaleString('ja-JP') + '\n';
   
@@ -3276,11 +4392,11 @@ window.resetData = () => { // グローバル化
   localStorage.removeItem('doctorCarV1');
   
   state = {
-    request: {type:'', detail:'', time:''},
-    patient: {history:'', medication:'', allergy:'', lastMeal:'', hospital:''},
-    car: {departure:'', scene_arrival:'', cardr_contact:'', activity_place:'', scene_departure:'', hospital_arrival:'', transport_method:'Uターン'},
+    request: {type:'', detail:'', age:'', sex:'', ems_team:'', content:''},
+    patient: {history:'', medication:'', allergy:'', lastWell:'', lastMeal:'', hospital:'', history_chips:{}, anticoagulant:'', anticoagulant_drugs:[], antiplatelet:'', antiplatelet_drugs:[], food_allergy:'', drug_allergy:''},
+    car: {request_time:'', departure:'', scene_arrival:'', cardr_contact:'', activity_place:'', scene_departure:'', hospital_arrival:'', transport_method:'Uターン'},
     ems: {
-      aware:'', arrival:'', contact:'', rp:'',
+      request_time:'', aware:'', arrival:'', contact:'', rp:'',
       vitals: [],
       exam_tab: 'general',
       chips: {},
@@ -3309,7 +4425,7 @@ window.resetData = () => { // グローバル化
       procedures_items: ['酸素投与','BVM','気管挿管','胸腔ドレナージ','開胸','輸液','輸血','骨盤固定','止血処置','CPR','除細動','経皮ペーシング'],
       procedure_detail:'',
       drugs: {},
-      drugs_items: ['アドレナリン','ミダゾラム','ジアゼパム','アトロピン','ロクロニウム','メイロン','レペタン','トランサミン','アセリオ','メトクロプラミド','エスラックス','生食','ソルアセトF','ブドウ糖液'],
+      drugs_items: ['生食','ソルアセトF','アドレナリン','ミダゾラム','ジアゼパム','アトロピン','ロクロニウム','メイロン','レペタン','トランサミン','アセリオ','メトクロプラミド','エスラックス','ブドウ糖液'],
       drug_detail:'',
       intubation: {time: '', size: '7.0'},
       drug_details: {}
@@ -3328,11 +4444,37 @@ window.resetData = () => { // グローバル化
 function restoreUI() {
   // HTML要素への値の復元
   $('#request_type').value = state.request.type || '';
-  $('#request_detail').value = state.request.detail || '';
-  $('#request_time').value = state.request.time || '';
+  // 要請内容が選択されている場合は、それを使用、そうでなければ既存のdetailを使用
+  if (state.request.content) {
+    $('#request_detail').value = state.request.content;
+  } else {
+    $('#request_detail').value = state.request.detail || '';
+  }
+  $('#cardr_request_time').value = state.car.request_time || '';
   $('#patient_history').value = state.patient?.history || '';
+  // 既往歴チップ状態を同期して再レンダリング
+  syncHistoryChipsFromText();
+  renderHistoryChips();
   $('#patient_medication').value = state.patient?.medication || '';
+  // 常用薬チップをレンダリング
+  if (!state.patient.anticoagulant) state.patient.anticoagulant = '';
+  if (!state.patient.antiplatelet) state.patient.antiplatelet = '';
+  if (!state.patient.anticoagulant_drugs) state.patient.anticoagulant_drugs = [];
+  if (!state.patient.antiplatelet_drugs) state.patient.antiplatelet_drugs = [];
+  renderMedicationChips();
   $('#patient_allergy').value = state.patient?.allergy || '';
+  // アレルギーチップをレンダリング
+  if (!state.patient.food_allergy) state.patient.food_allergy = '';
+  if (!state.patient.drug_allergy) state.patient.drug_allergy = '';
+  renderAllergyChips();
+  // 要請情報チップをレンダリング
+  if (!state.request.age) state.request.age = '';
+  if (!state.request.sex) state.request.sex = '';
+  if (!state.request.ems_team) state.request.ems_team = '';
+  if (!state.request.content) state.request.content = '';
+  renderRequestInfoChips();
+  renderRequestContentChips();
+  $('#last_well_time').value = state.patient?.lastWell || '';
   $('#last_meal_time').value = state.patient?.lastMeal || '';
   $('#patient_hospital').value = state.patient?.hospital || '';
   $('#car_departure').value = state.car?.departure || '';
@@ -3348,6 +4490,8 @@ function restoreUI() {
   $('#ems_aware').value = state.ems.aware || '';
   $('#ems_arrival').value = state.ems.arrival || '';
   $('#ems_contact').value = state.ems.contact || '';
+  $('#ems_pickup').value = state.ems.pickup || '';
+  $('#ems_departure').value = state.ems.departure || '';
   $('#ems_rp').value = state.ems.rp || ''; 
   if($('#ems_o2_flow')) $('#ems_o2_flow').value = state.ems.o2_flow || '';
   $('#ems_procedures_detail').value = state.ems.procedures_detail || '';
@@ -3362,18 +4506,14 @@ function restoreUI() {
   const isAbgSelected = state.cardr.abg_type === 'ABG' || state.cardr.abg_type === 'VBG';
   if (abgAreaEl) abgAreaEl.style.display = isAbgSelected ? 'block' : 'none';
 
-  // 検査チェックボックスとテキストエリア
-  const examBsEl = $('#exam_bs');
+  // 検査チップとテキストエリア
+  renderExamChips();
+  
   const examBsAreaEl = $('#exam_bs_area');
-  if(examBsEl) {
-    examBsEl.checked = state.cardr.exams?.bs || false;
-    if (examBsAreaEl) examBsAreaEl.style.display = state.cardr.exams?.bs ? 'block' : 'none';
-  }
+  if (examBsAreaEl) examBsAreaEl.style.display = state.cardr.exams?.bs ? 'block' : 'none';
   
   ['ucg','us_abd','us_lung','us_neck','ecg','fast','efast'].forEach(t => {
-    const chkEl = $(`#exam_${t}`);
     const txtEl = $(`#exam_${t}_txt`);
-    if (chkEl) chkEl.checked = state.cardr.exams[t] || false;
     if (txtEl) {
       txtEl.style.display = state.cardr.exams[t] ? 'block' : 'none';
       txtEl.value = state.cardr.exam_texts[t] || '';
@@ -3409,6 +4549,12 @@ function restoreUI() {
   }
   
   $('#consideration').value = state.consideration || '';
+  $('#outputReason').value = state.symptom_detail || '';
+  // トリアージと重症度分類の初期化
+  if (state.triage === undefined) state.triage = null;
+  if (state.severity === undefined) state.severity = null;
+  renderTriageChips();
+  renderSeverityChips();
   $('#destination_custom').value = state.destination.custom || '';
   $('#selection_reason').value = state.destination.reason || '';
   
@@ -3418,6 +4564,7 @@ function restoreUI() {
   renderProcedureChips('ems_procedures', state.ems.procedures_items, state.ems.procedures);
   renderProcedureChips('cardr_procedures', state.cardr.procedures_items, state.cardr.procedures); 
   renderProcedureChips('cardr_drugs', state.cardr.drugs_items, state.cardr.drugs); 
+  renderExamChips();
   renderAbgPills();
   renderProblems();
   renderHospitalChips();
@@ -3445,9 +4592,19 @@ function initializeStateDataStructure() {
     };
     state.ems.procedures_items = ['頚椎カラー','全身固定','吸引','酸素投与','BVM換気','気管挿管','LT挿入','静脈路確保','ブドウ糖投与','ショック輸液','圧迫止血','胸骨圧迫','LUCAS装着','除細動','アドレナリン'];
     state.cardr.procedures_items = ['酸素投与','BVM','気管挿管','胸腔ドレナージ','開胸','輸液','輸血','骨盤固定','止血処置','CPR','除細動','経皮ペーシング'];
-    state.cardr.drugs_items = ['アドレナリン','ミダゾラム','ジアゼパム','アトロピン','ロクロニウム','メイロン','レペタン','トランサミン','アセリオ','メトクロプラミド','エスラックス','生食','ソルアセトF','ブドウ糖液'];
+    state.cardr.drugs_items = ['生食','ソルアセトF','アドレナリン','ミダゾラム','ジアゼパム','アトロピン','ロクロニウム','メイロン','レペタン','トランサミン','アセリオ','メトクロプラミド','エスラックス','ブドウ糖液'];
 
     // ネストされたオブジェクトの初期化
+    if (!state.request.age) state.request.age = '';
+    if (!state.request.sex) state.request.sex = '';
+    if (!state.request.ems_team) state.request.ems_team = '';
+    if (!state.patient.history_chips) state.patient.history_chips = {};
+    if (!state.patient.anticoagulant) state.patient.anticoagulant = '';
+    if (!state.patient.antiplatelet) state.patient.antiplatelet = '';
+    if (!state.patient.anticoagulant_drugs) state.patient.anticoagulant_drugs = [];
+    if (!state.patient.antiplatelet_drugs) state.patient.antiplatelet_drugs = [];
+    if (!state.patient.food_allergy) state.patient.food_allergy = '';
+    if (!state.patient.drug_allergy) state.patient.drug_allergy = '';
     if (!state.cardr.intubation) state.cardr.intubation = {time: '', size: '7.0'};
     if (!state.cardr.drug_details) state.cardr.drug_details = {};
     if (!state.cardr.exams) state.cardr.exams = {bs:false, ucg:false, us_abd:false, us_lung:false, us_neck:false, ecg:false, fast:false, efast:false};
@@ -3731,6 +4888,54 @@ function init() {
   // タブイベント
   $$('.tab-bar-item').forEach(el => el.addEventListener('click', () => switchTab(el.dataset.tab)));
   
+  // スワイプ機能の初期化
+  const mainElement = $('main');
+  if (mainElement) {
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const tabs = ['patient', 'car-time', 'ems', 'doctor', 'exam', 'assess', 'consider', 'output'];
+    
+    function getCurrentTabIndex() {
+      const activeTab = $('.tab-bar-item.active');
+      if (!activeTab) return 0;
+      const tabId = activeTab.dataset.tab;
+      return tabs.indexOf(tabId);
+    }
+    
+    function switchTabBySwipe(direction) {
+      const currentIndex = getCurrentTabIndex();
+      let newIndex;
+      if (direction === 'left' && currentIndex < tabs.length - 1) {
+        newIndex = currentIndex + 1;
+      } else if (direction === 'right' && currentIndex > 0) {
+        newIndex = currentIndex - 1;
+      } else {
+        return; // 範囲外
+      }
+      switchTab(tabs[newIndex]);
+    }
+    
+    mainElement.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+
+    mainElement.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].clientX;
+      const diff = touchStartX - touchEndX;
+      const minSwipeDistance = 50; // 最小スワイプ距離
+      
+      if (Math.abs(diff) > minSwipeDistance) {
+        if (diff > 0) {
+          // 左にスワイプ（次のタブ）
+          switchTabBySwipe('left');
+        } else {
+          // 右にスワイプ（前のタブ）
+          switchTabBySwipe('right');
+        }
+      }
+    }, { passive: true });
+  }
+  
   // チップマウント
   mountChips('#ems-gen-head', EMS_GEN_GROUPS.head, 'ems');
   mountChips('#ems-gen-resp', EMS_GEN_GROUPS.resp, 'ems');
@@ -3773,8 +4978,46 @@ function init() {
   renderProcedureChips('cardr_procedures', state.cardr.procedures_items, state.cardr.procedures);
   renderProcedureChips('cardr_drugs', state.cardr.drugs_items, state.cardr.drugs);
   
+  // 既往歴チップをマウント（復元前にチップ状態を同期）
+  if (state.patient?.history && !state.patient.history_chips) {
+    state.patient.history_chips = {};
+  }
+  syncHistoryChipsFromText();
+  renderHistoryChips();
+  
+  // 常用薬チップをマウント
+  if (!state.patient.anticoagulant) state.patient.anticoagulant = '';
+  if (!state.patient.antiplatelet) state.patient.antiplatelet = '';
+  if (!state.patient.anticoagulant_drugs) state.patient.anticoagulant_drugs = [];
+  if (!state.patient.antiplatelet_drugs) state.patient.antiplatelet_drugs = [];
+  renderMedicationChips();
+  
+  // アレルギーチップをマウント
+  if (!state.patient.food_allergy) state.patient.food_allergy = '';
+  if (!state.patient.drug_allergy) state.patient.drug_allergy = '';
+  renderAllergyChips();
+  
+  // 要請情報チップをマウント
+  if (!state.request.age) state.request.age = '';
+  if (!state.request.sex) state.request.sex = '';
+  if (!state.request.ems_team) state.request.ems_team = '';
+  if (!state.request.content) state.request.content = '';
+  renderRequestInfoChips();
+  renderRequestContentChips();
+  
   renderHospitalChips();
   renderProblems();
+  renderTriageChips();
+  renderSeverityChips();
+  // 症状詳記のデータリスト初期化
+  const triggerOpts = MedicalReasonGenerator.triggers.map(t => `<option value="${t}">`).join('');
+  const triggerList = $('#triggerList');
+  if(triggerList) triggerList.innerHTML = triggerOpts;
+  
+  const suspOpts = MedicalReasonGenerator.suspicions.map(s => `<option value="${s}">`).join('');
+  const suspicionList = $('#suspicionList');
+  if(suspicionList) suspicionList.innerHTML = suspOpts;
+  
   renderAbgPills();
   renderNihss();
   bindMemos();
@@ -3801,9 +5044,56 @@ function init() {
     }
   });
 
+  // 既往歴テキストエリアの手動変更時にチップ状態を同期
+  const patientHistoryEl = $('#patient_history');
+  if (patientHistoryEl) {
+    patientHistoryEl.oninput = () => {
+      syncHistoryChipsFromText();
+      renderHistoryChips();
+      updateState();
+    };
+  }
+  
+  // 常用薬テキストエリアの手動変更時（チップで更新された値は除外）
+  const patientMedicationEl = $('#patient_medication');
+  if (patientMedicationEl) {
+    let isUpdatingFromChip = false;
+    const originalInput = patientMedicationEl.oninput;
+    patientMedicationEl.oninput = () => {
+      if (!isUpdatingFromChip) {
+        updateState();
+      }
+    };
+    // updateMedicationTextareaでフラグを設定
+    const originalUpdateMedicationTextarea = window.updateMedicationTextarea;
+    window.updateMedicationTextarea = function() {
+      isUpdatingFromChip = true;
+      originalUpdateMedicationTextarea();
+      isUpdatingFromChip = false;
+    };
+  }
+  
+  // アレルギーテキストエリアの手動変更時（チップで更新された値は除外）
+  const patientAllergyEl = $('#patient_allergy');
+  if (patientAllergyEl) {
+    let isUpdatingFromChip = false;
+    patientAllergyEl.oninput = () => {
+      if (!isUpdatingFromChip) {
+        updateState();
+      }
+    };
+    // updateAllergyTextareaでフラグを設定
+    const originalUpdateAllergyTextarea = window.updateAllergyTextarea;
+    window.updateAllergyTextarea = function() {
+      isUpdatingFromChip = true;
+      originalUpdateAllergyTextarea();
+      isUpdatingFromChip = false;
+    };
+  }
+  
   // その他の入力フィールドのバインド
   $$('input:not([type="time"]):not([type="checkbox"]), textarea, select').forEach(el => {
-    if(!el.onchange && !el.oninput) el.oninput = updateState;
+    if(!el.onchange && !el.oninput && el.id !== 'patient_history' && el.id !== 'patient_medication' && el.id !== 'patient_allergy') el.oninput = updateState;
   });
   
   // input type="time" の onchange も updateState に設定
@@ -3828,6 +5118,23 @@ function init() {
   // 4. UI状態の復元と描画
   restoreUI();
   render();
+  
+  // 初期タブのヘッダーを更新
+  const initialTab = $('.tab-content.active')?.dataset.tab || 'patient';
+  const tabNames = {
+    'patient': '患者',
+    'car-time': 'カー時刻',
+    'ems': '救急隊',
+    'doctor': '所見',
+    'exam': '検査',
+    'assess': '評価',
+    'consider': '搬送先',
+    'output': '出力'
+  };
+  const headerTitle = $('header h1');
+  if (headerTitle && tabNames[initialTab]) {
+    headerTitle.textContent = `🚗 ドクターカー - ${tabNames[initialTab]}`;
+  }
   
   // チェックボックスに光るエフェクトを追加
   $$('input[type="checkbox"]').forEach(checkbox => {
