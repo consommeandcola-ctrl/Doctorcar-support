@@ -1185,7 +1185,13 @@ window.switchTab = (tab) => {
   const content = $(`.tab-content[data-tab="${tab}"]`);
   const navItem = $(`.tab-bar-item[data-tab="${tab}"]`);
   if (content) content.classList.add('active');
-  if (navItem) navItem.classList.add('active');
+  if (navItem) {
+    navItem.classList.add('active');
+    // タブバーのアクティブなタブが画面内に表示されるようにスクロール
+    setTimeout(() => {
+      navItem.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }, 50);
+  }
   if (tab === 'output') render();
   
   // ヘッダーのタイトルを更新
