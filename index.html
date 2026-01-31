@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>ドクターカー活動記録 v3.0 (2026/01/19) - タブ版</title>
+<title>ドクターカー活動記録 v3.1 (2026/01/31) - タブ版</title>
 <style>
 :root{
   --ink:#111827;--muted:#6b7280;--bg:#f2f2f7;--card:#fff;
@@ -133,6 +133,43 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 }
 .check-toggle.active:before {
   content: "✅ "; /* チェックマークを追加 */
+}
+
+/* 反射ボタンの3状態スタイル */
+.reflex-toggle {
+  background: var(--chip);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  min-width: 120px;
+  text-align: center;
+}
+.reflex-toggle:active{transform:scale(0.97)}
+.reflex-toggle[data-state="positive"] {
+  background: #fee2e2;
+  border-color: #f87171;
+  color: #b91c1c;
+}
+.reflex-toggle[data-state="positive"]:before {
+  content: "陽性 ";
+}
+.reflex-toggle[data-state="negative"] {
+  background: #dcfce7;
+  border-color: #4ade80;
+  color: #15803d;
+}
+.reflex-toggle[data-state="negative"]:before {
+  content: "陰性 ";
+}
+.reflex-toggle[data-state="none"] {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #6b7280;
 }
 
 /* チェックボックスクリック時の光るエフェクト */
@@ -470,7 +507,7 @@ main {
 <body>
 <header>
   <h1>🚗 ドクターカー</h1>
-  <div class="version">v3.0 (2026/01/19)</div>
+  <div class="version">v3.1 (2026/01/31)</div>
 </header>
 
 <main>
@@ -802,13 +839,13 @@ main {
           <div>
             <label>瞳孔径 左(mm)</label>
             <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;text-align:center" onclick="openPupilDial('L')">
-              <span class="vital-value" id="pupilL_display">3.0</span>
+              <span class="vital-value" id="pupilL_display">-</span>
             </div>
           </div>
           <div>
             <label>瞳孔径 右(mm)</label>
             <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;text-align:center" onclick="openPupilDial('R')">
-              <span class="vital-value" id="pupilR_display">3.0</span>
+              <span class="vital-value" id="pupilR_display">-</span>
             </div>
           </div>
         </div>
@@ -860,25 +897,25 @@ main {
           <div>
             <label>右上肢</label>
             <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;text-align:center" onclick="openMmtDial('ru')">
-              <span class="vital-value" id="mmt_ru_display">5</span>
+              <span class="vital-value" id="mmt_ru_display">-</span>
             </div>
           </div>
           <div>
             <label>左上肢</label>
             <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;text-align:center" onclick="openMmtDial('lu')">
-              <span class="vital-value" id="mmt_lu_display">5</span>
+              <span class="vital-value" id="mmt_lu_display">-</span>
             </div>
           </div>
           <div>
             <label>右下肢</label>
             <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;text-align:center" onclick="openMmtDial('rl')">
-              <span class="vital-value" id="mmt_rl_display">5</span>
+              <span class="vital-value" id="mmt_rl_display">-</span>
             </div>
           </div>
           <div>
             <label>左下肢</label>
             <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;text-align:center" onclick="openMmtDial('ll')">
-              <span class="vital-value" id="mmt_ll_display">5</span>
+              <span class="vital-value" id="mmt_ll_display">-</span>
             </div>
           </div>
         </div>
@@ -905,9 +942,15 @@ main {
             </select>
           </div>
         </div>
-        <div class="checkline" style="margin-top:8px">
-          <label><input type="checkbox" id="str_babinski"> Babinski陽性</label>
-          <label><input type="checkbox" id="str_chaddock"> Chaddock陽性</label>
+        <div style="margin-top:8px">
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <div class="reflex-toggle" id="str_babinski_right" data-reflex="babinski" data-side="right">Babinski反射 右</div>
+            <div class="reflex-toggle" id="str_babinski_left" data-reflex="babinski" data-side="left">Babinski反射 左</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <div class="reflex-toggle" id="str_chaddock_right" data-reflex="chaddock" data-side="right">Chaddock反射 右</div>
+            <div class="reflex-toggle" id="str_chaddock_left" data-reflex="chaddock" data-side="left">Chaddock反射 左</div>
+          </div>
         </div>
         <textarea class="memo" id="memo-cardr-str-reflex" placeholder="反射メモ"></textarea>
 
@@ -1548,6 +1591,7 @@ let state = {
   cardr: {
     vitals: [],
     exam_tab: 'general',
+    exam_tabs: ['general'], // 複数選択されたタブを保持
     chips: {},
     memos: {general:{head:'',resp:'',card:'',abd:'',limb:'',neuro:''},trauma:{head:'',neck:'',chest:'',abd:'',pelvis:'',limb:''},stroke:{neuro:'',motor:'',eye:'',higher:''},cpa:{body:'',head:'',trunk:''}},
     exams: {bs:false, ucg:false, us_abd:false, us_lung:false, us_neck:false, ecg:false, fast:false, efast:false},
@@ -1555,19 +1599,21 @@ let state = {
     bs:120, abg_type:'', abg_data: [], exam_detail:'',
     cpaEvents: [],
     stroke: {
-      pupilL:3.0, pupilR:3.0, plrL:'', plrR:'', gaze:'', nyst:'', 
-      mmt:{ru:5, lu:5, rl:5, ll:5},
-      btr:'', ptr:'', babinski:false, chaddock:false,
+      pupilL:3.0, pupilR:3.0, pupilLTouched:false, pupilRTouched:false, plrL:'', plrR:'', gaze:'', nyst:'', 
+      mmt:{ru:5, lu:5, rl:5, ll:5}, mmtTouched:{ru:false, lu:false, rl:false, ll:false},
+      btr:'', ptr:'', babinski:{right:'none', left:'none'}, chaddock:{right:'none', left:'none'},
       nihss:{}, nihssMemo:''
     },
     procedures: {},
-    procedures_items: ['酸素投与','BVM','気管挿管','胸腔ドレナージ','開胸','輸液','輸血','骨盤固定','止血処置','CPR','除細動','経皮ペーシング'],
+    procedures_items: ['酸素投与','BVM','NPPV','気管挿管','胸腔ドレナージ','開胸','輸液','輸血','骨盤固定','止血処置','CPR','除細動','経皮ペーシング'],
     procedure_detail:'',
     drugs: {},
     // 薬剤マスタを更新
     drugs_items: ['生食','ソルアセトF','アドレナリン','ミダゾラム','ジアゼパム','アトロピン','ロクロニウム','メイロン','レペタン','トランサミン','アセリオ','メトクロプラミド','エスラックス','ブドウ糖液'],
     drug_detail:'',
     intubation: {time: '', size: '7.0'},
+    nppv: {mode: '', fio2: 0.21, ipap: 10, epap: 5, peep: 5}, // mode: 'ST' or 'CPAP'
+    nppv_history: [], // NPPVの変更履歴 {time: 'HH:mm', mode: 'ST'|'CPAP', fio2: 0.21, ipap: 10, epap: 5, peep: 5}
     // 薬剤投与の詳細情報を格納。キーは薬剤名。値は {time: 'HH:mm', amount: 'X.X'} の配列。
     drug_details: {}
   },
@@ -2408,9 +2454,15 @@ window.openPupilDial = (side) => { // グローバル化
   const wheels = [{options, selected: current.toFixed(1), unit: 'mm'}];
   
   openDial(`瞳孔径 ${side === 'L' ? '左' : '右'}`, wheels, vals => {
+    if(!state.cardr.stroke) state.cardr.stroke = {mmt:{}, nihss:{}, pupilL:3.0, pupilR:3.0, pupilLTouched:false, pupilRTouched:false};
     state.cardr.stroke[`pupil${side}`] = parseFloat(vals[0]);
+    state.cardr.stroke[`pupil${side}Touched`] = true; // タップしたことを記録
     $(`#pupil${side}_display`).textContent = vals[0];
     updateState();
+    // 出力に反映を強制
+    if (state.currentTab === 'output') {
+      render();
+    }
   });
 };
 
@@ -2429,9 +2481,17 @@ window.openMmtDial = (limb) => { // グローバル化
   const wheels = [{options, selected: current}];
   
   openDial(`MMT ${labels[limb]}`, wheels, vals => {
+    if(!state.cardr.stroke) state.cardr.stroke = {mmt:{}, nihss:{}, pupilL:3.0, pupilR:3.0, pupilLTouched:false, pupilRTouched:false};
+    if(!state.cardr.stroke.mmt) state.cardr.stroke.mmt = {};
+    if(!state.cardr.stroke.mmtTouched) state.cardr.stroke.mmtTouched = {ru:false, lu:false, rl:false, ll:false};
     state.cardr.stroke.mmt[limb] = vals[0];
+    state.cardr.stroke.mmtTouched[limb] = true; // タップしたことを記録
     $(`#mmt_${limb}_display`).textContent = vals[0];
     updateState();
+    // 出力に反映を強制
+    if (state.currentTab === 'output') {
+      render();
+    }
   });
 };
 
@@ -2698,8 +2758,10 @@ function renderProcedureChips(containerId, items, stateObj) {
   
   c.innerHTML = '';
   
-  // 念のため、intubationとdrug_detailsの初期化
+  // 念のため、intubation、nppv、drug_detailsの初期化
   if (containerId === 'cardr_procedures' && !state.cardr.intubation) state.cardr.intubation = {time: '', size: '7.0'};
+  if (containerId === 'cardr_procedures' && !state.cardr.nppv) state.cardr.nppv = {mode: '', fio2: 0.21, ipap: 10, epap: 5, peep: 5};
+  if (containerId === 'cardr_procedures' && !state.cardr.nppv_history) state.cardr.nppv_history = [];
   if (containerId === 'cardr_drugs' && !state.cardr.drug_details) state.cardr.drug_details = {};
 
   items.forEach(item => {
@@ -2725,6 +2787,17 @@ function renderProcedureChips(containerId, items, stateObj) {
     } else if(containerId === 'cardr_procedures' && item === '気管挿管' && state.cardr.procedures[item] && state.cardr.intubation.time) {
         // 気管挿管は複数回ないのでそのまま
         chipText = `${item} ${state.cardr.intubation.time} (${state.cardr.intubation.size}mm)`;
+    } else if(containerId === 'cardr_procedures' && item === 'NPPV' && state.cardr.procedures[item] && state.cardr.nppv.mode) {
+        // NPPVの表示
+        const nppv = state.cardr.nppv;
+        let nppvText = `NPPV ${nppv.mode === 'ST' ? 'S/T' : 'CPAP'}`;
+        nppvText += ` FiO2:${nppv.fio2}`;
+        if(nppv.mode === 'ST') {
+            nppvText += ` IPAP:${nppv.ipap} EPAP:${nppv.epap}`;
+        } else {
+            nppvText += ` PEEP:${nppv.peep}`;
+        }
+        chipText = nppvText;
     }
     // 選択されている場合はチェックマークを追加
     if(stateObj[item]) {
@@ -2792,6 +2865,23 @@ function renderProcedureChips(containerId, items, stateObj) {
             // OFFの場合: 記録ダイアルを開く
             stateObj[item] = true;
             openIntubationDial();
+        }
+        
+        // 状態変更を反映させるために再レンダリングを呼び出す
+        renderProcedureChips('cardr_procedures', state.cardr.procedures_items, state.cardr.procedures); 
+        updateState();
+        return;
+      }
+      
+      // NPPVはダイヤルを開く（薬剤と同じ挙動）
+      if(containerId === 'cardr_procedures' && item === 'NPPV') {
+        if(stateObj[item]) {
+            // 既にONの場合: 設定しなおすか解除かを選べる
+            openNppvDial(true); // true: 編集モード
+        } else {
+            // OFFの場合: 記録ダイアルを開く
+            stateObj[item] = true;
+            openNppvDial(false); // false: 新規設定モード
         }
         
         // 状態変更を反映させるために再レンダリングを呼び出す
@@ -3460,17 +3550,59 @@ function setupExamTabs(prefix) {
   
   tabs.forEach(tab => {
     tab.onclick = function() {
-      container.querySelectorAll('.exam-tab').forEach(t => t.classList.remove('active'));
-      this.classList.add('active');
       const examType = this.dataset.exam;
-      if (state[prefix]) {
-        state[prefix].exam_tab = examType;
-      }
-      const card = this.closest('.card');
-      if (card) {
-        card.querySelectorAll('.exam-pane').forEach(p => p.classList.remove('active'));
-        const pane = card.querySelector(`.exam-pane[data-pane="${examType}"]`);
-        if (pane) pane.classList.add('active');
+      
+      // cardrの場合のみ複数選択を許可（汎用、外傷、脳卒中の3つ）
+      if (prefix === 'cardr' && (examType === 'general' || examType === 'trauma' || examType === 'stroke')) {
+        // 複数選択モード
+        if (this.classList.contains('active')) {
+          // 既に選択されている場合は解除
+          this.classList.remove('active');
+          if (state[prefix].exam_tabs) {
+            const index = state[prefix].exam_tabs.indexOf(examType);
+            if (index > -1) {
+              state[prefix].exam_tabs.splice(index, 1);
+            }
+            // 最後に選択されたタブをexam_tabに設定
+            if (state[prefix].exam_tabs.length > 0) {
+              state[prefix].exam_tab = state[prefix].exam_tabs[state[prefix].exam_tabs.length - 1];
+            }
+          }
+        } else {
+          // 選択されていない場合は追加
+          this.classList.add('active');
+          if (!state[prefix].exam_tabs) {
+            state[prefix].exam_tabs = [];
+          }
+          if (!state[prefix].exam_tabs.includes(examType)) {
+            state[prefix].exam_tabs.push(examType);
+          }
+          state[prefix].exam_tab = examType; // 最後に選択したタブ
+        }
+        
+        // ペインの表示切り替え（最後に選択したタブのペインを表示）
+        const card = this.closest('.card');
+        if (card) {
+          card.querySelectorAll('.exam-pane').forEach(p => p.classList.remove('active'));
+          const pane = card.querySelector(`.exam-pane[data-pane="${state[prefix].exam_tab}"]`);
+          if (pane) pane.classList.add('active');
+        }
+      } else {
+        // その他の場合は従来通り単一選択
+        container.querySelectorAll('.exam-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        if (state[prefix]) {
+          state[prefix].exam_tab = examType;
+          if (state[prefix].exam_tabs) {
+            state[prefix].exam_tabs = [examType];
+          }
+        }
+        const card = this.closest('.card');
+        if (card) {
+          card.querySelectorAll('.exam-pane').forEach(p => p.classList.remove('active'));
+          const pane = card.querySelector(`.exam-pane[data-pane="${examType}"]`);
+          if (pane) pane.classList.add('active');
+        }
       }
       
       // CPAタブ選択時にバイタル初期値をCPA用に設定（確認ダイアログ付き）
@@ -3991,8 +4123,17 @@ function updateState() {
     state.cardr.stroke.nyst = $('#str_nyst')?.value || '';
     state.cardr.stroke.btr = $('#str_btr')?.value || '';
     state.cardr.stroke.ptr = $('#str_ptr')?.value || '';
-    state.cardr.stroke.babinski = $('#str_babinski')?.checked || false;
-    state.cardr.stroke.chaddock = $('#str_chaddock')?.checked || false;
+    // babinskiとchaddockは3状態ボタンから取得
+    const babinskiRight = $('#str_babinski_right')?.dataset.state || 'none';
+    const babinskiLeft = $('#str_babinski_left')?.dataset.state || 'none';
+    const chaddockRight = $('#str_chaddock_right')?.dataset.state || 'none';
+    const chaddockLeft = $('#str_chaddock_left')?.dataset.state || 'none';
+    if(!state.cardr.stroke.babinski) state.cardr.stroke.babinski = {right:'none', left:'none'};
+    if(!state.cardr.stroke.chaddock) state.cardr.stroke.chaddock = {right:'none', left:'none'};
+    state.cardr.stroke.babinski.right = babinskiRight;
+    state.cardr.stroke.babinski.left = babinskiLeft;
+    state.cardr.stroke.chaddock.right = chaddockRight;
+    state.cardr.stroke.chaddock.left = chaddockLeft;
     state.cardr.stroke.nihssMemo = $('#nihss_memo')?.value || '';
   }
   
@@ -4172,64 +4313,144 @@ function generateReport() {
     });
   }
   
-  const cardrTab = state.cardr.exam_tab;
-  if(cardrTab === 'general') {
+  // 身体所見の出力：複数のタブ（汎用、外傷、脳卒中）のデータを統合して出力
+  let hasGeneralData = false;
+  let hasTraumaData = false;
+  let hasStrokeData = false;
+  
+  // 汎用タブにデータがあるかチェック
+  [['頭頚部',CARDR_GEN_GROUPS.head,'head'],['呼吸器',CARDR_GEN_GROUPS.resp,'resp'],['循環器',CARDR_GEN_GROUPS.card,'card'],['腹部',CARDR_GEN_GROUPS.abd,'abd'],['四肢',CARDR_GEN_GROUPS.limb,'limb'],['神経',CARDR_GEN_GROUPS.neuro,'neuro']].forEach(([title,def,key]) => {
+    const s = extractFindings(def, state.cardr.chips);
+    const m = state.cardr.memos?.general?.[key];
+    if(s || m) hasGeneralData = true;
+  });
+  
+  // 外傷タブにデータがあるかチェック
+  [['頭部・顔面',CARDR_TRA_GROUPS.head,'head'],['頸部',CARDR_TRA_GROUPS.neck,'neck'],['胸部',CARDR_TRA_GROUPS.chest,'chest'],['腹部',CARDR_TRA_GROUPS.abd,'abd'],['骨盤',CARDR_TRA_GROUPS.pelvis,'pelvis'],['四肢',CARDR_TRA_GROUPS.limb,'limb']].forEach(([title,arr,key]) => {
+    const s = extractFindings(arr, state.cardr.chips);
+    const m = state.cardr.memos?.trauma?.[key];
+    if(s || m) hasTraumaData = true;
+  });
+  
+  // 脳卒中タブにデータがあるかチェック
+  const cnFindings = extractFindings(CARDR_STR_GROUPS.cn, state.cardr.chips);
+  const cnMemo = state.cardr.memos?.stroke?.cn || '';
+  const higherFindings = extractFindings(CARDR_STR_GROUPS.higher, state.cardr.chips);
+  const higherMemo = state.cardr.memos?.stroke?.higher || '';
+  const str = state.cardr.stroke || {};
+  const hasStrokeChips = cnFindings || cnMemo || higherFindings || higherMemo;
+  // 瞳孔径とMMTはタップした場合のみデータありとみなす
+  const hasPupilData = str.pupilLTouched || str.pupilRTouched;
+  const mmtTouched = str.mmtTouched || {ru:false, lu:false, rl:false, ll:false};
+  const hasMmtData = mmtTouched.ru || mmtTouched.lu || mmtTouched.rl || mmtTouched.ll;
+  const hasStrokeDataFields = hasPupilData || hasMmtData || str.plrL || str.plrR || str.gaze || str.nyst || str.btr || str.ptr || 
+    (str.babinski && (str.babinski.right !== 'none' || str.babinski.left !== 'none')) || 
+    (str.chaddock && (str.chaddock.right !== 'none' || str.chaddock.left !== 'none')) || 
+    (str.nihss && Object.keys(str.nihss).length > 0);
+  if(hasStrokeChips || hasStrokeDataFields) hasStrokeData = true;
+  
+  // データがある場合は＜身体所見＞セクションを作成
+  if(hasGeneralData || hasTraumaData || hasStrokeData) {
     r += '\n＜身体所見＞\n';
-    [['頭頚部',CARDR_GEN_GROUPS.head,'head'],['呼吸器',CARDR_GEN_GROUPS.resp,'resp'],['循環器',CARDR_GEN_GROUPS.card,'card'],['腹部',CARDR_GEN_GROUPS.abd,'abd'],['四肢',CARDR_GEN_GROUPS.limb,'limb'],['神経',CARDR_GEN_GROUPS.neuro,'neuro']].forEach(([title,def,key]) => {
-      const s = extractFindings(def, state.cardr.chips);
-      const m = state.cardr.memos?.general?.[key];
-      if(s || m) r += `【${title}】${[s,m].filter(Boolean).join('。')}\n`;
-    });
-  } else if(cardrTab === 'trauma') {
-    r += '\n＜身体所見（外傷）＞\n';
-    [['頭部・顔面',CARDR_TRA_GROUPS.head,'head'],['頸部',CARDR_TRA_GROUPS.neck,'neck'],['胸部',CARDR_TRA_GROUPS.chest,'chest'],['腹部',CARDR_TRA_GROUPS.abd,'abd'],['骨盤',CARDR_TRA_GROUPS.pelvis,'pelvis'],['四肢',CARDR_TRA_GROUPS.limb,'limb']].forEach(([title,arr,key]) => {
-      const s = extractFindings(arr, state.cardr.chips);
-      const m = state.cardr.memos?.trauma?.[key];
-      if(s || m) r += `【${title}】${[s,m].filter(Boolean).join('。')}\n`;
-    });
-  } else if(cardrTab === 'stroke') {
-    r += '\n＜身体所見（脳卒中）＞\n';
     
-    // 脳神経所見チップ
-    const cnFindings = extractFindings(CARDR_STR_GROUPS.cn, state.cardr.chips);
-    const cnMemo = state.cardr.memos?.stroke?.cn || '';
-    if(cnFindings || cnMemo) r += `【脳神経】${[cnFindings, cnMemo].filter(Boolean).join('。')}\n`;
-    
-    // 瞳孔・眼球
-    const str = state.cardr.stroke || {};
-    let eyeFindings = [];
-    if(str.pupilL || str.pupilR) eyeFindings.push(`瞳孔径 L:${str.pupilL ?? '-'}mm R:${str.pupilR ?? '-'}mm`);
-    if(str.plrL || str.plrR) eyeFindings.push(`対光反射 L:${str.plrL || '-'} R:${str.plrR || '-'}`);
-    if(str.gaze) eyeFindings.push(`共同偏視:${str.gaze}`);
-    if(str.nyst) eyeFindings.push(`眼振:${str.nyst}`);
-    if(eyeFindings.length > 0) r += `【瞳孔・眼】${eyeFindings.join('、')}\n`;
-    
-    // MMT
-    if(str.mmt) {
-      r += `【運動MMT】右上肢:${str.mmt.ru ?? 5} 左上肢:${str.mmt.lu ?? 5} 右下肢:${str.mmt.rl ?? 5} 左下肢:${str.mmt.ll ?? 5}\n`;
+    // 一般診察所見
+    if(hasGeneralData) {
+      r += '一般診察所見\n';
+      [['頭頚部',CARDR_GEN_GROUPS.head,'head'],['呼吸器',CARDR_GEN_GROUPS.resp,'resp'],['循環器',CARDR_GEN_GROUPS.card,'card'],['腹部',CARDR_GEN_GROUPS.abd,'abd'],['四肢',CARDR_GEN_GROUPS.limb,'limb'],['神経',CARDR_GEN_GROUPS.neuro,'neuro']].forEach(([title,def,key]) => {
+        const s = extractFindings(def, state.cardr.chips);
+        const m = state.cardr.memos?.general?.[key];
+        if(s || m) r += `【${title}】${[s,m].filter(Boolean).join('。')}\n`;
+      });
     }
     
-    // 反射
-    let reflexFindings = [];
-    if(str.btr) reflexFindings.push(`BTR:${str.btr}`);
-    if(str.ptr) reflexFindings.push(`PTR:${str.ptr}`);
-    if(str.babinski) reflexFindings.push('Babinski陽性');
-    if(str.chaddock) reflexFindings.push('Chaddock陽性');
-    if(reflexFindings.length > 0) r += `【反射】${reflexFindings.join('、')}\n`;
-    
-    // 高次脳機能
-    const higherFindings = extractFindings(CARDR_STR_GROUPS.higher, state.cardr.chips);
-    const higherMemo = state.cardr.memos?.stroke?.higher || '';
-    if(higherFindings || higherMemo) r += `【高次脳機能】${[higherFindings, higherMemo].filter(Boolean).join('。')}\n`;
-    
-    // NIHSS
-    if(str.nihss && Object.keys(str.nihss).length > 0) {
-      let nihssSum = 0;
-      NIHSS_ITEMS.forEach(item => nihssSum += str.nihss[item.id] || 0);
-      r += `【NIHSS】${nihssSum}点\n`;
-      if(str.nihssMemo) r += `NIHSSメモ：${str.nihssMemo}\n`;
+    // 外傷所見
+    if(hasTraumaData) {
+      r += '外傷所見\n';
+      [['頭部・顔面',CARDR_TRA_GROUPS.head,'head'],['頸部',CARDR_TRA_GROUPS.neck,'neck'],['胸部',CARDR_TRA_GROUPS.chest,'chest'],['腹部',CARDR_TRA_GROUPS.abd,'abd'],['骨盤',CARDR_TRA_GROUPS.pelvis,'pelvis'],['四肢',CARDR_TRA_GROUPS.limb,'limb']].forEach(([title,arr,key]) => {
+        const s = extractFindings(arr, state.cardr.chips);
+        const m = state.cardr.memos?.trauma?.[key];
+        if(s || m) r += `【${title}】${[s,m].filter(Boolean).join('。')}\n`;
+      });
     }
-  } else if(cardrTab === 'cpa') {
+    
+    // 神経学的所見
+    if(hasStrokeData) {
+      r += '神経学的所見\n';
+      
+      // 脳神経所見チップ
+      if(cnFindings || cnMemo) r += `【脳神経】${[cnFindings, cnMemo].filter(Boolean).join('。')}\n`;
+      
+      // 瞳孔・眼球（タップした場合のみ出力）
+      let eyeFindings = [];
+      const pupilL = str.pupilL;
+      const pupilR = str.pupilR;
+      // タップした場合（pupilLTouchedまたはpupilRTouchedがtrue）のみ出力
+      if(str.pupilLTouched || str.pupilRTouched) {
+        eyeFindings.push(`瞳孔径 L:${pupilL ?? '-'}mm R:${pupilR ?? '-'}mm`);
+      }
+      if(str.plrL || str.plrR) eyeFindings.push(`対光反射 L:${str.plrL || '-'} R:${str.plrR || '-'}`);
+      if(str.gaze) eyeFindings.push(`共同偏視:${str.gaze}`);
+      if(str.nyst) eyeFindings.push(`眼振:${str.nyst}`);
+      if(eyeFindings.length > 0) r += `【瞳孔・眼】${eyeFindings.join('、')}\n`;
+      
+      // MMT（タップした場合のみ出力）
+      if(str.mmt && Object.keys(str.mmt).length > 0) {
+        const mmtTouched = str.mmtTouched || {ru:false, lu:false, rl:false, ll:false};
+        const mmtValues = [];
+        // 各部位について、タップした場合のみ追加
+        ['ru','lu','rl','ll'].forEach(limb => {
+          const key = limb;
+          const labels = {ru:'右上肢', lu:'左上肢', rl:'右下肢', ll:'左下肢'};
+          if(mmtTouched[key] && str.mmt[key] !== undefined && str.mmt[key] !== null) {
+            mmtValues.push({limb: key, label: labels[key], value: str.mmt[key]});
+          }
+        });
+        // タップした値がある場合のみ出力
+        if(mmtValues.length > 0) {
+          const mmtText = mmtValues.map(m => `${m.label}:${m.value}`).join(' ');
+          r += `【運動MMT】${mmtText}\n`;
+        }
+      }
+      
+      // 反射
+      let reflexFindings = [];
+      if(str.btr) reflexFindings.push(`BTR:${str.btr}`);
+      if(str.ptr) reflexFindings.push(`PTR:${str.ptr}`);
+      // Babinski反射
+      if(str.babinski) {
+        const babinskiParts = [];
+        if(str.babinski.right === 'positive') babinskiParts.push('右:陽性');
+        if(str.babinski.right === 'negative') babinskiParts.push('右:陰性');
+        if(str.babinski.left === 'positive') babinskiParts.push('左:陽性');
+        if(str.babinski.left === 'negative') babinskiParts.push('左:陰性');
+        if(babinskiParts.length > 0) reflexFindings.push(`Babinski反射 ${babinskiParts.join(' ')}`);
+      }
+      // Chaddock反射
+      if(str.chaddock) {
+        const chaddockParts = [];
+        if(str.chaddock.right === 'positive') chaddockParts.push('右:陽性');
+        if(str.chaddock.right === 'negative') chaddockParts.push('右:陰性');
+        if(str.chaddock.left === 'positive') chaddockParts.push('左:陽性');
+        if(str.chaddock.left === 'negative') chaddockParts.push('左:陰性');
+        if(chaddockParts.length > 0) reflexFindings.push(`Chaddock反射 ${chaddockParts.join(' ')}`);
+      }
+      if(reflexFindings.length > 0) r += `【反射】${reflexFindings.join('、')}\n`;
+      
+      // 高次脳機能
+      if(higherFindings || higherMemo) r += `【高次脳機能】${[higherFindings, higherMemo].filter(Boolean).join('。')}\n`;
+      
+      // NIHSS
+      if(str.nihss && Object.keys(str.nihss).length > 0) {
+        let nihssSum = 0;
+        NIHSS_ITEMS.forEach(item => nihssSum += str.nihss[item.id] || 0);
+        r += `【NIHSS】${nihssSum}点\n`;
+        if(str.nihssMemo) r += `NIHSSメモ：${str.nihssMemo}\n`;
+      }
+    }
+  }
+  
+  const cardrTab = state.cardr.exam_tab;
+  if(cardrTab === 'cpa') {
     r += '\n＜CPA記録＞\n';
     if(state.cardr.cpaEvents && state.cardr.cpaEvents.length > 0) {
       state.cardr.cpaEvents.forEach((cpa, idx) => {
@@ -4308,6 +4529,32 @@ function generateReport() {
       const procWithDetails = cardrProc.map(p => {
         if(p === '気管挿管' && state.cardr.procedures['気管挿管'] && state.cardr.intubation?.time) {
           return `${p}(${state.cardr.intubation.time}、${state.cardr.intubation.size}mm)`;
+        }
+        if(p === 'NPPV' && state.cardr.procedures['NPPV'] && state.cardr.nppv?.mode) {
+          // NPPVの変更履歴を表示
+          if(state.cardr.nppv_history && state.cardr.nppv_history.length > 0) {
+            const historyTexts = state.cardr.nppv_history.map(h => {
+              let settingText = '';
+              if(h.mode === 'ST') {
+                settingText = `${h.mode} FiO2:${h.fio2} IPAP:${h.ipap} EPAP:${h.epap}`;
+              } else {
+                settingText = `${h.mode} FiO2:${h.fio2} PEEP:${h.peep}`;
+              }
+              return `${h.time} ${settingText}`;
+            });
+            return `NPPV(${historyTexts.join(' → ')})`;
+          } else {
+            // 履歴がない場合は現在の設定を表示
+            const nppv = state.cardr.nppv;
+            let nppvText = `NPPV ${nppv.mode === 'ST' ? 'S/T' : 'CPAP'}`;
+            nppvText += ` FiO2:${nppv.fio2}`;
+            if(nppv.mode === 'ST') {
+              nppvText += ` IPAP:${nppv.ipap} EPAP:${nppv.epap}`;
+            } else {
+              nppvText += ` PEEP:${nppv.peep}`;
+            }
+            return nppvText;
+          }
         }
         return p;
       });
@@ -4470,18 +4717,20 @@ window.resetData = () => { // グローバル化
       bs:120, abg_type:'', abg_data: [], exam_detail:'',
       cpaEvents: [],
       stroke: {
-        pupilL:3.0, pupilR:3.0, plrL:'', plrR:'', gaze:'', nyst:'',
-        mmt:{ru:5, lu:5, rl:5, ll:5},
-        btr:'', ptr:'', babinski:false, chaddock:false,
+        pupilL:3.0, pupilR:3.0, pupilLTouched:false, pupilRTouched:false, plrL:'', plrR:'', gaze:'', nyst:'',
+        mmt:{ru:5, lu:5, rl:5, ll:5}, mmtTouched:{ru:false, lu:false, rl:false, ll:false},
+        btr:'', ptr:'', babinski:{right:'none', left:'none'}, chaddock:{right:'none', left:'none'},
         nihss:{}, nihssMemo:''
       },
       procedures: {},
-      procedures_items: ['酸素投与','BVM','気管挿管','胸腔ドレナージ','開胸','輸液','輸血','骨盤固定','止血処置','CPR','除細動','経皮ペーシング'],
+      procedures_items: ['酸素投与','BVM','NPPV','気管挿管','胸腔ドレナージ','開胸','輸液','輸血','骨盤固定','止血処置','CPR','除細動','経皮ペーシング'],
       procedure_detail:'',
       drugs: {},
       drugs_items: ['生食','ソルアセトF','アドレナリン','ミダゾラム','ジアゼパム','アトロピン','ロクロニウム','メイロン','レペタン','トランサミン','アセリオ','メトクロプラミド','エスラックス','ブドウ糖液'],
       drug_detail:'',
       intubation: {time: '', size: '7.0'},
+      nppv: {mode: '', fio2: 0.21, ipap: 10, epap: 5, peep: 5},
+      nppv_history: [],
       drug_details: {}
     },
     problems: [],
@@ -4491,6 +4740,24 @@ window.resetData = () => { // グローバル化
       '鹿児島市': ['鹿児島市立病院','鹿児島大学病院','鹿児島医療センター','米盛病院','いまきいれ総合病院','今村総合病院','中央病院','鹿児島徳洲会病院','南風病院','鹿児島生協病院','厚地脳神経外科病院','池田病院','いじゅういん脳神経外科','上町いまきいれ病院','いづろ今村病院','岩尾病院','植村病院','大勝病院','小田代病院','鹿児島厚生連病院','鹿児島こども病院','鹿児島市医師会病院','鹿児島赤十字病院','河井脳神経外科','かわはら脳神経外科クリニック','木村外科内科','共立病院','キラメキテラスヘルスケアホスピタル','馬場病院','健翔会病院','済生会鹿児島病院','桜島病院','三愛病院','新成病院','豊島病院','中野脳神経外科','新村病院','林内科胃腸科病院','日高病院','増田整形外科病院','三船病院','三宅病院','みらいリハビリテーション病院']
     }
   };
+  
+  // 瞳孔径とMMTの表示を明示的にリセット
+  const pupilLDisplay = $('#pupilL_display');
+  const pupilRDisplay = $('#pupilR_display');
+  if(pupilLDisplay) pupilLDisplay.textContent = '-';
+  if(pupilRDisplay) pupilRDisplay.textContent = '-';
+  const mmtRuDisplay = $('#mmt_ru_display');
+  const mmtLuDisplay = $('#mmt_lu_display');
+  const mmtRlDisplay = $('#mmt_rl_display');
+  const mmtLlDisplay = $('#mmt_ll_display');
+  if(mmtRuDisplay) mmtRuDisplay.textContent = '-';
+  if(mmtLuDisplay) mmtLuDisplay.textContent = '-';
+  if(mmtRlDisplay) mmtRlDisplay.textContent = '-';
+  if(mmtLlDisplay) mmtLlDisplay.textContent = '-';
+  
+  // 出力欄をクリア
+  const outTextEl = $('#outText');
+  if(outTextEl) outTextEl.textContent = '';
   
   location.reload();
 };
@@ -4582,22 +4849,46 @@ function restoreUI() {
   
   // 脳卒中情報復元
   if(state.cardr.stroke && $('#plrL')) {
-    $('#pupilL_display').textContent = state.cardr.stroke.pupilL?.toFixed(1) || '3.0';
-    $('#pupilR_display').textContent = state.cardr.stroke.pupilR?.toFixed(1) || '3.0';
+    // 瞳孔径の表示（タップした場合のみ数値を表示）
+    $('#pupilL_display').textContent = state.cardr.stroke.pupilLTouched ? (state.cardr.stroke.pupilL?.toFixed(1) || '3.0') : '-';
+    $('#pupilR_display').textContent = state.cardr.stroke.pupilRTouched ? (state.cardr.stroke.pupilR?.toFixed(1) || '3.0') : '-';
     $('#plrL').value = state.cardr.stroke.plrL || '';
     $('#plrR').value = state.cardr.stroke.plrR || '';
     $('#str_gaze').value = state.cardr.stroke.gaze || '';
     $('#str_nyst').value = state.cardr.stroke.nyst || '';
+    // MMTの表示（タップした場合のみ数値を表示）
     if(state.cardr.stroke.mmt) {
-      $('#mmt_ru_display').textContent = state.cardr.stroke.mmt.ru ?? 5;
-      $('#mmt_lu_display').textContent = state.cardr.stroke.mmt.lu ?? 5;
-      $('#mmt_rl_display').textContent = state.cardr.stroke.mmt.rl ?? 5;
-      $('#mmt_ll_display').textContent = state.cardr.stroke.mmt.ll ?? 5;
+      const mmtTouched = state.cardr.stroke.mmtTouched || {ru:false, lu:false, rl:false, ll:false};
+      $('#mmt_ru_display').textContent = mmtTouched.ru ? (state.cardr.stroke.mmt.ru ?? 5) : '-';
+      $('#mmt_lu_display').textContent = mmtTouched.lu ? (state.cardr.stroke.mmt.lu ?? 5) : '-';
+      $('#mmt_rl_display').textContent = mmtTouched.rl ? (state.cardr.stroke.mmt.rl ?? 5) : '-';
+      $('#mmt_ll_display').textContent = mmtTouched.ll ? (state.cardr.stroke.mmt.ll ?? 5) : '-';
     }
     $('#str_btr').value = state.cardr.stroke.btr || '';
     $('#str_ptr').value = state.cardr.stroke.ptr || '';
-    $('#str_babinski').checked = state.cardr.stroke.babinski || false;
-    $('#str_chaddock').checked = state.cardr.stroke.chaddock || false;
+    // babinskiとchaddockの3状態ボタンを復元
+    const babinski = state.cardr.stroke.babinski || {right:'none', left:'none'};
+    const chaddock = state.cardr.stroke.chaddock || {right:'none', left:'none'};
+    const babinskiRightEl = $('#str_babinski_right');
+    const babinskiLeftEl = $('#str_babinski_left');
+    const chaddockRightEl = $('#str_chaddock_right');
+    const chaddockLeftEl = $('#str_chaddock_left');
+    if(babinskiRightEl) {
+      babinskiRightEl.dataset.state = babinski.right || 'none';
+      updateReflexToggleState(babinskiRightEl);
+    }
+    if(babinskiLeftEl) {
+      babinskiLeftEl.dataset.state = babinski.left || 'none';
+      updateReflexToggleState(babinskiLeftEl);
+    }
+    if(chaddockRightEl) {
+      chaddockRightEl.dataset.state = chaddock.right || 'none';
+      updateReflexToggleState(chaddockRightEl);
+    }
+    if(chaddockLeftEl) {
+      chaddockLeftEl.dataset.state = chaddock.left || 'none';
+      updateReflexToggleState(chaddockLeftEl);
+    }
     if($('#nihss_memo')) $('#nihss_memo').value = state.cardr.stroke.nihssMemo || '';
     renderNihss();
   }
@@ -4624,17 +4915,42 @@ function restoreUI() {
   renderHospitalChips();
   bindMemos();
   
-  // 身体所見タブの復元
-  if (state.cardr && state.cardr.exam_tab) {
-    const examTab = $(`#cardr_examTabs .exam-tab[data-exam="${state.cardr.exam_tab}"]`);
-    if (examTab) {
-      $$('#cardr_examTabs .exam-tab').forEach(t => t.classList.remove('active'));
-      examTab.classList.add('active');
-      const card = examTab.closest('.card');
-      if (card) {
-        card.querySelectorAll('.exam-pane').forEach(p => p.classList.remove('active'));
-        const pane = card.querySelector(`.exam-pane[data-pane="${state.cardr.exam_tab}"]`);
-        if (pane) pane.classList.add('active');
+  // 身体所見タブの復元（複数選択対応）
+  if (state.cardr) {
+    // exam_tabsが存在する場合は複数選択を復元
+    if (state.cardr.exam_tabs && Array.isArray(state.cardr.exam_tabs) && state.cardr.exam_tabs.length > 0) {
+      $$('#cardr_examTabs .exam-tab').forEach(t => {
+        const examType = t.dataset.exam;
+        if (state.cardr.exam_tabs.includes(examType)) {
+          t.classList.add('active');
+        } else {
+          t.classList.remove('active');
+        }
+      });
+      // 最後に選択したタブのペインを表示
+      if (state.cardr.exam_tab) {
+        const card = $('#cardr_examTabs')?.closest('.card');
+        if (card) {
+          card.querySelectorAll('.exam-pane').forEach(p => p.classList.remove('active'));
+          const pane = card.querySelector(`.exam-pane[data-pane="${state.cardr.exam_tab}"]`);
+          if (pane) pane.classList.add('active');
+        }
+      }
+    } else if (state.cardr.exam_tab) {
+      // 従来の単一選択の復元（後方互換性）
+      const examTab = $(`#cardr_examTabs .exam-tab[data-exam="${state.cardr.exam_tab}"]`);
+      if (examTab) {
+        $$('#cardr_examTabs .exam-tab').forEach(t => t.classList.remove('active'));
+        examTab.classList.add('active');
+        if (!state.cardr.exam_tabs) {
+          state.cardr.exam_tabs = [state.cardr.exam_tab];
+        }
+        const card = examTab.closest('.card');
+        if (card) {
+          card.querySelectorAll('.exam-pane').forEach(p => p.classList.remove('active'));
+          const pane = card.querySelector(`.exam-pane[data-pane="${state.cardr.exam_tab}"]`);
+          if (pane) pane.classList.add('active');
+        }
       }
     }
   }
@@ -4675,7 +4991,7 @@ function initializeStateDataStructure() {
       '鹿児島市': ['鹿児島市立病院','鹿児島大学病院','鹿児島医療センター','米盛病院','いまきいれ総合病院','今村総合病院','中央病院','鹿児島徳洲会病院','南風病院','鹿児島生協病院','厚地脳神経外科病院','池田病院','いじゅういん脳神経外科','上町いまきいれ病院','いづろ今村病院','岩尾病院','植村病院','大勝病院','小田代病院','鹿児島厚生連病院','鹿児島こども病院','鹿児島市医師会病院','鹿児島赤十字病院','河井脳神経外科','かわはら脳神経外科クリニック','木村外科内科','共立病院','キラメキテラスヘルスケアホスピタル','馬場病院','健翔会病院','済生会鹿児島病院','桜島病院','三愛病院','新成病院','豊島病院','中野脳神経外科','新村病院','林内科胃腸科病院','日高病院','増田整形外科病院','三船病院','三宅病院','みらいリハビリテーション病院']
     };
     state.ems.procedures_items = ['頚椎カラー','全身固定','吸引','酸素投与','BVM換気','気管挿管','LT挿入','静脈路確保','ブドウ糖投与','ショック輸液','圧迫止血','胸骨圧迫','LUCAS装着','除細動','アドレナリン'];
-    state.cardr.procedures_items = ['酸素投与','BVM','気管挿管','胸腔ドレナージ','開胸','輸液','輸血','骨盤固定','止血処置','CPR','除細動','経皮ペーシング'];
+    state.cardr.procedures_items = ['酸素投与','BVM','NPPV','気管挿管','胸腔ドレナージ','開胸','輸液','輸血','骨盤固定','止血処置','CPR','除細動','経皮ペーシング'];
     state.cardr.drugs_items = ['生食','ソルアセトF','アドレナリン','ミダゾラム','ジアゼパム','アトロピン','ロクロニウム','メイロン','レペタン','トランサミン','アセリオ','メトクロプラミド','エスラックス','ブドウ糖液'];
 
     // ネストされたオブジェクトの初期化
@@ -4690,21 +5006,33 @@ function initializeStateDataStructure() {
     if (!state.patient.food_allergy) state.patient.food_allergy = '';
     if (!state.patient.drug_allergy) state.patient.drug_allergy = '';
     if (!state.cardr.intubation) state.cardr.intubation = {time: '', size: '7.0'};
+    if (!state.cardr.nppv) state.cardr.nppv = {mode: '', fio2: 0.21, ipap: 10, epap: 5, peep: 5};
     if (!state.cardr.drug_details) state.cardr.drug_details = {};
     if (!state.cardr.exams) state.cardr.exams = {bs:false, ucg:false, us_abd:false, us_lung:false, us_neck:false, ecg:false, fast:false, efast:false};
     if (!state.cardr.exam_texts) state.cardr.exam_texts = {ucg:'', us_abd:'', us_lung:'', us_neck:'', ecg:'', fast:'', efast:''};
     if (!state.cardr.abg_data) state.cardr.abg_data = [];
     if (!state.cardr.cpaEvents) state.cardr.cpaEvents = [];
     if (!state.cardr.exam_tab) state.cardr.exam_tab = 'general';
+    if (!state.cardr.exam_tabs) state.cardr.exam_tabs = [state.cardr.exam_tab || 'general'];
     if (!state.ems.exam_tab) state.ems.exam_tab = 'general';
 
     if (!state.cardr.stroke) state.cardr.stroke = {};
     if (state.cardr.stroke.pupilL === undefined) state.cardr.stroke.pupilL = 3.0;
     if (state.cardr.stroke.pupilR === undefined) state.cardr.stroke.pupilR = 3.0;
+    if (state.cardr.stroke.pupilLTouched === undefined) state.cardr.stroke.pupilLTouched = false;
+    if (state.cardr.stroke.pupilRTouched === undefined) state.cardr.stroke.pupilRTouched = false;
     if (!state.cardr.stroke.mmt) state.cardr.stroke.mmt = {ru:5, lu:5, rl:5, ll:5};
+    if (!state.cardr.stroke.mmtTouched) state.cardr.stroke.mmtTouched = {ru:false, lu:false, rl:false, ll:false};
     if (!state.cardr.stroke.nihss) state.cardr.stroke.nihss = {};
-    if (state.cardr.stroke.babinski === undefined) state.cardr.stroke.babinski = false;
-    if (state.cardr.stroke.chaddock === undefined) state.cardr.stroke.chaddock = false;
+    if (!state.cardr.stroke.babinski) state.cardr.stroke.babinski = {right:'none', left:'none'};
+    if (!state.cardr.stroke.chaddock) state.cardr.stroke.chaddock = {right:'none', left:'none'};
+    // 後方互換性: booleanからオブジェクトに変換
+    if (typeof state.cardr.stroke.babinski === 'boolean') {
+      state.cardr.stroke.babinski = {right: state.cardr.stroke.babinski ? 'positive' : 'none', left: 'none'};
+    }
+    if (typeof state.cardr.stroke.chaddock === 'boolean') {
+      state.cardr.stroke.chaddock = {right: state.cardr.stroke.chaddock ? 'positive' : 'none', left: 'none'};
+    }
     
     // CPAメモが古い形式の場合の対応（新しい形式に合わせる）
     if (state.ems.memos.cpa && typeof state.ems.memos.cpa === 'string') {
@@ -4760,6 +5088,173 @@ window.openIntubationDial = () => { // グローバル化
     updateState();
   });
 };
+
+// NPPVダイヤル
+window.openNppvDial = (isEditMode) => { // グローバル化、isEditMode: true=編集モード、false=新規設定
+  // state.cardr.nppvの存在を保証
+  if (!state.cardr.nppv) state.cardr.nppv = {mode: '', fio2: 0.21, ipap: 10, epap: 5, peep: 5};
+  if (!state.cardr.nppv_history) state.cardr.nppv_history = [];
+  
+  const nppv = state.cardr.nppv;
+  
+  // 編集モードの場合、カスタムダイアログで設定しなおすか解除かを選択
+  if(isEditMode && nppv.mode) {
+    const currentSettings = nppv.mode === 'ST' 
+      ? `NPPV S/T FiO2:${nppv.fio2} IPAP:${nppv.ipap} EPAP:${nppv.epap}`
+      : `NPPV CPAP FiO2:${nppv.fio2} PEEP:${nppv.peep}`;
+    
+    const customDialog = `
+      <div id="nppv-custom-dialog" style="padding:20px; text-align:center;">
+        <h3 style="margin-top:0; font-size:18px;">NPPV設定</h3>
+        <p style="font-size:14px; margin-bottom:15px; color:var(--muted);">現在の設定: ${currentSettings}</p>
+        <p style="font-size:14px; margin-bottom:15px; color:var(--muted);">設定を変更するか、記録を解除してください。</p>
+        
+        <button class="btn" style="background:#4ade80; margin-bottom:10px;" onclick="closeDial(); window.startNppvSetup();">
+          設定を変更
+        </button>
+        <button class="btn ghost" style="color:#dc2626; border:1px solid #dc2626;" onclick="closeDial(); window.removeNppv();">
+          記録を解除 (チップOFF)
+        </button>
+      </div>
+    `;
+    
+    $('#dialOverlay').classList.add('show');
+    $('#dialBody').innerHTML = customDialog;
+    $('#dialTitle').textContent = 'NPPV設定';
+    
+    // カスタムUIでは完了ボタンを非表示
+    const doneBtn = $('#dialDone');
+    if (doneBtn) doneBtn.style.display = 'none';
+    
+    // グローバル関数として設定
+    window.startNppvSetup = () => {
+      startNppvSetupSteps();
+    };
+    window.removeNppv = () => {
+      state.cardr.procedures['NPPV'] = false;
+      state.cardr.nppv = {mode: '', fio2: 0.21, ipap: 10, epap: 5, peep: 5};
+      state.cardr.nppv_history = [];
+      renderProcedureChips('cardr_procedures', state.cardr.procedures_items, state.cardr.procedures);
+      updateState();
+    };
+    
+    return;
+  }
+  
+  // 新規設定モード: 直接設定開始
+  startNppvSetupSteps();
+};
+
+// NPPV設定のステップを開始する関数
+function startNppvSetupSteps() {
+  if (!state.cardr.nppv) state.cardr.nppv = {mode: '', fio2: 0.21, ipap: 10, epap: 5, peep: 5};
+  if (!state.cardr.nppv_history) state.cardr.nppv_history = [];
+  const nppv = state.cardr.nppv;
+  
+  // ステップ1: モード選択
+  const modeOptions = [
+    {label: 'S/T', value: 'ST'},
+    {label: 'CPAP', value: 'CPAP'}
+  ];
+  const currentMode = nppv.mode || 'ST';
+  
+  openDial('NPPV モード選択', [
+    {options: modeOptions, selected: currentMode}
+  ], (vals) => {
+    const selectedMode = vals[0];
+    state.cardr.nppv.mode = selectedMode;
+    closeDial();
+    
+    // ステップ2: FiO2選択（少し待ってから開く）
+    setTimeout(() => {
+      const fio2Options = [];
+      for(let i = 21; i <= 100; i++) {
+        const fio2 = (i / 100).toFixed(2);
+        fio2Options.push({label: fio2, value: fio2});
+      }
+      const currentFio2 = nppv.fio2 ? nppv.fio2.toFixed(2) : '0.21';
+      
+      openDial('NPPV FiO2', [
+        {options: fio2Options, selected: currentFio2}
+      ], (vals) => {
+        state.cardr.nppv.fio2 = parseFloat(vals[0]);
+        closeDial();
+        
+        // ステップ3: モードに応じたパラメータ選択（少し待ってから開く）
+        setTimeout(() => {
+          if(selectedMode === 'ST') {
+            // S/Tモード: IPAP/EPAP選択
+            const ipapOptions = [];
+            for(let i = 5; i <= 30; i++) {
+              ipapOptions.push({label: i.toString(), value: i.toString()});
+            }
+            const epapOptions = [];
+            for(let i = 3; i <= 20; i++) {
+              epapOptions.push({label: i.toString(), value: i.toString()});
+            }
+            const currentIpap = nppv.ipap ? nppv.ipap.toString() : '10';
+            const currentEpap = nppv.epap ? nppv.epap.toString() : '5';
+            
+            openDial('NPPV S/T パラメータ', [
+              {options: ipapOptions, selected: currentIpap, unit: 'cmH2O IPAP'},
+              {options: epapOptions, selected: currentEpap, unit: 'cmH2O EPAP'}
+            ], (vals) => {
+              state.cardr.nppv.ipap = parseInt(vals[0]);
+              state.cardr.nppv.epap = parseInt(vals[1]);
+              // 変更履歴を記録
+              const now = new Date();
+              const hh = String(now.getHours()).padStart(2, '0');
+              const mm = String(now.getMinutes()).padStart(2, '0');
+              const currentTime = `${hh}:${mm}`;
+              if(!state.cardr.nppv_history) state.cardr.nppv_history = [];
+              state.cardr.nppv_history.push({
+                time: currentTime,
+                mode: state.cardr.nppv.mode,
+                fio2: state.cardr.nppv.fio2,
+                ipap: state.cardr.nppv.ipap,
+                epap: state.cardr.nppv.epap,
+                peep: null
+              });
+              closeDial();
+              renderProcedureChips('cardr_procedures', state.cardr.procedures_items, state.cardr.procedures);
+              updateState();
+            });
+          } else {
+            // CPAPモード: PEEP選択
+            const peepOptions = [];
+            for(let i = 3; i <= 20; i++) {
+              peepOptions.push({label: i.toString(), value: i.toString()});
+            }
+            const currentPeep = nppv.peep ? nppv.peep.toString() : '5';
+            
+            openDial('NPPV CPAP PEEP', [
+              {options: peepOptions, selected: currentPeep, unit: 'cmH2O'}
+            ], (vals) => {
+              state.cardr.nppv.peep = parseInt(vals[0]);
+              // 変更履歴を記録
+              const now = new Date();
+              const hh = String(now.getHours()).padStart(2, '0');
+              const mm = String(now.getMinutes()).padStart(2, '0');
+              const currentTime = `${hh}:${mm}`;
+              if(!state.cardr.nppv_history) state.cardr.nppv_history = [];
+              state.cardr.nppv_history.push({
+                time: currentTime,
+                mode: state.cardr.nppv.mode,
+                fio2: state.cardr.nppv.fio2,
+                ipap: null,
+                epap: null,
+                peep: state.cardr.nppv.peep
+              });
+              closeDial();
+              renderProcedureChips('cardr_procedures', state.cardr.procedures_items, state.cardr.procedures);
+              updateState();
+            });
+          }
+        }, 300);
+      });
+    }, 300);
+  });
+}
 
 // 薬剤投与詳細ダイヤル (大幅修正)
 window.openDrugDetailDial = (drugName, isEditMode) => { // グローバル化
@@ -5203,6 +5698,47 @@ function init() {
   // input type="time" の onchange も updateState に設定
   $$('input[type="time"], select:not(#transport_method):not(#cardr_abg_type)').forEach(el => {
       if(!el.onchange) el.onchange = updateState;
+  });
+  
+  // 反射トグルボタンの状態を更新する関数（グローバル化）
+  window.updateReflexToggleState = function(el) {
+    if(!el) return;
+    const state = el.dataset.state || 'none';
+    el.setAttribute('data-state', state);
+    // すべての状態クラスを削除
+    el.classList.remove('active');
+    // 現在の状態に応じてクラスを追加（CSSでdata-state属性でスタイルを適用）
+  };
+  
+  // 反射トグルボタンのクリック処理（3状態を循環）
+  function toggleReflexState(el) {
+    if(!el) return;
+    const currentState = el.dataset.state || 'none';
+    let nextState;
+    if(currentState === 'none') {
+      nextState = 'positive';
+    } else if(currentState === 'positive') {
+      nextState = 'negative';
+    } else {
+      nextState = 'none';
+    }
+    el.dataset.state = nextState;
+    updateReflexToggleState(el);
+    updateState();
+  }
+  
+  // babinskiとchaddockの3状態トグルボタンのイベントリスナー
+  ['str_babinski_right', 'str_babinski_left', 'str_chaddock_right', 'str_chaddock_left'].forEach(id => {
+    const el = $(`#${id}`);
+    if(el) {
+      // 初期状態を設定
+      if(!el.dataset.state) el.dataset.state = 'none';
+      updateReflexToggleState(el);
+      // クリックイベント
+      el.onclick = function() {
+        toggleReflexState(this);
+      };
+    }
   });
   
   // コピーボタンの設定
