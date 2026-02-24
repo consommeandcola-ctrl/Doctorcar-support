@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>ドクターカー活動記録 v3.1 (2026/01/31) - タブ版</title>
+<title>ドクターカー活動記録 v3.2 (2026/02/24) - タブ版</title>
 <style>
 :root{
   --ink:#111827;--muted:#6b7280;--bg:#f2f2f7;--card:#fff;
@@ -507,7 +507,7 @@ main {
 <body>
 <header>
   <h1>🚗 ドクターカー</h1>
-  <div class="version">v3.1 (2026/01/31)</div>
+  <div class="version">v3.2 (2026/02/24)</div>
 </header>
 
 <main>
@@ -1891,15 +1891,15 @@ function closeDial(e) {
 }
 
 function confirmDial() {
-  if(dialCallback) {
-    const values = dialWheels.map(w => w.selected);
-    dialCallback(values);
-  }
+  const cb = dialCallback;
+  const values = dialWheels.map(w => w.selected);
+  dialCallback = null;
   $('#dialOverlay').classList.remove('show');
-  // 背景スクロール復元
   document.body.classList.remove('dial-open');
-  // スクロール位置を復元
-  window.scrollTo(0, scrollPosition); 
+  window.scrollTo(0, scrollPosition);
+  if(cb) {
+    setTimeout(() => cb(values), 50);
+  }
 }
 
 // 共通レンジ生成
@@ -2003,25 +2003,30 @@ window.openBsDial = () => { // グローバル化
   });
 };
 
-// CPA イベント管理関数群 (変更なし)
-window.addCpaEvent = () => { // グローバル化
+// CPA イベント管理関数群 (v3.2 拡張)
+window.addCpaEvent = () => {
   const now = new Date();
   const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   
   const newEvent = {
     arrestTime: time,
     rhythm: 'Asystole',
+    rhythmChanges: [{time: time, rhythm: 'Asystole'}],
     witnessed: false,
     bystander: false,
     cprStart: '',
     ivTime: '',
     adrenalineTimes: [],
+    defibrillationTimes: [],
+    amiodaroneTimes: [],
     lt: false,
     intubation: false,
     intubationTime: '',
     pericardio: false,
     pericardioTime: '',
+    outcome: '',
     roscTime: '',
+    endTime: '',
     memo: ''
   };
   
@@ -2052,12 +2057,12 @@ function renderCpaEvents() {
     const card = document.createElement('div');
     card.className = 'vital-card';
     card.style.marginBottom = '12px';
+    const outcomeLabel = event.outcome === 'rosc' ? ' (ROSC)' : event.outcome === 'death' ? ' (死亡)' : event.outcome === 'hospital' ? ' (病着)' : '';
+    const isFirst = idx === 0;
     
-    // イベント1（初回心停止）の場合
-    if(idx === 0) {
-      card.innerHTML = `
+    card.innerHTML = `
       <div class="vital-header">
-        <div style="font-weight:600">心停止イベント ${idx + 1}${event.roscTime ? ' (ROSC)' : ''}</div>
+        <div style="font-weight:600">心停止イベント ${idx + 1}${isFirst ? '' : '（再心停止）'}${outcomeLabel}</div>
         <button class="vital-del" onclick="deleteCpaEvent(${idx})">削除</button>
       </div>
       <div style="padding:12px">
@@ -2077,7 +2082,7 @@ function renderCpaEvents() {
           </div>
         </div>
         
-        <div class="grid2" style="margin-top:12px">
+        ${isFirst ? `<div class="grid2" style="margin-top:12px">
           <div class="toggle-btn ${event.witnessed ? 'active' : ''}" onclick="toggleCpaField(${idx}, 'witnessed')">
             ${event.witnessed ? '目撃あり' : '目撃なし'}
           </div>
@@ -2085,7 +2090,6 @@ function renderCpaEvents() {
             ${event.bystander ? 'バイスタンダーCPRあり' : 'バイスタンダーCPRなし'}
           </div>
         </div>
-        
         <h3 style="margin-top:12px">蘇生処置</h3>
         <div class="grid2">
           <div>
@@ -2102,13 +2106,25 @@ function renderCpaEvents() {
               <button class="time-btn" onclick="setCpaEventNow(${idx}, 'ivTime')">Now</button>
             </div>
           </div>
-        </div>
+        </div>` : ''}
+        
+        <h3 style="margin-top:12px">波形変化</h3>
+        <div id="rhythm_changes_${idx}"></div>
+        <button class="btn small" style="margin-top:8px" onclick="addRhythmChange(${idx})">＋ 波形変化を追加</button>
+        
+        <h3 style="margin-top:12px">除細動</h3>
+        <div id="defibrillation_times_${idx}"></div>
+        <button class="btn small" style="margin-top:8px;background:#dc2626;color:#fff" onclick="addDefibrillationTime(${idx})">⚡ 除細動追加</button>
         
         <h3 style="margin-top:12px">アドレナリン投与</h3>
         <div id="adrenaline_times_${idx}"></div>
         <button class="btn small" style="margin-top:8px" onclick="addAdrenalineTime(${idx})">＋ アドレナリン追加</button>
         
-        <h3 style="margin-top:12px">気道確保</h3>
+        <h3 style="margin-top:12px">アミオダロン投与</h3>
+        <div id="amiodarone_times_${idx}"></div>
+        <button class="btn small" style="margin-top:8px;background:#7c3aed;color:#fff" onclick="addAmiodaroneTime(${idx})">＋ アミオダロン追加</button>
+        
+        ${isFirst ? `<h3 style="margin-top:12px">気道確保</h3>
         <div class="checkline">
           <label class="check-toggle ${event.lt ? 'active' : ''}" data-event-index="${idx}" data-target="lt">
             <input type="checkbox" id="cpa_lt_check_${idx}" ${event.lt ? 'checked' : ''} onchange="updateCpaEventField(${idx}, 'lt', this.checked); toggleCheckState(this)"> LT挿入
@@ -2125,7 +2141,6 @@ function renderCpaEvents() {
             <button class="time-btn" onclick="setCpaEventNow(${idx}, 'intubationTime')">Now</button>
           </div>
         </div>
-        
         <h3 style="margin-top:12px">その他処置</h3>
         <div class="checkline">
           <label class="check-toggle ${event.pericardio ? 'active' : ''}" data-event-index="${idx}" data-target="pericardio">
@@ -2137,22 +2152,32 @@ function renderCpaEvents() {
             <input type="time" value="${event.pericardioTime}" onchange="updateCpaEventField(${idx}, 'pericardioTime', this.value)">
             <button class="time-btn" onclick="setCpaEventNow(${idx}, 'pericardioTime')">Now</button>
           </div>
-        </div>
+        </div>` : ''}
         
         <h3 style="margin-top:12px">転帰</h3>
-        <div>
-          <label>心拍再開(ROSC)時刻</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <div class="toggle-btn ${event.outcome === 'rosc' ? 'active' : ''}" style="flex:1;min-width:80px;text-align:center;${event.outcome === 'rosc' ? 'background:#22c55e;color:#fff;border-color:#22c55e' : ''}" onclick="setCpaOutcome(${idx}, 'rosc')">ROSC</div>
+          <div class="toggle-btn ${event.outcome === 'hospital' ? 'active' : ''}" style="flex:1;min-width:80px;text-align:center;${event.outcome === 'hospital' ? 'background:#f59e0b;color:#fff;border-color:#f59e0b' : ''}" onclick="setCpaOutcome(${idx}, 'hospital')">病着(継続)</div>
+          <div class="toggle-btn ${event.outcome === 'death' ? 'active' : ''}" style="flex:1;min-width:80px;text-align:center;${event.outcome === 'death' ? 'background:#6b7280;color:#fff;border-color:#6b7280' : ''}" onclick="setCpaOutcome(${idx}, 'death')">死亡</div>
+        </div>
+        <div id="cpa_outcome_area_${idx}">
+          ${event.outcome === 'rosc' ? `<label>ROSC時刻</label>
           <div class="time-row">
             <input type="time" value="${event.roscTime}" onchange="updateCpaEventField(${idx}, 'roscTime', this.value)">
             <button class="time-btn" onclick="setCpaEventNow(${idx}, 'roscTime')">Now</button>
-          </div>
+          </div>` : ''}
+          ${event.outcome === 'hospital' || event.outcome === 'death' ? `<label>${event.outcome === 'hospital' ? '病着時刻' : '蘇生終了時刻'}</label>
+          <div class="time-row">
+            <input type="time" value="${event.endTime}" onchange="updateCpaEventField(${idx}, 'endTime', this.value)">
+            <button class="time-btn" onclick="setCpaEventNow(${idx}, 'endTime')">Now</button>
+          </div>` : ''}
         </div>
         
         <div id="flow_times_${idx}" style="margin-top:12px;padding:12px;background:#f0f9ff;border-radius:10px;border:1px solid #0ea5e9">
-          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          ${isFirst ? `<div style="display:flex;justify-content:space-between;margin-bottom:8px">
             <span style="font-weight:600;color:#0369a1">No Flow Time</span>
             <span id="no_flow_time_${idx}" style="font-weight:600;color:#0369a1">-- 分</span>
-          </div>
+          </div>` : ''}
           <div style="display:flex;justify-content:space-between">
             <span style="font-weight:600;color:#0369a1">Low Flow Time</span>
             <span id="low_flow_time_${idx}" style="font-weight:600;color:#0369a1">-- 分</span>
@@ -2163,58 +2188,12 @@ function renderCpaEvents() {
         <textarea class="memo" placeholder="このイベントに関するメモ" onchange="updateCpaEventField(${idx}, 'memo', this.value)">${event.memo}</textarea>
       </div>
     `;
-    } else {
-      // イベント2以降（再心停止）の場合
-      card.innerHTML = `
-      <div class="vital-header">
-        <div style="font-weight:600">心停止イベント ${idx + 1}（再心停止）${event.roscTime ? ' (ROSC)' : ''}</div>
-        <button class="vital-del" onclick="deleteCpaEvent(${idx})">削除</button>
-      </div>
-      <div style="padding:12px">
-        <div class="grid2" style="margin-bottom:12px">
-          <div>
-            <label>心停止時刻</label>
-            <div class="time-row">
-              <input type="time" value="${event.arrestTime}" onchange="updateCpaEventField(${idx}, 'arrestTime', this.value)">
-              <button class="time-btn" onclick="setCpaEventNow(${idx}, 'arrestTime')">Now</button>
-            </div>
-          </div>
-          <div>
-            <label>波形</label>
-            <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:10px;cursor:pointer;text-align:center" onclick="openCpaRhythmDial(${idx})">
-              <div class="vital-value" style="font-size:16px">${event.rhythm}</div>
-            </div>
-          </div>
-        </div>
-        
-        <h3 style="margin-top:12px">アドレナリン投与</h3>
-        <div id="adrenaline_times_${idx}"></div>
-        <button class="btn small" style="margin-top:8px" onclick="addAdrenalineTime(${idx})">＋ アドレナリン追加</button>
-        
-        <h3 style="margin-top:12px">転帰</h3>
-        <div>
-          <label>心拍再開(ROSC)時刻</label>
-          <div class="time-row">
-            <input type="time" value="${event.roscTime}" onchange="updateCpaEventField(${idx}, 'roscTime', this.value)">
-            <button class="time-btn" onclick="setCpaEventNow(${idx}, 'roscTime')">Now</button>
-          </div>
-        </div>
-        
-        <div id="flow_times_${idx}" style="margin-top:12px;padding:12px;background:#f0f9ff;border-radius:10px;border:1px solid #0ea5e9">
-          <div style="display:flex;justify-content:space-between">
-            <span style="font-weight:600;color:#0369a1">Low Flow Time</span>
-            <span id="low_flow_time_${idx}" style="font-weight:600;color:#0369a1">-- 分</span>
-          </div>
-        </div>
-        
-        <label style="margin-top:12px">メモ</label>
-        <textarea class="memo" placeholder="このイベントに関するメモ" onchange="updateCpaEventField(${idx}, 'memo', this.value)">${event.memo}</textarea>
-      </div>
-    `;
-    }
     
     container.appendChild(card);
+    renderRhythmChanges(idx);
+    renderDefibrillationTimes(idx);
     renderAdrenalineTimes(idx);
+    renderAmiodaroneTimes(idx);
     calcFlowTimes(idx);
   });
 }
@@ -2222,7 +2201,7 @@ function renderCpaEvents() {
 function updateCpaEventField(idx, field, value) {
   if (state.cardr.cpaEvents[idx]) {
     state.cardr.cpaEvents[idx][field] = value;
-    if(field === 'arrestTime' || field === 'cprStart' || field === 'roscTime') {
+    if(field === 'arrestTime' || field === 'cprStart' || field === 'roscTime' || field === 'endTime') {
       calcFlowTimes(idx);
     }
     updateState();
@@ -2387,18 +2366,224 @@ window.openAdrenalineTimeDial = (idx, adrIdx) => { // グローバル化
   });
 };
 
-// Flow Time計算関数群 (変更なし)
+// 除細動タイム管理 (v3.2 新規)
+window.addDefibrillationTime = (idx) => {
+  if(!state.cardr.cpaEvents[idx]) return;
+  if(!state.cardr.cpaEvents[idx].defibrillationTimes) state.cardr.cpaEvents[idx].defibrillationTimes = [];
+  const now = new Date();
+  const newTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  state.cardr.cpaEvents[idx].defibrillationTimes.push(newTime);
+  renderDefibrillationTimes(idx);
+  updateState();
+};
+
+window.removeDefibrillationTime = (idx, dIdx) => {
+  if(state.cardr.cpaEvents[idx]?.defibrillationTimes) {
+    state.cardr.cpaEvents[idx].defibrillationTimes.splice(dIdx, 1);
+    renderDefibrillationTimes(idx);
+    updateState();
+  }
+};
+
+function renderDefibrillationTimes(idx) {
+  const container = $(`#defibrillation_times_${idx}`);
+  if(!container) return;
+  container.innerHTML = '';
+  const times = state.cardr.cpaEvents[idx]?.defibrillationTimes || [];
+  times.forEach((time, dIdx) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px';
+    row.innerHTML = `
+      <span style="font-weight:500;min-width:60px;color:#dc2626">⚡${dIdx + 1}回目</span>
+      <div class="vital-item" style="border:1px solid #dc2626;border-radius:10px;padding:8px 12px;cursor:pointer;flex:1;text-align:center" onclick="openDefibrillationTimeDial(${idx}, ${dIdx})">
+        <span style="font-size:18px;font-weight:600;color:#dc2626">${time}</span>
+      </div>
+      <button class="btn small ghost" style="padding:8px 12px;width:auto" onclick="removeDefibrillationTime(${idx}, ${dIdx})">削除</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+window.openDefibrillationTimeDial = (idx, dIdx) => {
+  const currentTime = state.cardr.cpaEvents[idx]?.defibrillationTimes?.[dIdx] || '00:00';
+  const [h, m] = currentTime.split(':').map(Number);
+  const hours = Array.from({length: 24}, (_, i) => ({label: String(i).padStart(2,'0'), value: String(i).padStart(2,'0')}));
+  const minutes = Array.from({length: 60}, (_, i) => ({label: String(i).padStart(2,'0'), value: String(i).padStart(2,'0')}));
+  openDial(`除細動 ${dIdx + 1}回目`, [{options: hours, selected: String(h).padStart(2,'0'), unit: ':'}, {options: minutes, selected: String(m).padStart(2,'0'), unit: ''}], vals => {
+    if(state.cardr.cpaEvents[idx]?.defibrillationTimes) {
+      state.cardr.cpaEvents[idx].defibrillationTimes[dIdx] = `${vals[0]}:${vals[1]}`;
+      renderDefibrillationTimes(idx);
+      updateState();
+    }
+  });
+};
+
+// アミオダロンタイム管理 (v3.2 新規)
+window.addAmiodaroneTime = (idx) => {
+  if(!state.cardr.cpaEvents[idx]) return;
+  if(!state.cardr.cpaEvents[idx].amiodaroneTimes) state.cardr.cpaEvents[idx].amiodaroneTimes = [];
+  const now = new Date();
+  const newTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const count = state.cardr.cpaEvents[idx].amiodaroneTimes.length;
+  const dose = count === 0 ? '300mg' : '150mg';
+  state.cardr.cpaEvents[idx].amiodaroneTimes.push({time: newTime, dose: dose});
+  renderAmiodaroneTimes(idx);
+  updateState();
+};
+
+window.removeAmiodaroneTime = (idx, aIdx) => {
+  if(state.cardr.cpaEvents[idx]?.amiodaroneTimes) {
+    state.cardr.cpaEvents[idx].amiodaroneTimes.splice(aIdx, 1);
+    renderAmiodaroneTimes(idx);
+    updateState();
+  }
+};
+
+function renderAmiodaroneTimes(idx) {
+  const container = $(`#amiodarone_times_${idx}`);
+  if(!container) return;
+  container.innerHTML = '';
+  const items = state.cardr.cpaEvents[idx]?.amiodaroneTimes || [];
+  items.forEach((item, aIdx) => {
+    const time = typeof item === 'string' ? item : item.time;
+    const dose = typeof item === 'string' ? '' : (item.dose || '');
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px';
+    row.innerHTML = `
+      <span style="font-weight:500;min-width:80px;color:#7c3aed">${aIdx + 1}回目 ${dose}</span>
+      <div class="vital-item" style="border:1px solid #7c3aed;border-radius:10px;padding:8px 12px;cursor:pointer;flex:1;text-align:center" onclick="openAmiodaroneTimeDial(${idx}, ${aIdx})">
+        <span style="font-size:18px;font-weight:600;color:#7c3aed">${time}</span>
+      </div>
+      <button class="btn small ghost" style="padding:8px 12px;width:auto" onclick="removeAmiodaroneTime(${idx}, ${aIdx})">削除</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+window.openAmiodaroneTimeDial = (idx, aIdx) => {
+  const item = state.cardr.cpaEvents[idx]?.amiodaroneTimes?.[aIdx];
+  const currentTime = (typeof item === 'string' ? item : item?.time) || '00:00';
+  const [h, m] = currentTime.split(':').map(Number);
+  const hours = Array.from({length: 24}, (_, i) => ({label: String(i).padStart(2,'0'), value: String(i).padStart(2,'0')}));
+  const minutes = Array.from({length: 60}, (_, i) => ({label: String(i).padStart(2,'0'), value: String(i).padStart(2,'0')}));
+  openDial(`アミオダロン ${aIdx + 1}回目`, [{options: hours, selected: String(h).padStart(2,'0'), unit: ':'}, {options: minutes, selected: String(m).padStart(2,'0'), unit: ''}], vals => {
+    if(state.cardr.cpaEvents[idx]?.amiodaroneTimes) {
+      const existing = state.cardr.cpaEvents[idx].amiodaroneTimes[aIdx];
+      const dose = typeof existing === 'string' ? '' : (existing.dose || '');
+      state.cardr.cpaEvents[idx].amiodaroneTimes[aIdx] = {time: `${vals[0]}:${vals[1]}`, dose: dose};
+      renderAmiodaroneTimes(idx);
+      updateState();
+    }
+  });
+};
+
+// 波形変化管理 (v3.2 新規)
+window.addRhythmChange = (idx) => {
+  if(!state.cardr.cpaEvents[idx]) return;
+  if(!state.cardr.cpaEvents[idx].rhythmChanges) state.cardr.cpaEvents[idx].rhythmChanges = [];
+  const now = new Date();
+  const newTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const lastRhythm = state.cardr.cpaEvents[idx].rhythmChanges.length > 0
+    ? state.cardr.cpaEvents[idx].rhythmChanges[state.cardr.cpaEvents[idx].rhythmChanges.length - 1].rhythm
+    : state.cardr.cpaEvents[idx].rhythm;
+  state.cardr.cpaEvents[idx].rhythmChanges.push({time: newTime, rhythm: lastRhythm});
+  renderRhythmChanges(idx);
+  updateState();
+};
+
+window.removeRhythmChange = (idx, rIdx) => {
+  if(state.cardr.cpaEvents[idx]?.rhythmChanges && rIdx > 0) {
+    state.cardr.cpaEvents[idx].rhythmChanges.splice(rIdx, 1);
+    renderRhythmChanges(idx);
+    updateState();
+  }
+};
+
+function renderRhythmChanges(idx) {
+  const container = $(`#rhythm_changes_${idx}`);
+  if(!container) return;
+  container.innerHTML = '';
+  const changes = state.cardr.cpaEvents[idx]?.rhythmChanges || [];
+  if(changes.length <= 1) {
+    container.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:4px 0">初期波形のみ（波形変化があれば追加してください）</div>';
+    return;
+  }
+  changes.forEach((c, rIdx) => {
+    if(rIdx === 0) return;
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px';
+    row.innerHTML = `
+      <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer;min-width:70px;text-align:center" onclick="openRhythmChangeTimeDial(${idx}, ${rIdx})">
+        <span style="font-size:14px;font-weight:600;color:var(--brand)">${c.time}</span>
+      </div>
+      <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer;flex:1;text-align:center" onclick="openRhythmChangeRhythmDial(${idx}, ${rIdx})">
+        <span style="font-size:14px;font-weight:600">${c.rhythm}</span>
+      </div>
+      <button class="btn small ghost" style="padding:8px 10px;width:auto" onclick="removeRhythmChange(${idx}, ${rIdx})">削除</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+window.openRhythmChangeTimeDial = (idx, rIdx) => {
+  const c = state.cardr.cpaEvents[idx]?.rhythmChanges?.[rIdx];
+  if(!c) return;
+  const [h, m] = c.time.split(':').map(Number);
+  const hours = Array.from({length: 24}, (_, i) => ({label: String(i).padStart(2,'0'), value: String(i).padStart(2,'0')}));
+  const minutes = Array.from({length: 60}, (_, i) => ({label: String(i).padStart(2,'0'), value: String(i).padStart(2,'0')}));
+  openDial(`波形変化 時刻`, [{options: hours, selected: String(h).padStart(2,'0'), unit: ':'}, {options: minutes, selected: String(m).padStart(2,'0'), unit: ''}], vals => {
+    if(state.cardr.cpaEvents[idx]?.rhythmChanges?.[rIdx]) {
+      state.cardr.cpaEvents[idx].rhythmChanges[rIdx].time = `${vals[0]}:${vals[1]}`;
+      renderRhythmChanges(idx);
+      updateState();
+    }
+  });
+};
+
+window.openRhythmChangeRhythmDial = (idx, rIdx) => {
+  const c = state.cardr.cpaEvents[idx]?.rhythmChanges?.[rIdx];
+  if(!c) return;
+  const rhythms = ['Asystole', 'PEA', 'Vf', 'Pulseless VT', 'Sinus', 'AF', 'VT', 'Other'];
+  const options = rhythms.map(r => ({label: r, value: r}));
+  openDial(`波形`, [{options, selected: c.rhythm}], vals => {
+    if(state.cardr.cpaEvents[idx]?.rhythmChanges?.[rIdx]) {
+      state.cardr.cpaEvents[idx].rhythmChanges[rIdx].rhythm = vals[0];
+      renderRhythmChanges(idx);
+      updateState();
+    }
+  });
+};
+
+// 転帰設定 (v3.2 新規)
+window.setCpaOutcome = (idx, outcome) => {
+  if(!state.cardr.cpaEvents[idx]) return;
+  const current = state.cardr.cpaEvents[idx].outcome;
+  if(current === outcome) {
+    state.cardr.cpaEvents[idx].outcome = '';
+    state.cardr.cpaEvents[idx].roscTime = '';
+    state.cardr.cpaEvents[idx].endTime = '';
+  } else {
+    state.cardr.cpaEvents[idx].outcome = outcome;
+    if(outcome === 'rosc') {
+      state.cardr.cpaEvents[idx].endTime = '';
+    } else {
+      state.cardr.cpaEvents[idx].roscTime = '';
+    }
+  }
+  renderCpaEvents();
+  updateState();
+};
+
+// Flow Time計算関数群 (v3.2 改修: ROSC なし時にも対応)
 function calcFlowTimes(idx) {
   const event = state.cardr.cpaEvents[idx];
   if (!event) return;
   
   const arrestTime = event.arrestTime;
   const cprStart = event.cprStart;
-  const roscTime = event.roscTime;
+  const endTimeForCalc = event.outcome === 'rosc' ? event.roscTime : (event.endTime || '');
   
-  // イベント1（初回）の場合のみNo Flow Timeを計算
   if(idx === 0) {
-    // No Flow Time = 心停止から胸骨圧迫開始まで
     if(arrestTime && cprStart) {
       const noFlow = calcTimeDiffMinutes(arrestTime, cprStart);
       const el = $(`#no_flow_time_${idx}`);
@@ -2408,9 +2593,8 @@ function calcFlowTimes(idx) {
       if(el) el.textContent = '-- 分';
     }
     
-    // Low Flow Time = 胸骨圧迫開始からROSCまで
-    if(cprStart && roscTime) {
-      const lowFlow = calcTimeDiffMinutes(cprStart, roscTime);
+    if(cprStart && endTimeForCalc) {
+      const lowFlow = calcTimeDiffMinutes(cprStart, endTimeForCalc);
       const el = $(`#low_flow_time_${idx}`);
       if(el) el.textContent = lowFlow >= 0 ? `${lowFlow} 分` : '-- 分';
     } else {
@@ -2418,9 +2602,8 @@ function calcFlowTimes(idx) {
       if(el) el.textContent = '-- 分';
     }
   } else {
-    // イベント2以降（再心停止）の場合はLow Flow Timeのみ = 心停止からROSCまで
-    if(arrestTime && roscTime) {
-      const lowFlow = calcTimeDiffMinutes(arrestTime, roscTime);
+    if(arrestTime && endTimeForCalc) {
+      const lowFlow = calcTimeDiffMinutes(arrestTime, endTimeForCalc);
       const el = $(`#low_flow_time_${idx}`);
       if(el) el.textContent = lowFlow >= 0 ? `${lowFlow} 分` : '-- 分';
     } else {
@@ -4182,7 +4365,7 @@ function extractFindings(def, chips) {
 }
 
 function generateReport() {
-  let r = '━━━━━━━━━━━━━━━━━━━━\n　病院前医療活動記録（ドクターカー）\n━━━━━━━━━━━━━━━━━━━━\n\n';
+  let r = '━━━━━━━━━━━━━━━━━━━━\n　病院前医療活動記録（ドクターカー） v3.2\n━━━━━━━━━━━━━━━━━━━━\n\n';
   
   r += '【要請情報】\n';
   r += `要請方法：${state.request.type || '（未選択）'}\n`;
@@ -4449,59 +4632,79 @@ function generateReport() {
     }
   }
   
-  const cardrTab = state.cardr.exam_tab;
-  if(cardrTab === 'cpa') {
+  // CPA記録: cpaEventsがあれば常に出力（タブ選択に依存しない）
+  if(state.cardr.cpaEvents && state.cardr.cpaEvents.length > 0) {
     r += '\n＜CPA記録＞\n';
-    if(state.cardr.cpaEvents && state.cardr.cpaEvents.length > 0) {
-      state.cardr.cpaEvents.forEach((cpa, idx) => {
-        if(state.cardr.cpaEvents.length > 1) r += `\n【心停止イベント ${idx + 1}${idx > 0 ? '（再心停止）' : ''}】\n`;
-        
-        // イベント1（初回）の場合
-        if(idx === 0) {
-          if(cpa.arrestTime) r += `心停止時刻：${cpa.arrestTime}\n`;
-          if(cpa.rhythm) r += `初期波形：${cpa.rhythm}\n`;
-          r += `目撃：${cpa.witnessed ? 'あり' : 'なし'}\n`;
-          r += `バイスタンダーCPR：${cpa.bystander ? 'あり' : 'なし'}\n`;
-          if(cpa.cprStart) r += `胸骨圧迫開始：${cpa.cprStart}\n`;
-          if(cpa.ivTime) r += `末梢確保：${cpa.ivTime}\n`;
-          if(cpa.adrenalineTimes && cpa.adrenalineTimes.length > 0) {
-            r += `アドレナリン投与：${cpa.adrenalineTimes.map((t,i) => `${i+1}回目 ${t}`).join('、')}\n`;
-          }
-          if(cpa.lt) r += `LT挿入：実施\n`;
-          if(cpa.intubation) r += `気管挿管：${state.cardr.procedures['気管挿管'] ? (state.cardr.intubation.time || '実施') + ' (' + state.cardr.intubation.size + 'mm)' : '実施'}\n`;
-          if(cpa.pericardio) r += `心膜腔穿刺：${cpa.pericardioTime || '実施'}\n`;
-          if(cpa.roscTime) r += `心拍再開(ROSC)：${cpa.roscTime}\n`;
-          
-          // Flow Time計算
-          if(cpa.arrestTime && cpa.cprStart) {
-            const noFlow = calcTimeDiffMinutes(cpa.arrestTime, cprStart);
-            if(noFlow >= 0) r += `No Flow Time：${noFlow}分\n`;
-          }
-          if(cpa.cprStart && cpa.roscTime) {
-            const lowFlow = calcTimeDiffMinutes(cprStart, cpa.roscTime);
-            if(lowFlow >= 0) r += `Low Flow Time：${lowFlow}分\n`;
-          }
-        } else {
-          // イベント2以降（再心停止）の場合
-          if(cpa.arrestTime) r += `心停止時刻：${cpa.arrestTime}\n`;
-          if(cpa.rhythm) r += `波形：${cpa.rhythm}\n`;
-          if(cpa.adrenalineTimes && cpa.adrenalineTimes.length > 0) {
-            r += `アドレナリン投与：${cpa.adrenalineTimes.map((t,i) => `${i+1}回目 ${t}`).join('、')}\n`;
-          }
-          if(cpa.roscTime) r += `心拍再開(ROSC)：${cpa.roscTime}\n`;
-          
-          // Low Flow Time = 心停止からROSCまで
-          if(cpa.arrestTime && cpa.roscTime) {
-            const lowFlow = calcTimeDiffMinutes(cpa.arrestTime, cpa.roscTime);
-            if(lowFlow >= 0) r += `Low Flow Time：${lowFlow}分\n`;
-          }
-        }
-        
-        if(cpa.memo) r += `メモ：${cpa.memo}\n`;
-      });
-    } else {
-      r += 'データなし\n';
-    }
+    state.cardr.cpaEvents.forEach((cpa, idx) => {
+      const isFirst = idx === 0;
+      if(state.cardr.cpaEvents.length > 1) r += `\n【心停止イベント ${idx + 1}${!isFirst ? '（再心停止）' : ''}】\n`;
+      
+      if(cpa.arrestTime) r += `心停止時刻：${cpa.arrestTime}\n`;
+      if(cpa.rhythm) r += `初期波形：${cpa.rhythm}\n`;
+      
+      if(isFirst) {
+        r += `目撃：${cpa.witnessed ? 'あり' : 'なし'}\n`;
+        r += `バイスタンダーCPR：${cpa.bystander ? 'あり' : 'なし'}\n`;
+        if(cpa.cprStart) r += `胸骨圧迫開始：${cpa.cprStart}\n`;
+        if(cpa.ivTime) r += `末梢確保：${cpa.ivTime}\n`;
+      }
+      
+      // 波形変化
+      const changes = cpa.rhythmChanges || [];
+      if(changes.length > 1) {
+        r += `波形変化：${changes.slice(1).map(c => `${c.time} ${c.rhythm}`).join(' → ')}\n`;
+      }
+      
+      // 除細動
+      const defibTimes = cpa.defibrillationTimes || [];
+      if(defibTimes.length > 0) {
+        r += `除細動：${defibTimes.map((t,i) => `${i+1}回目 ${t}`).join('、')}（計${defibTimes.length}回）\n`;
+      }
+      
+      // アドレナリン
+      if(cpa.adrenalineTimes && cpa.adrenalineTimes.length > 0) {
+        r += `アドレナリン投与：${cpa.adrenalineTimes.map((t,i) => `${i+1}回目 ${t}`).join('、')}\n`;
+      }
+      
+      // アミオダロン
+      const amioTimes = cpa.amiodaroneTimes || [];
+      if(amioTimes.length > 0) {
+        r += `アミオダロン投与：${amioTimes.map((a,i) => {
+          const time = typeof a === 'string' ? a : a.time;
+          const dose = typeof a === 'string' ? '' : (a.dose ? ` ${a.dose}` : '');
+          return `${i+1}回目 ${time}${dose}`;
+        }).join('、')}\n`;
+      }
+      
+      if(isFirst) {
+        if(cpa.lt) r += `LT挿入：実施\n`;
+        if(cpa.intubation) r += `気管挿管：${state.cardr.procedures['気管挿管'] ? (state.cardr.intubation.time || '実施') + ' (' + state.cardr.intubation.size + 'mm)' : '実施'}\n`;
+        if(cpa.pericardio) r += `心膜腔穿刺：${cpa.pericardioTime || '実施'}\n`;
+      }
+      
+      // 転帰
+      const endTimeForCalc = cpa.outcome === 'rosc' ? cpa.roscTime : (cpa.endTime || '');
+      if(cpa.outcome === 'rosc' && cpa.roscTime) {
+        r += `心拍再開(ROSC)：${cpa.roscTime}\n`;
+      } else if(cpa.outcome === 'hospital' && cpa.endTime) {
+        r += `転帰：CPR継続のまま病着（${cpa.endTime}）\n`;
+      } else if(cpa.outcome === 'death' && cpa.endTime) {
+        r += `転帰：蘇生終了（${cpa.endTime}）\n`;
+      }
+      
+      // Flow Time 計算
+      if(isFirst && cpa.arrestTime && cpa.cprStart) {
+        const noFlow = calcTimeDiffMinutes(cpa.arrestTime, cpa.cprStart);
+        if(noFlow >= 0) r += `No Flow Time：${noFlow}分\n`;
+      }
+      const lowFlowStart = isFirst ? cpa.cprStart : cpa.arrestTime;
+      if(lowFlowStart && endTimeForCalc) {
+        const lowFlow = calcTimeDiffMinutes(lowFlowStart, endTimeForCalc);
+        if(lowFlow >= 0) r += `Low Flow Time：${lowFlow}分\n`;
+      }
+      
+      if(cpa.memo) r += `メモ：${cpa.memo}\n`;
+    });
   }
   
   if((state.cardr.exams?.bs && state.cardr.bs) || state.cardr.abg_type || Object.values(state.cardr.exams || {}).some(v=>v) || state.cardr.exam_detail) {
@@ -5037,6 +5240,21 @@ function initializeStateDataStructure() {
     // CPAメモが古い形式の場合の対応（新しい形式に合わせる）
     if (state.ems.memos.cpa && typeof state.ems.memos.cpa === 'string') {
         state.ems.memos.cpa = {memo: state.ems.memos.cpa};
+    }
+    
+    // v3.2 CPA イベントのマイグレーション: 旧データに新フィールドを補完
+    if (state.cardr.cpaEvents && state.cardr.cpaEvents.length > 0) {
+      state.cardr.cpaEvents.forEach(ev => {
+        if (!ev.defibrillationTimes) ev.defibrillationTimes = [];
+        if (!ev.amiodaroneTimes) ev.amiodaroneTimes = [];
+        if (!ev.rhythmChanges) {
+          ev.rhythmChanges = ev.rhythm ? [{time: ev.arrestTime || '', rhythm: ev.rhythm}] : [];
+        }
+        if (ev.outcome === undefined) {
+          ev.outcome = ev.roscTime ? 'rosc' : '';
+        }
+        if (ev.endTime === undefined) ev.endTime = '';
+      });
     }
 }
 
