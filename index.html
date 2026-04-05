@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- 2026/04/05 | v3.5 | 紹介状タブ追加（heli_record 診療情報提供書ロジックをドクターカー state に適合） -->
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -6,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>ドクターカー活動記録 v3.2 (2026/02/24) - タブ版</title>
+<title>ドクターカー活動記録 v3.5 (2026/04/05) - タブ版</title>
 <style>
 :root{
   --ink:#111827;--muted:#6b7280;--bg:#f2f2f7;--card:#fff;
@@ -350,6 +351,14 @@ body.dial-open{
   border:1px dashed var(--line);
 }
 
+/* 紹介状タブ（ヘリ記録の紹介状作成をドクターカー用に移植） */
+#referralText{
+  font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+  line-height:1.9;font-size:14px;min-height:200px;
+}
+.referral-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.referral-actions .btn{flex:1;min-width:120px}
+
 /* 下部ナビ */
 .bottom-nav{display:none;}
 .bottom-nav .btn{flex:1;padding:12px}
@@ -507,7 +516,7 @@ main {
 <body>
 <header>
   <h1>🚗 ドクターカー</h1>
-  <div class="version">v3.2 (2026/02/24)</div>
+  <div class="version">v3.5 (2026/04/05)</div>
 </header>
 
 <main>
@@ -1159,6 +1168,20 @@ main {
   <button class="btn ghost" onclick="reloadApp()" style="flex:1;min-width:120px;color:#2563eb">🔄 アプリを更新</button>
   <button class="btn ghost" onclick="resetData()" style="flex:1;min-width:120px;color:#dc2626">🗑 リセット</button>
 </div>
+</div>
+</div>
+</div>
+
+<div class="tab-content" data-tab="referral">
+  <div class="card">
+    <div class="card-header">📋 診療情報提供書（紹介状）</div>
+    <div class="card-body">
+      <p style="margin:0 0 10px;font-size:13px;color:var(--muted)">入力内容から診療情報提供書形式のテキストを生成します。最新データはタブを開いたときに反映されます。</p>
+      <div class="result" id="referralText"></div>
+      <div class="referral-actions">
+        <button type="button" class="btn" id="copyReferral">📋 コピー</button>
+        <button type="button" class="btn" style="background:#ea4335;color:#fff" onclick="sendReferralEmail()">📧 メール送信</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1201,6 +1224,10 @@ main {
   <div class="tab-bar-item" data-tab="output">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
     <span>出力</span>
+  </div>
+  <div class="tab-bar-item" data-tab="referral">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+    <span>紹介状</span>
   </div>
 </nav>
 
@@ -1249,6 +1276,7 @@ window.switchTab = (tab) => {
   }, 50);
   
   if (tab === 'output') render();
+  if (tab === 'referral') renderReferralLetter();
   
   // ヘッダーのタイトルを更新
   const tabNames = {
@@ -1260,7 +1288,8 @@ window.switchTab = (tab) => {
     'assess': '評価',
     'consider': '搬送先',
     'symptom': '症状詳記',
-    'output': '出力'
+    'output': '出力',
+    'referral': '紹介状'
   };
   const headerTitle = $('header h1');
   if (headerTitle && tabNames[tab]) {
@@ -4346,9 +4375,15 @@ function render() {
   if(outEl) outEl.textContent = generateReport();
 }
 
+/** 初期波形（CPA）など、ラベル自体が所見内容のものは（＋）を付けない */
+const FINDING_LABELS_NO_PLUS = new Set(['Vf', 'Pulseless VT', 'PEA', 'Asystole']);
+
 function fmtFinding(lbl, st) {
   if(st === 'on') return lbl;
-  if(st === '+') return `${lbl}（＋）`;
+  if(st === '+') {
+    if(lbl.endsWith('なし') || FINDING_LABELS_NO_PLUS.has(lbl)) return lbl;
+    return `${lbl}（＋）`;
+  }
   if(st === '-') return `${lbl}（-）`;
   return null;
 }
@@ -4364,8 +4399,298 @@ function extractFindings(def, chips) {
   return arr.join('、');
 }
 
+// ---------- 紹介状（診療情報提供書）ヘリ記録 v4.2 由来・ドクターカー state 対応 ----------
+const REFERRAL_EMAIL = 'kchcenter.drheli.drcar@gmail.com';
+
+function referralSafeGet(obj, path, defaultVal = '') {
+  const v = path.split('.').reduce((acc, part) => (acc && acc[part] !== undefined) ? acc[part] : undefined, obj);
+  return v !== undefined && v !== null ? v : defaultVal;
+}
+
+function buildReferralClassificationLists(type) {
+  const allNormal = [];
+  const allAbnormal = [];
+  const mergeGroup = (g) => {
+    if (!g) return;
+    if (Array.isArray(g)) allAbnormal.push(...g);
+    else {
+      if (g.normal) allNormal.push(...g.normal);
+      if (g.abn) allAbnormal.push(...g.abn);
+    }
+  };
+  const bags = type === 'ems'
+    ? [EMS_GEN_GROUPS, EMS_TRA_GROUPS, EMS_CPA_GROUPS, EMS_STR_GROUPS]
+    : [CARDR_GEN_GROUPS, CARDR_TRA_GROUPS, CARDR_CPA_GROUPS, CARDR_STR_GROUPS];
+  bags.forEach(obj => Object.values(obj).forEach(mergeGroup));
+  return { allNormal, allAbnormal };
+}
+
+function classifyNormalAndAbnormalReferral(chips, type) {
+  const normal = [];
+  const abnormal = [];
+  const { allNormal, allAbnormal } = buildReferralClassificationLists(type);
+  if (!chips || typeof chips !== 'object') return { normal, abnormal };
+  Object.entries(chips).forEach(([key, val]) => {
+    const vStr = String(val).toLowerCase().trim();
+    const isActive = (vStr === '+' || vStr === 'on' || vStr === 'true' || vStr === 'あり' || vStr === '陽性');
+    if (isActive) {
+      if (allNormal.includes(key)) normal.push(key);
+      else if (allAbnormal.includes(key)) abnormal.push(key);
+      else {
+        const normalKeywords = ['正中', '対称', '整', '清', '軟', '平坦', '良好', 'なし', '正常', '純'];
+        if (normalKeywords.some(kw => key.includes(kw))) normal.push(key);
+        else abnormal.push(key);
+      }
+    }
+  });
+  return { normal, abnormal };
+}
+
+function getReferralFindingsData(data, type) {
+  const chips = type === 'ems' ? referralSafeGet(data, 'ems.chips', {}) : referralSafeGet(data, 'cardr.chips', {});
+  const { normal, abnormal } = classifyNormalAndAbnormalReferral(chips, type);
+  const memoList = [];
+  if (type === 'ems') {
+    const tm = data.ems?.memos?.trauma || {};
+    if (tm.head) memoList.push(`頭部: ${tm.head}`);
+    if (tm.neck) memoList.push(`頸部: ${tm.neck}`);
+    if (tm.chest) memoList.push(`胸部: ${tm.chest}`);
+    if (tm.abd) memoList.push(`腹部: ${tm.abd}`);
+    if (tm.pelvis) memoList.push(`骨盤: ${tm.pelvis}`);
+    if (tm.limb) memoList.push(`四肢: ${tm.limb}`);
+    const sm = data.ems?.memos?.stroke?.memo;
+    if (sm) memoList.push(`脳卒中メモ: ${sm}`);
+  } else {
+    const tm = data.cardr?.memos?.trauma || {};
+    if (tm.head) memoList.push(`頭部: ${tm.head}`);
+    if (tm.neck) memoList.push(`頸部: ${tm.neck}`);
+    if (tm.chest) memoList.push(`胸部: ${tm.chest}`);
+    if (tm.abd) memoList.push(`腹部: ${tm.abd}`);
+    if (tm.pelvis) memoList.push(`骨盤: ${tm.pelvis}`);
+    if (tm.limb) memoList.push(`四肢: ${tm.limb}`);
+    const stm = data.cardr?.memos?.stroke || {};
+    if (stm.neuro) memoList.push(`脳神経: ${stm.neuro}`);
+    if (stm.motor) memoList.push(`運動: ${stm.motor}`);
+    if (stm.eye) memoList.push(`眼: ${stm.eye}`);
+    if (stm.higher) memoList.push(`高次機能: ${stm.higher}`);
+    const cpa = data.cardr?.memos?.cpa || {};
+    if (cpa.body) memoList.push(`CPA全身: ${cpa.body}`);
+    if (cpa.head) memoList.push(`CPA頭部: ${cpa.head}`);
+    if (cpa.trunk) memoList.push(`CPA体幹: ${cpa.trunk}`);
+  }
+  return { normal, abnormal, memoList };
+}
+
+function formatReferralFindings(normal, abnormal, memoList) {
+  const findings = [];
+  if (normal.length > 0) findings.push(normal.join('、') + 'でした。');
+  if (abnormal.length > 0) findings.push(abnormal.join('、') + 'を認めました。');
+  memoList.forEach(m => findings.push(m));
+  return findings.length > 0 ? findings.join(' ') : '特記すべき身体所見はありませんでした。';
+}
+
+function formatReferralVitals(v) {
+  if (!v || Object.keys(v).length === 0) return null;
+  const gcs = v.gcs ? `GCS E${referralSafeGet(v, 'gcs.e','-')}V${referralSafeGet(v, 'gcs.v','-')}M${referralSafeGet(v, 'gcs.m','-')}` : '';
+  const jcs = referralSafeGet(v, 'jcs', '') !== '' && referralSafeGet(v, 'jcs', '') !== '-' ? `JCS ${referralSafeGet(v, 'jcs','-')}` : '';
+  const consciousness = [gcs, jcs].filter(Boolean).join(' / ') || '';
+  const bp = referralSafeGet(v, 'sbp', '') !== '' && referralSafeGet(v, 'sbp', '') !== '-' ? `${referralSafeGet(v, 'sbp','-')}/${referralSafeGet(v, 'dbp','-')} mmHg` : '';
+  const hr = referralSafeGet(v, 'hr', '') !== '' && referralSafeGet(v, 'hr', '') !== '-' ? `${referralSafeGet(v, 'hr','-')} bpm` : '';
+  const spo2 = referralSafeGet(v, 'spo2', '') !== '' && referralSafeGet(v, 'spo2', '') !== '-' ? `${referralSafeGet(v, 'spo2','-')}%` : '';
+  const vitals = [bp, hr, spo2].filter(Boolean);
+  return { consciousness, vitals: vitals.join('、') || '測定不能' };
+}
+
+function getReferralTreatmentStrEms(data) {
+  const e = data.ems || {};
+  const proc = e.procedures || {};
+  const items = e.procedures_items || [];
+  const list = items.filter(k => proc[k]).map(p =>
+    (p === '酸素投与' && proc['酸素投与'] && e.o2_flow) ? `${p}(${e.o2_flow})` : p
+  );
+  if (e.procedures_detail) list.push(e.procedures_detail);
+  return list.length ? [...new Set(list)].join('、') : '特記事項なし';
+}
+
+function getReferralTreatmentStrCardr(data) {
+  const c = data.cardr || {};
+  const proc = c.procedures || {};
+  const items = c.procedures_items || [];
+  let list = items.filter(k => proc[k]);
+  const drugs = c.drugs || {};
+  const ditems = c.drugs_items || [];
+  list = [...list, ...ditems.filter(k => drugs[k])];
+  if (c.drug_detail) list.push(c.drug_detail);
+  if (c.procedure_detail) list.push(c.procedure_detail);
+  return list.length ? [...new Set(list)].filter(Boolean).join('、') : '特記事項なし';
+}
+
+function buildCardrExamReferralLine(data) {
+  const c = data.cardr || {};
+  const parts = [];
+  if (c.exams?.bs && c.bs) parts.push(`血糖値 ${c.bs} mg/dL`);
+  if (c.abg_type && c.abg_data?.length) {
+    const line = c.abg_data.filter(x => x.val).map(x => `${x.item} ${x.val}${x.unit || ''}`).join(', ');
+    if (line) parts.push(`血ガス(${c.abg_type}): ${line}`);
+  }
+  const labels = {ucg:'UCG',us_abd:'腹部US',us_lung:'肺US',us_neck:'頸部血管US',ecg:'12誘導心電図',fast:'FAST',efast:'eFAST'};
+  ['ucg','us_abd','us_lung','us_neck','ecg','fast','efast'].forEach(t => {
+    if (c.exams?.[t] && c.exam_texts?.[t]) parts.push(`${labels[t]}: ${c.exam_texts[t]}`);
+  });
+  if (c.exam_detail) parts.push(c.exam_detail);
+  return parts.length ? parts.join('、') : '特記すべき検査所見はありませんでした。';
+}
+
+/** 紹介状では JTAS/NACA 行を出さない（プロブレム・考察から除外用） */
+function isReferralExcludedJtasNacaLine(text) {
+  const s = String(text).trim().replace(/^#\d+[.\s]*/, '');
+  if (/^JTAS\s*[1-5]\s*$/i.test(s)) return true;
+  if (/^NACA\s*[0-7]\s*$/i.test(s)) return true;
+  return false;
+}
+
+function stripJtasNacaLinesFromText(text) {
+  return String(text || '')
+    .split('\n')
+    .filter(line => !isReferralExcludedJtasNacaLine(line))
+    .join('\n')
+    .trim();
+}
+
+function generateDrCarReferralText(data) {
+  const today = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  const destName = referralSafeGet(data, 'destination.custom') || referralSafeGet(data, 'destination.hospital') || '＿＿＿＿病院';
+  const requestType = referralSafeGet(data, 'request.type', '');
+  const requestDetail = (referralSafeGet(data, 'request.detail', '') || '').trim();
+  const requestText = requestType ? `${requestType}。${requestDetail}` : requestDetail;
+  const agePart = [referralSafeGet(data, 'request.age'), referralSafeGet(data, 'request.sex')].filter(Boolean).join(' ');
+  const ageLine = agePart ? `年代・性別: ${agePart}\n` : '';
+
+  const emsVitals = referralSafeGet(data, 'ems.vitals', []);
+  const emsLastV = emsVitals.length > 0 ? emsVitals[emsVitals.length - 1] : null;
+  const emsVitalsFormatted = formatReferralVitals(emsLastV);
+  const emsFindings = getReferralFindingsData(data, 'ems');
+  const emsFindingsText = formatReferralFindings(emsFindings.normal, emsFindings.abnormal, emsFindings.memoList);
+  const emsTreatment = getReferralTreatmentStrEms(data);
+
+  const emsAware = referralSafeGet(data, 'ems.aware', '');
+  const emsArrival = referralSafeGet(data, 'ems.arrival', '');
+  const emsContact = referralSafeGet(data, 'ems.contact', '');
+  const emsPickup = referralSafeGet(data, 'ems.pickup', '');
+  const emsDeparture = referralSafeGet(data, 'ems.departure', '');
+  const emsRp = referralSafeGet(data, 'ems.rp', '');
+  const actPlace = referralSafeGet(data, 'car.activity_place', '');
+  let emsTimelineText = '';
+  if (emsAware) emsTimelineText += `覚知: ${emsAware}`;
+  if (emsArrival) emsTimelineText += emsTimelineText ? `、現着: ${emsArrival}` : `現着: ${emsArrival}`;
+  if (emsContact) emsTimelineText += emsTimelineText ? `、接触: ${emsContact}` : `接触: ${emsContact}`;
+  if (emsPickup) emsTimelineText += emsTimelineText ? `、収容: ${emsPickup}` : `収容: ${emsPickup}`;
+  if (emsDeparture) emsTimelineText += emsTimelineText ? `、現発: ${emsDeparture}` : `現発: ${emsDeparture}`;
+  if (emsRp && actPlace === 'RP（ランデブーポイント）') emsTimelineText += emsTimelineText ? `、RP到着: ${emsRp}` : `RP到着: ${emsRp}`;
+
+  const car = data.car || {};
+  let carTimelineText = '';
+  if (car.request_time) carTimelineText += `要請時刻: ${car.request_time}`;
+  if (car.departure) carTimelineText += carTimelineText ? `、ドクターカー出動: ${car.departure}` : `ドクターカー出動: ${car.departure}`;
+  if (car.scene_arrival) carTimelineText += carTimelineText ? `、現場/RP到着: ${car.scene_arrival}` : `現場/RP到着: ${car.scene_arrival}`;
+  if (car.cardr_contact) carTimelineText += carTimelineText ? `、ドクターカーチーム接触: ${car.cardr_contact}` : `ドクターカーチーム接触: ${car.cardr_contact}`;
+  if (car.activity_place) carTimelineText += carTimelineText ? `、活動場所: ${car.activity_place}` : `活動場所: ${car.activity_place}`;
+  if (car.scene_departure) carTimelineText += carTimelineText ? `、現場出発: ${car.scene_departure}` : `現場出発: ${car.scene_departure}`;
+  if (car.hospital_arrival) carTimelineText += carTimelineText ? `、病院着: ${car.hospital_arrival}` : `病院着: ${car.hospital_arrival}`;
+  if (car.transport_method) carTimelineText += carTimelineText ? `、搬送方法: ${car.transport_method}` : `搬送方法: ${car.transport_method}`;
+
+  const fdVitals = referralSafeGet(data, 'cardr.vitals', []);
+  const fdLastV = fdVitals.length > 0 ? fdVitals[fdVitals.length - 1] : null;
+  const fdVitalsFormatted = formatReferralVitals(fdLastV);
+  const fdFindings = getReferralFindingsData(data, 'cardr');
+  const fdFindingsText = formatReferralFindings(fdFindings.normal, fdFindings.abnormal, fdFindings.memoList);
+  const fdTreatment = getReferralTreatmentStrCardr(data);
+  const examStr = buildCardrExamReferralLine(data);
+
+  const problemsFiltered = (Array.isArray(data.problems) ? data.problems : []).filter(p => !isReferralExcludedJtasNacaLine(p));
+  const problemText = problemsFiltered.length > 0
+    ? problemsFiltered.map((p, i) => `${i + 1}. ${p}`).join('\n')
+    : '特記事項なし';
+  const consideration = stripJtasNacaLinesFromText(referralSafeGet(data, 'consideration', '') || '');
+
+  let referralText = `診療情報提供書
+
+${destName} 救急外来 ご担当医先生 御机下
+${today}
+鹿児島市ドクターカー/カードクター
+
+平素より、鹿児島市における救急医療・病院前医療（ドクターカー活動）にご高配を賜り、厚く御礼申し上げます。
+さて、本日搬送いたしました患者様につきまして、病院前活動を下記の通りご報告申し上げます。
+
+【要請方法・要請内容】
+${requestText || '（記載なし）'}
+${ageLine}【患者情報】
+既往歴: ${referralSafeGet(data, 'patient.history', 'なし')}
+内服: ${referralSafeGet(data, 'patient.medication', 'なし')}
+アレルギー: ${referralSafeGet(data, 'patient.allergy', 'なし')}`;
+
+  const p = data.patient || {};
+  if (p.lastWell) referralText += `\n最終健常: ${p.lastWell}`;
+  if (p.lastMeal) referralText += `\n最終食事: ${p.lastMeal}`;
+  if (p.hospital) referralText += `\nかかりつけ: ${p.hospital}`;
+
+  referralText += `\n\n【先行救急隊活動】`;
+  if (emsTimelineText) referralText += `\nタイムライン: ${emsTimelineText}`;
+  if (emsVitalsFormatted) {
+    referralText += `\nバイタルサイン: ${emsVitalsFormatted.consciousness ? `意識レベル ${emsVitalsFormatted.consciousness}、` : ''}${emsVitalsFormatted.vitals}`;
+  }
+  referralText += `\n身体所見: ${emsFindingsText}`;
+  if (emsTreatment !== '特記事項なし') referralText += `\n実施処置: ${emsTreatment}`;
+
+  referralText += `\n\n【ドクターカータイムライン】`;
+  referralText += carTimelineText ? `\n${carTimelineText}` : `\n特記事項なし`;
+
+  referralText += `\n\n【ドクターカーチーム活動】`;
+  if (fdVitalsFormatted) {
+    referralText += `\nバイタルサイン: ${fdVitalsFormatted.consciousness ? `意識レベル ${fdVitalsFormatted.consciousness}、` : ''}${fdVitalsFormatted.vitals}`;
+  }
+  referralText += `\n身体所見: ${fdFindingsText}`;
+  if (examStr !== '特記すべき検査所見はありませんでした。') referralText += `\n検査所見: ${examStr}`;
+  if (fdTreatment !== '特記事項なし') referralText += `\n実施処置・薬剤: ${fdTreatment}`;
+
+  referralText += `\n\n【傷病名・プロブレム】
+${problemText}`;
+
+  if (consideration) {
+    referralText += `\n\n【考察】
+${consideration}`;
+  }
+
+  referralText += `
+
+以上、病院前活動のご報告とさせていただきます。
+本日は緊急の搬送要請に対し、迅速にご快諾いただき深謝いたします。
+つきましては、貴院にて詳細な精査および加療をお願いしたく存じます。
+ご多忙の折恐縮ですが、何卒よろしくお願い申し上げます。`;
+
+  return referralText;
+}
+
+window.renderReferralLetter = function() {
+  updateState();
+  const el = $('#referralText');
+  if (el) el.textContent = generateDrCarReferralText(state);
+};
+
+window.sendReferralEmail = function() {
+  const el = $('#referralText');
+  const text = el ? el.textContent : '';
+  if (!text || !String(text).trim()) {
+    alert('送信するテキストがありません。紹介状タブを開いて生成してください。');
+    return;
+  }
+  const subject = encodeURIComponent('診療情報提供書');
+  const body = encodeURIComponent(text);
+  window.location.href = `mailto:${REFERRAL_EMAIL}?subject=${subject}&body=${body}`;
+};
+
 function generateReport() {
-  let r = '━━━━━━━━━━━━━━━━━━━━\n　病院前医療活動記録（ドクターカー） v3.2\n━━━━━━━━━━━━━━━━━━━━\n\n';
+  let r = '━━━━━━━━━━━━━━━━━━━━\n　病院前医療活動記録（ドクターカー）\n━━━━━━━━━━━━━━━━━━━━\n\n';
   
   r += '【要請情報】\n';
   r += `要請方法：${state.request.type || '（未選択）'}\n`;
@@ -5692,7 +6017,7 @@ function init() {
   if (mainElement) {
     let touchStartX = 0;
     let touchEndX = 0;
-    const tabs = ['patient', 'car-time', 'ems', 'doctor', 'exam', 'assess', 'consider', 'symptom', 'output'];
+    const tabs = ['patient', 'car-time', 'ems', 'doctor', 'exam', 'assess', 'consider', 'symptom', 'output', 'referral'];
     
     function getCurrentTabIndex() {
       const activeTab = $('.tab-bar-item.active');
@@ -5972,6 +6297,16 @@ function init() {
       });
     };
   }
+  const copyRefEl = $('#copyReferral');
+  if (copyRefEl) {
+    copyRefEl.onclick = () => {
+      const t = $('#referralText')?.textContent || '';
+      navigator.clipboard.writeText(t).then(() => {
+        copyRefEl.textContent = '✓ コピー完了';
+        setTimeout(() => { copyRefEl.textContent = '📋 コピー'; }, 2000);
+      });
+    };
+  }
   
   // 4. UI状態の復元と描画
   restoreUI();
@@ -5992,7 +6327,9 @@ function init() {
     'exam': '検査',
     'assess': '評価',
     'consider': '搬送先',
-    'output': '出力'
+    'symptom': '症状詳記',
+    'output': '出力',
+    'referral': '紹介状'
   };
   const headerTitle = $('header h1');
   if (headerTitle && tabNames[initialTab]) {
