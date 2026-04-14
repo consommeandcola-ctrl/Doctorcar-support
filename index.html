@@ -1,5 +1,22 @@
 <!doctype html>
 <!-- 2026/04/05 | v3.5 | 紹介状タブ追加（heli_record 診療情報提供書ロジックをドクターカー state に適合） -->
+<!-- 2026/04/15 | v3.5 | 薬剤投与: メイロンは20/40mL選択、メトクロプラミドは10mg固定 -->
+<!-- 2026/04/15 | v3.5 | 薬剤投与: レペタンは0.05/0.1/0.2mg（数値のみ表示） -->
+<!-- 2026/04/15 | v3.5 | 薬剤投与: アセリオ500/1000mg、トランサミン1g（1000mg）固定 -->
+<!-- 2026/04/15 | v3.5 | 薬剤チップからエスラックスを削除 -->
+<!-- 2026/04/15 | v3.5 | 検査タブ実施処置から輸液チップを削除 -->
+<!-- 2026/04/15 | v3.5 | 搬送方法の初期値を未選択（null）、出力は選択時のみ -->
+<!-- 2026/04/15 | v3.6 | 検査タブ：UCG/腹部/肺/頸部/心電図の定型フォーム＋テキスト反映（別ファイル） -->
+<!-- 2026/04/15 | v3.6 | UCG：壁領域をピル選択＋選択ハイライト、フォーム枠をコンパクト化 -->
+<!-- 2026/04/15 | v3.6 | 肺US：検査部位をピル選択＋選択ハイライト、カードをコンパクト化 -->
+<!-- 2026/04/15 | v3.6 | 肺US：lung sliding あり/なし、なし時も部位指定可 -->
+<!-- 2026/04/15 | v3.6 | 肺US：あり/消失で別々に部位選択・出力を結合 -->
+<!-- 2026/04/15 | v3.6 | FAST/eFAST：陰性定型文（心膜腔）＋テキスト反映・シード -->
+<!-- 2026/04/15 | v3.6 | FAST/eFAST：本文は検査名を含めない（出力で「FAST：」と重複しないため） -->
+<!-- 2026/04/15 | v3.6 | 出力：身体所見の【部位】を「部位：」表記に統一 -->
+<!-- 2026/04/15 | v3.6 | 出力：【評価】見出しを出さない（プロブレム等の本文は維持） -->
+<!-- 2026/04/15 | v3.6 | 要請内容チップに「頭痛」を追加 -->
+<!-- 2026/04/15 | v3.6 | 心電図フォームカードのレイアウトをコンパクト化 -->
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -7,7 +24,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>ドクターカー活動記録 v3.5 (2026/04/05) - タブ版</title>
+<title>ドクターカー活動記録 v3.6 (2026/04/15) - タブ版</title>
 <style>
 :root{
   --ink:#111827;--muted:#6b7280;--bg:#f2f2f7;--card:#fff;
@@ -79,6 +96,75 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .chip[data-state="+"]{background:#fee2e2;border-color:#f87171;color:#b91c1c}
 .chip[data-state="-"]{background:#dcfce7;border-color:#4ade80;color:#15803d}
 .chip[data-state="proc"]{background:var(--brand);color:#fff}
+/* UCG検査：コンパクトカード＋壁領域ピル選択 */
+.exam-ucg-card{
+  font-size:13px;margin-bottom:8px;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--chip);
+  max-width:100%;
+}
+.exam-ucg-card .exam-ucg-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.exam-ucg-card .exam-ucg-row:last-of-type{margin-bottom:0}
+.exam-ucg-card .exam-ucg-inline-label{font-size:12px;color:var(--muted);margin:0;white-space:nowrap}
+.exam-ucg-card select.exam-ucg-select{max-width:140px;width:auto;padding:8px 26px 8px 10px;font-size:14px}
+.exam-ucg-walls-wrap{margin-top:2px}
+.exam-ucg-walls-hint{font-size:11px;color:var(--muted);margin:0 0 6px;display:block}
+.exam-ucg-walls{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.exam-ucg-wall-pill{position:relative;cursor:pointer;margin:0;display:inline-block}
+.exam-ucg-card label.exam-ucg-wall-pill{color:var(--ink)}
+.exam-ucg-wall-pill input{position:absolute;opacity:0;width:0;height:0}
+.exam-ucg-wall-pill span{
+  display:inline-block;padding:5px 11px;border-radius:18px;border:1.5px solid var(--line);
+  background:var(--card);font-size:12px;font-weight:500;color:var(--ink);
+  transition:background .15s,border-color .15s,color .15s;
+}
+.exam-ucg-wall-pill input:checked + span{
+  background:var(--brand);color:#fff;border-color:var(--brand);
+}
+.exam-ucg-wall-pill input:focus-visible + span{outline:2px solid var(--brand);outline-offset:2px}
+.exam-ucg-ivc-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+.exam-ucg-ivc-grid .exam-ucg-ivc-cell label{font-size:11px;margin:0 0 2px}
+.exam-ucg-ivc-grid select{width:100%;padding:8px 10px;font-size:13px}
+/* 肺US：コンパクトカード＋検査部位ピル選択（UCGと同様のハイライト） */
+.exam-lung-card{
+  font-size:13px;margin-bottom:8px;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--chip);
+  max-width:100%;
+}
+.exam-lung-hint{font-size:11px;color:var(--muted);margin:0 0 6px;display:block;line-height:1.35}
+.exam-lung-sites{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.exam-lung-pill{position:relative;cursor:pointer;margin:0;display:inline-block}
+.exam-lung-card label.exam-lung-pill{color:var(--ink)}
+.exam-lung-pill input{position:absolute;opacity:0;width:0;height:0}
+.exam-lung-pill span{
+  display:inline-block;padding:5px 11px;border-radius:18px;border:1.5px solid var(--line);
+  background:var(--card);font-size:12px;font-weight:500;color:var(--ink);
+  transition:background .15s,border-color .15s,color .15s;
+}
+.exam-lung-pill input:checked + span{
+  background:var(--brand);color:#fff;border-color:var(--brand);
+}
+.exam-lung-pill input:focus-visible + span{outline:2px solid var(--brand);outline-offset:2px}
+.exam-lung-subhead{display:block;font-size:11px;color:var(--muted);margin:10px 0 4px;line-height:1.35}
+.exam-lung-card .exam-lung-subhead:first-of-type{margin-top:0}
+/* 12誘導心電図：ST上昇/低下の誘導ピル（UCG壁と同系・コンパクト） */
+.exam-ecg-card{
+  font-size:12px;margin-bottom:6px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--chip);max-width:100%;
+}
+.exam-ecg-card .exam-ecg-row{margin-bottom:4px}
+.exam-ecg-card .exam-ecg-row:last-child{margin-bottom:0}
+.exam-ecg-card label.exam-ecg-inline{font-size:11px;color:var(--muted);margin:0 0 2px;display:block;line-height:1.25}
+.exam-ecg-card select{width:100%;padding:5px 8px;font-size:13px;border-radius:8px}
+.exam-ecg-st-block{margin-top:2px;margin-bottom:4px}
+.exam-ecg-st-hint{font-size:10px;color:var(--muted);margin:0 0 3px;display:block;line-height:1.3}
+.exam-ecg-leads{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.exam-ecg-lead-pill{position:relative;cursor:pointer;margin:0;display:inline-block}
+.exam-ecg-card label.exam-ecg-lead-pill{color:var(--ink)}
+.exam-ecg-lead-pill input{position:absolute;opacity:0;width:0;height:0}
+.exam-ecg-lead-pill span{
+  display:inline-block;min-width:1.9em;text-align:center;padding:3px 6px;border-radius:12px;border:1.5px solid var(--line);
+  background:var(--card);font-size:10px;font-weight:600;color:var(--ink);
+  transition:background .15s,border-color .15s,color .15s;
+}
+.exam-ecg-lead-pill input:checked + span{background:var(--brand);color:#fff;border-color:var(--brand)}
+.exam-ecg-lead-pill input:focus-visible + span{outline:2px solid var(--brand);outline-offset:2px}
 .btn{
   background:var(--brand);color:#fff;
   border:none;border-radius:10px;
@@ -516,7 +602,7 @@ main {
 <body>
 <header>
   <h1>🚗 ドクターカー</h1>
-  <div class="version">v3.5 (2026/04/05)</div>
+  <div class="version">v3.6 (2026/04/15)</div>
 </header>
 
 <main>
@@ -996,13 +1082,164 @@ main {
         </div>
         <input type="hidden" id="cardr_bs" value="120">
       </div>
-      <textarea id="exam_ucg_txt" placeholder="UCG所見" style="display:none;margin-top:8px"></textarea>
-      <textarea id="exam_us_abd_txt" placeholder="腹部US所見" style="display:none;margin-top:8px"></textarea>
-      <textarea id="exam_us_lung_txt" placeholder="肺US所見" style="display:none;margin-top:8px"></textarea>
-      <textarea id="exam_us_neck_txt" placeholder="頸部血管US所見" style="display:none;margin-top:8px"></textarea>
-      <textarea id="exam_ecg_txt" placeholder="12誘導心電図所見" style="display:none;margin-top:8px"></textarea>
-      <textarea id="exam_fast_txt" placeholder="FAST所見" style="display:none;margin-top:8px"></textarea>
-      <textarea id="exam_efast_txt" placeholder="eFAST所見" style="display:none;margin-top:8px"></textarea>
+      <div id="exam_ucg_wrap" style="display:none;margin-top:8px" class="exam-struct-wrap">
+        <div class="exam-form exam-ucg-card">
+          <div class="exam-ucg-row">
+            <span class="exam-ucg-inline-label">左室収縮能</span>
+            <select id="exam_ucg_lv" class="exam-ucg-select" onchange="examUcgLvChanged()">
+              <option value="good">良好</option>
+              <option value="bad">不良</option>
+            </select>
+          </div>
+          <div id="exam_ucg_walls_row" class="exam-ucg-walls-wrap" style="display:none">
+            <span class="exam-ucg-walls-hint">低下領域をタップで選択（複数可・選択中は色が付きます）</span>
+            <div class="exam-ucg-walls" role="group" aria-label="左室低下領域">
+              <label class="exam-ucg-wall-pill"><input type="checkbox" class="exam_ucg_wall" value="前壁"><span>前壁</span></label>
+              <label class="exam-ucg-wall-pill"><input type="checkbox" class="exam_ucg_wall" value="側壁"><span>側壁</span></label>
+              <label class="exam-ucg-wall-pill"><input type="checkbox" class="exam_ucg_wall" value="後壁"><span>後壁</span></label>
+              <label class="exam-ucg-wall-pill"><input type="checkbox" class="exam_ucg_wall" value="中隔"><span>中隔</span></label>
+            </div>
+          </div>
+          <div class="exam-ucg-row" style="margin-top:6px">
+            <span class="exam-ucg-inline-label">心膜液</span>
+            <select id="exam_ucg_pc" class="exam-ucg-select">
+              <option value="none">貯留なし</option>
+              <option value="yes">貯留あり</option>
+            </select>
+          </div>
+          <div class="exam-ucg-ivc-grid">
+            <div class="exam-ucg-ivc-cell">
+              <label for="exam_ucg_ivc_cal">IVC径</label>
+              <select id="exam_ucg_ivc_cal">
+                <option value="normal">正常</option>
+                <option value="collapsed">虚脱</option>
+              </select>
+            </div>
+            <div class="exam-ucg-ivc-cell">
+              <label for="exam_ucg_ivc_resp">呼吸性変動</label>
+              <select id="exam_ucg_ivc_resp">
+                <option value="present">あり</option>
+                <option value="absent">消失</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn small" style="margin-bottom:8px" onclick="applyExamStructuredText('ucg')">テキストに反映</button>
+        <textarea id="exam_ucg_txt" placeholder="UCG所見（反映後に編集可）" rows="4" style="width:100%;margin-top:4px"></textarea>
+      </div>
+      <div id="exam_us_abd_wrap" style="display:none;margin-top:8px">
+        <button type="button" class="btn small" style="margin-bottom:8px" onclick="applyExamStructuredText('us_abd')">テキストに反映（正常デフォルト）</button>
+        <textarea id="exam_us_abd_txt" placeholder="腹部US所見" rows="6" style="width:100%"></textarea>
+      </div>
+      <div id="exam_us_lung_wrap" style="display:none;margin-top:8px">
+        <div class="exam-form exam-lung-card">
+          <span class="exam-lung-hint">lung sliding「あり」「消失」それぞれで検査部位を選べます（複数可・選択中は色が付きます）。両方に同じ部位を付けないでください。</span>
+          <span class="exam-lung-subhead">lung sliding あり（部位）</span>
+          <div class="exam-lung-sites" role="group" aria-label="lung sliding ありの部位（右→左：前胸部・側胸部）">
+            <label class="exam-lung-pill"><input type="checkbox" class="exam_us_lung_site" id="exam_us_lung_present_ra" checked><span>右前胸部</span></label>
+            <label class="exam-lung-pill"><input type="checkbox" class="exam_us_lung_site" id="exam_us_lung_present_la" checked><span>左前胸部</span></label>
+            <label class="exam-lung-pill"><input type="checkbox" class="exam_us_lung_site" id="exam_us_lung_present_rl"><span>右側胸部</span></label>
+            <label class="exam-lung-pill"><input type="checkbox" class="exam_us_lung_site" id="exam_us_lung_present_ll"><span>左側胸部</span></label>
+          </div>
+          <span class="exam-lung-subhead">lung sliding 消失（部位）</span>
+          <div class="exam-lung-sites" role="group" aria-label="lung sliding 消失の部位（右→左：前胸部・側胸部）">
+            <label class="exam-lung-pill"><input type="checkbox" class="exam_us_lung_site" id="exam_us_lung_absent_ra"><span>右前胸部</span></label>
+            <label class="exam-lung-pill"><input type="checkbox" class="exam_us_lung_site" id="exam_us_lung_absent_la"><span>左前胸部</span></label>
+            <label class="exam-lung-pill"><input type="checkbox" class="exam_us_lung_site" id="exam_us_lung_absent_rl"><span>右側胸部</span></label>
+            <label class="exam-lung-pill"><input type="checkbox" class="exam_us_lung_site" id="exam_us_lung_absent_ll"><span>左側胸部</span></label>
+          </div>
+        </div>
+        <button type="button" class="btn small" style="margin-bottom:8px" onclick="applyExamStructuredText('us_lung')">テキストに反映</button>
+        <textarea id="exam_us_lung_txt" placeholder="肺US所見" rows="3" style="width:100%"></textarea>
+      </div>
+      <div id="exam_us_neck_wrap" style="display:none;margin-top:8px">
+        <button type="button" class="btn small" style="margin-bottom:8px" onclick="applyExamStructuredText('us_neck')">テキストに反映（デフォルト）</button>
+        <textarea id="exam_us_neck_txt" placeholder="頸部血管US所見" rows="3" style="width:100%"></textarea>
+      </div>
+      <div id="exam_ecg_wrap" style="display:none;margin-top:8px">
+        <div class="exam-form exam-ecg-card">
+          <div class="exam-ecg-row">
+            <label class="exam-ecg-inline" for="exam_ecg_rhythm">調律</label>
+            <select id="exam_ecg_rhythm">
+              <option value="sinus">洞調律</option>
+              <option value="af">心房細動</option>
+              <option value="other">その他</option>
+            </select>
+          </div>
+          <div class="exam-ecg-row">
+            <label class="exam-ecg-inline" for="exam_ecg_arr">不整脈</label>
+            <select id="exam_ecg_arr">
+              <option value="none">なし</option>
+              <option value="yes">あり</option>
+            </select>
+          </div>
+          <div class="exam-ecg-row">
+            <label class="exam-ecg-inline" for="exam_ecg_st_elev_mode">ST上昇</label>
+            <select id="exam_ecg_st_elev_mode" onchange="examEcgStElevModeChanged()">
+              <option value="no">なし</option>
+              <option value="yes">あり</option>
+            </select>
+          </div>
+          <div id="exam_ecg_st_elev_row" class="exam-ecg-st-block" style="display:none">
+            <span class="exam-ecg-st-hint">誘導を選択（複数可）</span>
+            <div class="exam-ecg-leads" role="group" aria-label="ST上昇の誘導">
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_elev" value="Ⅰ"><span>Ⅰ</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_elev" value="Ⅱ"><span>Ⅱ</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_elev" value="Ⅲ"><span>Ⅲ</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_elev" value="aVR"><span>aVR</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_elev" value="aVL"><span>aVL</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_elev" value="aVF"><span>aVF</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_elev" value="V1"><span>V1</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_elev" value="V2"><span>V2</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_elev" value="V3"><span>V3</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_elev" value="V4"><span>V4</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_elev" value="V5"><span>V5</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_elev" value="V6"><span>V6</span></label>
+            </div>
+          </div>
+          <div class="exam-ecg-row">
+            <label class="exam-ecg-inline" for="exam_ecg_st_dep_mode">ST低下</label>
+            <select id="exam_ecg_st_dep_mode" onchange="examEcgStDepModeChanged()">
+              <option value="no">なし</option>
+              <option value="yes">あり</option>
+            </select>
+          </div>
+          <div id="exam_ecg_st_dep_row" class="exam-ecg-st-block" style="display:none">
+            <span class="exam-ecg-st-hint">誘導を選択（複数可）</span>
+            <div class="exam-ecg-leads" role="group" aria-label="ST低下の誘導">
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_dep" value="Ⅰ"><span>Ⅰ</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_dep" value="Ⅱ"><span>Ⅱ</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_dep" value="Ⅲ"><span>Ⅲ</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_dep" value="aVR"><span>aVR</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_dep" value="aVL"><span>aVL</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_dep" value="aVF"><span>aVF</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_dep" value="V1"><span>V1</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_dep" value="V2"><span>V2</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_dep" value="V3"><span>V3</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_dep" value="V4"><span>V4</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_dep" value="V5"><span>V5</span></label>
+              <label class="exam-ecg-lead-pill"><input type="checkbox" class="exam_ecg_st_dep" value="V6"><span>V6</span></label>
+            </div>
+          </div>
+          <div class="exam-ecg-row">
+            <label class="exam-ecg-inline" for="exam_ecg_qrs">QRS</label>
+            <select id="exam_ecg_qrs">
+              <option value="narrow">narrow</option>
+              <option value="wide">wide</option>
+            </select>
+          </div>
+        </div>
+        <button type="button" class="btn small" style="margin-bottom:8px" onclick="applyExamStructuredText('ecg')">テキストに反映</button>
+        <textarea id="exam_ecg_txt" placeholder="12誘導心電図所見" rows="4" style="width:100%"></textarea>
+      </div>
+      <div id="exam_fast_wrap" style="display:none;margin-top:8px">
+        <button type="button" class="btn small" style="margin-bottom:8px" onclick="applyExamStructuredText('fast')">テキストに反映（陰性デフォルト）</button>
+        <textarea id="exam_fast_txt" placeholder="FAST所見" rows="3" style="width:100%"></textarea>
+      </div>
+      <div id="exam_efast_wrap" style="display:none;margin-top:8px">
+        <button type="button" class="btn small" style="margin-bottom:8px" onclick="applyExamStructuredText('efast')">テキストに反映（陰性デフォルト）</button>
+        <textarea id="exam_efast_txt" placeholder="eFAST所見" rows="3" style="width:100%"></textarea>
+      </div>
       
       <div class="grid2" style="margin-top:8px">
         <div>
@@ -1084,6 +1321,7 @@ main {
       
       <h3>搬送方法</h3>
       <select id="transport_method" onchange="toggleTransportTimes()">
+        <option value="">（未選択）</option>
         <option value="Uターン">Uターン</option>
         <option value="Jターン">Jターン</option>
         <option value="Iターン">Iターン</option>
@@ -1601,11 +1839,296 @@ const CARDR_CPA_GROUPS = {
   trunk: {normal:[], abn:['心音聴取不可','呼吸音聴取不可','腹部膨隆']}
 };
 
+/** v3.6 腹部US デフォルト所見（テキストに反映で挿入、手編集可） */
+const DEFAULT_EXAM_US_ABD_TEXT = '腹部超音波検査；肝臓辺縁鋭、肝内胆管拡張なし、肝実質内に特記すべきエコー像なし、胆嚢緊満なし、胆嚢壁肥厚なし、胆嚢内Acoustic shadowなし、膵体部の膵管拡張なし、脾臓に腫大なし、モリソン窩液体貯留なし、脾周囲液体貯留なし、腎臓、右腎盂拡大なし、左腎盂拡大なし、膀胱緊満なし、Douglas窩に液体貯留なし、腹部大動脈径の拡大なし';
+
+/** FAST（4部位）陰性の定型（free fluid なし）。先頭に検査名を付けない（generateReport 等で「FAST：」が付くため） */
+const DEFAULT_EXAM_FAST_TEXT = 'モリソン窩・脾腎間・心膜腔・膀胱後方に明らかなfree fluidを認めず。';
+
+/** eFAST（FAST＋肺）陰性の定型 */
+const DEFAULT_EXAM_EFAST_TEXT = 'モリソン窩・脾腎間・心膜腔・膀胱後方に明らかなfree fluidを認めず。両側肺野に明らかな肺水腫像・気胸を示唆する所見は認めず。';
+
+function getDefaultExamForm() {
+  return {
+    ucg: { lv: 'good', walls: [], pericardial: 'none', ivcCal: 'normal', ivcResp: 'present' },
+    us_lung: {
+      present: { la: true, ra: true, ll: false, rl: false },
+      absent: { la: false, ra: false, ll: false, rl: false }
+    },
+    us_neck: {},
+    ecg: {
+      rhythm: 'sinus',
+      arrhythmia: 'none',
+      qrs: 'narrow',
+      stElevMode: 'no',
+      stElevLeads: [],
+      stDepMode: 'no',
+      stDepLeads: []
+    }
+  };
+}
+
+const ECG_ST_LEAD_ORDER = ['Ⅰ', 'Ⅱ', 'Ⅲ', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'];
+
+function filterValidEcgLeads(arr) {
+  if (!Array.isArray(arr)) return [];
+  const set = new Set(ECG_ST_LEAD_ORDER);
+  return ECG_ST_LEAD_ORDER.filter(x => arr.includes(x) && set.has(x));
+}
+
+function normalizeEcgForm(ec) {
+  const def = getDefaultExamForm().ecg;
+  if (!ec || typeof ec !== 'object') return JSON.parse(JSON.stringify(def));
+  let stElevMode = ec.stElevMode === 'yes' ? 'yes' : 'no';
+  let stDepMode = ec.stDepMode === 'yes' ? 'yes' : 'no';
+  if (ec.st === 'elev' && stElevMode === 'no' && ec.stElevMode === undefined) stElevMode = 'yes';
+  if (ec.st === 'dep' && stDepMode === 'no' && ec.stDepMode === undefined) stDepMode = 'yes';
+  return {
+    rhythm: ec.rhythm || 'sinus',
+    arrhythmia: ec.arrhythmia || 'none',
+    qrs: ec.qrs || 'narrow',
+    stElevMode,
+    stDepMode,
+    stElevLeads: stElevMode === 'yes' ? filterValidEcgLeads(ec.stElevLeads) : [],
+    stDepLeads: stDepMode === 'yes' ? filterValidEcgLeads(ec.stDepLeads) : []
+  };
+}
+
+function collectEcgStLeadsFromDom(className) {
+  const picked = new Set();
+  document.querySelectorAll('input.' + className + ':checked').forEach(cb => {
+    if (cb.value) picked.add(cb.value);
+  });
+  return ECG_ST_LEAD_ORDER.filter(x => picked.has(x));
+}
+
+function buildUcgExamText(form) {
+  const f = form || getDefaultExamForm().ucg;
+  let s = '心臓超音波検査：';
+  if (f.lv === 'good') {
+    s += '左室収縮能良好。';
+  } else {
+    const walls = Array.isArray(f.walls) ? f.walls.filter(Boolean) : [];
+    if (walls.length) {
+      s += '左室収縮能低下（' + walls.join('、') + 'に壁運動低下を認める）。';
+    } else {
+      s += '左室収縮能低下。';
+    }
+  }
+  s += f.pericardial === 'yes' ? '心膜液貯留あり。' : '心膜液貯留なし。';
+  const cal = f.ivcCal === 'collapsed' ? 'IVC径虚脱' : 'IVC径正常';
+  const resp = f.ivcResp === 'absent' ? '呼吸性変動消失' : '呼吸性変動あり';
+  s += cal + '、' + resp + '。';
+  return s;
+}
+
+function normalizeUsLungForm(ul) {
+  const z = () => ({ la: false, ra: false, ll: false, rl: false });
+  const def = getDefaultExamForm().us_lung;
+  if (!ul || typeof ul !== 'object') return JSON.parse(JSON.stringify(def));
+  if (ul.present && ul.absent) {
+    return {
+      present: { la: !!ul.present.la, ra: !!ul.present.ra, ll: !!ul.present.ll, rl: !!ul.present.rl },
+      absent: { la: !!ul.absent.la, ra: !!ul.absent.ra, ll: !!ul.absent.ll, rl: !!ul.absent.rl }
+    };
+  }
+  const flat = { la: !!ul.la, ra: !!ul.ra, ll: !!ul.ll, rl: !!ul.rl };
+  if (ul.sliding === 'absent') {
+    return { present: z(), absent: { ...flat } };
+  }
+  return { present: { ...flat }, absent: z() };
+}
+
+function usLungSiteParts(side) {
+  const parts = [];
+  if (!side) return parts;
+  if (side.ra) parts.push('右前胸部');
+  if (side.la) parts.push('左前胸部');
+  if (side.rl) parts.push('右側胸部');
+  if (side.ll) parts.push('左側胸部');
+  return parts;
+}
+
+function buildUsLungExamText(form) {
+  const f = normalizeUsLungForm(form);
+  const pres = usLungSiteParts(f.present);
+  const abs = usLungSiteParts(f.absent);
+  const chunks = [];
+  if (pres.length) chunks.push('lung slidingあり（' + pres.join('、') + '）');
+  if (abs.length) chunks.push('lung sliding消失（' + abs.join('、') + '）');
+  const body = chunks.length ? chunks.join('。') + '。' : '（所見部位未選択）';
+  return '肺超音波検査：' + body;
+}
+
+function buildUsNeckExamText() {
+  return '頸部超音波検査：左右総頚動脈に明かな動脈解離を示唆するフラップなし。';
+}
+
+function buildEcgExamText(form) {
+  const f = normalizeEcgForm(form);
+  const rhythmMap = { sinus: '洞調律', af: '心房細動', other: 'その他調律' };
+  const rhy = rhythmMap[f.rhythm] || '洞調律';
+  const arr = f.arrhythmia === 'yes' ? '不整脈あり' : '不整脈なし';
+  const stParts = [];
+  if (f.stElevMode === 'yes') {
+    if (f.stElevLeads.length) stParts.push('ST上昇（' + f.stElevLeads.join('、') + '）');
+    else stParts.push('ST上昇あり');
+  }
+  if (f.stDepMode === 'yes') {
+    if (f.stDepLeads.length) stParts.push('ST低下（' + f.stDepLeads.join('、') + '）');
+    else stParts.push('ST低下あり');
+  }
+  const stText = stParts.length ? stParts.join('。') : 'ST-T変化なし';
+  const qrs = f.qrs === 'wide' ? 'QRS wide' : 'QRS narrow';
+  return '12誘導心電図：' + rhy + '。' + arr + '。' + stText + '。' + qrs + '。';
+}
+
+function syncExamFormsFromDom() {
+  if (!state.cardr) return;
+  if (!state.cardr.exam_form) state.cardr.exam_form = getDefaultExamForm();
+  const ef = state.cardr.exam_form;
+  if ($('#exam_ucg_lv')) {
+    ef.ucg = ef.ucg || {};
+    ef.ucg.lv = $('#exam_ucg_lv').value || 'good';
+    ef.ucg.walls = [];
+    document.querySelectorAll('input.exam_ucg_wall:checked').forEach(cb => {
+      if (cb.value) ef.ucg.walls.push(cb.value);
+    });
+    if ($('#exam_ucg_pc')) ef.ucg.pericardial = $('#exam_ucg_pc').value;
+    if ($('#exam_ucg_ivc_cal')) ef.ucg.ivcCal = $('#exam_ucg_ivc_cal').value;
+    if ($('#exam_ucg_ivc_resp')) ef.ucg.ivcResp = $('#exam_ucg_ivc_resp').value;
+  }
+  if ($('#exam_us_lung_present_la')) {
+    ef.us_lung = {
+      present: {
+        la: !!$('#exam_us_lung_present_la').checked,
+        ra: !!$('#exam_us_lung_present_ra').checked,
+        ll: !!$('#exam_us_lung_present_ll').checked,
+        rl: !!$('#exam_us_lung_present_rl').checked
+      },
+      absent: {
+        la: !!$('#exam_us_lung_absent_la').checked,
+        ra: !!$('#exam_us_lung_absent_ra').checked,
+        ll: !!$('#exam_us_lung_absent_ll').checked,
+        rl: !!$('#exam_us_lung_absent_rl').checked
+      }
+    };
+  }
+  if ($('#exam_ecg_rhythm')) {
+    ef.ecg = ef.ecg || {};
+    ef.ecg.rhythm = $('#exam_ecg_rhythm').value;
+    ef.ecg.arrhythmia = $('#exam_ecg_arr').value;
+    ef.ecg.qrs = $('#exam_ecg_qrs').value;
+    if ($('#exam_ecg_st_elev_mode')) {
+      ef.ecg.stElevMode = $('#exam_ecg_st_elev_mode').value === 'yes' ? 'yes' : 'no';
+      ef.ecg.stDepMode = $('#exam_ecg_st_dep_mode').value === 'yes' ? 'yes' : 'no';
+      ef.ecg.stElevLeads = ef.ecg.stElevMode === 'yes' ? collectEcgStLeadsFromDom('exam_ecg_st_elev') : [];
+      ef.ecg.stDepLeads = ef.ecg.stDepMode === 'yes' ? collectEcgStLeadsFromDom('exam_ecg_st_dep') : [];
+    }
+  }
+}
+
+function restoreExamFormsToDom() {
+  const ef = state.cardr.exam_form || getDefaultExamForm();
+  if ($('#exam_ucg_lv')) {
+    $('#exam_ucg_lv').value = ef.ucg?.lv || 'good';
+    document.querySelectorAll('input.exam_ucg_wall').forEach(cb => {
+      cb.checked = !!(ef.ucg?.walls && ef.ucg.walls.includes(cb.value));
+    });
+    if ($('#exam_ucg_pc')) $('#exam_ucg_pc').value = ef.ucg?.pericardial || 'none';
+    if ($('#exam_ucg_ivc_cal')) $('#exam_ucg_ivc_cal').value = ef.ucg?.ivcCal || 'normal';
+    if ($('#exam_ucg_ivc_resp')) $('#exam_ucg_ivc_resp').value = ef.ucg?.ivcResp || 'present';
+    examUcgWallsRow();
+  }
+  if ($('#exam_us_lung_present_la')) {
+    const ul = normalizeUsLungForm(ef.us_lung);
+    $('#exam_us_lung_present_la').checked = !!ul.present.la;
+    $('#exam_us_lung_present_ra').checked = !!ul.present.ra;
+    $('#exam_us_lung_present_ll').checked = !!ul.present.ll;
+    $('#exam_us_lung_present_rl').checked = !!ul.present.rl;
+    $('#exam_us_lung_absent_la').checked = !!ul.absent.la;
+    $('#exam_us_lung_absent_ra').checked = !!ul.absent.ra;
+    $('#exam_us_lung_absent_ll').checked = !!ul.absent.ll;
+    $('#exam_us_lung_absent_rl').checked = !!ul.absent.rl;
+  }
+  if ($('#exam_ecg_rhythm')) {
+    const ec = normalizeEcgForm(ef.ecg);
+    $('#exam_ecg_rhythm').value = ec.rhythm || 'sinus';
+    $('#exam_ecg_arr').value = ec.arrhythmia || 'none';
+    $('#exam_ecg_qrs').value = ec.qrs || 'narrow';
+    if ($('#exam_ecg_st_elev_mode')) {
+      $('#exam_ecg_st_elev_mode').value = ec.stElevMode === 'yes' ? 'yes' : 'no';
+      $('#exam_ecg_st_dep_mode').value = ec.stDepMode === 'yes' ? 'yes' : 'no';
+      document.querySelectorAll('input.exam_ecg_st_elev').forEach(cb => {
+        cb.checked = !!(ec.stElevLeads && ec.stElevLeads.includes(cb.value));
+      });
+      document.querySelectorAll('input.exam_ecg_st_dep').forEach(cb => {
+        cb.checked = !!(ec.stDepLeads && ec.stDepLeads.includes(cb.value));
+      });
+      examEcgStRowsVisibility();
+    }
+  }
+}
+
+window.examEcgStElevModeChanged = function() {
+  const v = $('#exam_ecg_st_elev_mode')?.value;
+  const row = $('#exam_ecg_st_elev_row');
+  if (row) row.style.display = v === 'yes' ? 'block' : 'none';
+  if (v === 'no') document.querySelectorAll('input.exam_ecg_st_elev').forEach(cb => { cb.checked = false; });
+  updateState();
+};
+
+window.examEcgStDepModeChanged = function() {
+  const v = $('#exam_ecg_st_dep_mode')?.value;
+  const row = $('#exam_ecg_st_dep_row');
+  if (row) row.style.display = v === 'yes' ? 'block' : 'none';
+  if (v === 'no') document.querySelectorAll('input.exam_ecg_st_dep').forEach(cb => { cb.checked = false; });
+  updateState();
+};
+
+function examEcgStRowsVisibility() {
+  const em = $('#exam_ecg_st_elev_mode')?.value;
+  const dm = $('#exam_ecg_st_dep_mode')?.value;
+  const er = $('#exam_ecg_st_elev_row');
+  const dr = $('#exam_ecg_st_dep_row');
+  if (er) er.style.display = em === 'yes' ? 'block' : 'none';
+  if (dr) dr.style.display = dm === 'yes' ? 'block' : 'none';
+}
+
+window.examUcgLvChanged = function() {
+  examUcgWallsRow();
+  updateState();
+};
+
+function examUcgWallsRow() {
+  const lv = $('#exam_ucg_lv')?.value;
+  const row = $('#exam_ucg_walls_row');
+  if (row) row.style.display = lv === 'bad' ? 'block' : 'none';
+}
+
+window.applyExamStructuredText = function(type) {
+  syncExamFormsFromDom();
+  const t = $(`#exam_${type}_txt`);
+  if (!t) return;
+  let text = '';
+  if (type === 'ucg') text = buildUcgExamText(state.cardr.exam_form.ucg);
+  else if (type === 'us_abd') text = DEFAULT_EXAM_US_ABD_TEXT;
+  else if (type === 'us_lung') text = buildUsLungExamText(state.cardr.exam_form.us_lung);
+  else if (type === 'us_neck') text = buildUsNeckExamText();
+  else if (type === 'ecg') text = buildEcgExamText(state.cardr.exam_form.ecg);
+  else if (type === 'fast') text = DEFAULT_EXAM_FAST_TEXT;
+  else if (type === 'efast') text = DEFAULT_EXAM_EFAST_TEXT;
+  else return;
+  t.value = text;
+  if (state.cardr.exam_texts) state.cardr.exam_texts[type] = text;
+  updateState();
+};
+
 // 状態
 let state = {
   request: {type:'', detail:'', age:'', sex:'', ems_team:'', content:''},
   patient: {history:'', medication:'', allergy:'', lastWell:'', lastMeal:'', hospital:'', history_chips:{}, anticoagulant:'', anticoagulant_drugs:[], antiplatelet:'', antiplatelet_drugs:[], food_allergy:'', drug_allergy:''},
-  car: {request_time:'', departure:'', scene_arrival:'', cardr_contact:'', activity_place:'', scene_departure:'', hospital_arrival:'', transport_method:'Uターン'},
+  car: {request_time:'', departure:'', scene_arrival:'', cardr_contact:'', activity_place:'', scene_departure:'', hospital_arrival:'', transport_method:null},
   ems: {
     aware:'', arrival:'', contact:'', pickup:'', departure:'', rp:'',
     vitals: [],
@@ -1625,6 +2148,7 @@ let state = {
     memos: {general:{head:'',resp:'',card:'',abd:'',limb:'',neuro:''},trauma:{head:'',neck:'',chest:'',abd:'',pelvis:'',limb:''},stroke:{neuro:'',motor:'',eye:'',higher:''},cpa:{body:'',head:'',trunk:''}},
     exams: {bs:false, ucg:false, us_abd:false, us_lung:false, us_neck:false, ecg:false, fast:false, efast:false},
     exam_texts: {ucg:'', us_abd:'', us_lung:'', us_neck:'', ecg:'', fast:'', efast:''},
+    exam_form: getDefaultExamForm(),
     bs:120, abg_type:'', abg_data: [], exam_detail:'',
     cpaEvents: [],
     stroke: {
@@ -1634,11 +2158,11 @@ let state = {
       nihss:{}, nihssMemo:''
     },
     procedures: {},
-    procedures_items: ['酸素投与','BVM','NPPV','気管挿管','胸腔ドレナージ','開胸','輸液','輸血','骨盤固定','止血処置','CPR','除細動','経皮ペーシング'],
+    procedures_items: ['酸素投与','BVM','NPPV','気管挿管','胸腔ドレナージ','開胸','輸血','骨盤固定','止血処置','CPR','除細動','経皮ペーシング'],
     procedure_detail:'',
     drugs: {},
     // 薬剤マスタを更新
-    drugs_items: ['生食','ソルアセトF','アドレナリン','ミダゾラム','ジアゼパム','アトロピン','ロクロニウム','メイロン','レペタン','トランサミン','アセリオ','メトクロプラミド','エスラックス','ブドウ糖液'],
+    drugs_items: ['生食','ソルアセトF','アドレナリン','ミダゾラム','ジアゼパム','アトロピン','ロクロニウム','メイロン','レペタン','トランサミン','アセリオ','メトクロプラミド','ブドウ糖液'],
     drug_detail:'',
     intubation: {time: '', size: '7.0'},
     nppv: {mode: '', fio2: 0.21, ipap: 10, epap: 5, peep: 5}, // mode: 'ST' or 'CPAP'
@@ -2963,6 +3487,21 @@ function mountChips(id, def, prefix) {
   }
 }
 
+/** 薬剤名に応じた投与量の表示（メイロンは mL、その他は mg） */
+function formatDrugAmountForDisplay(drugName, amount) {
+  if (drugName === 'メイロン') return `${amount}mL`;
+  if (drugName === 'レペタン') {
+    const n = parseFloat(amount);
+    if (!Number.isNaN(n)) return `${n}mg`;
+  }
+  if (drugName === 'トランサミン') {
+    const n = parseFloat(amount);
+    if (!Number.isNaN(n) && n === 1000) return '1g';
+    if (!Number.isNaN(n)) return `${n}mg`;
+  }
+  return `${amount}mg`;
+}
+
 // 処置・薬剤チップ (機能拡張)
 function renderProcedureChips(containerId, items, stateObj) {
   const c = $(`#${containerId}`);
@@ -2993,7 +3532,7 @@ function renderProcedureChips(containerId, items, stateObj) {
             if(['生食', 'ソルアセトF', 'ブドウ糖液'].includes(item)) {
                 chipText = `${item} ${lastDetail.time} (開始)`;
             } else {
-                chipText = `${item} ${lastDetail.time} (${lastDetail.amount}mg)`;
+                chipText = `${item} ${lastDetail.time} (${formatDrugAmountForDisplay(item, lastDetail.amount)})`;
             }
         }
     } else if(containerId === 'cardr_procedures' && item === '気管挿管' && state.cardr.procedures[item] && state.cardr.intubation.time) {
@@ -3660,6 +4199,7 @@ function renderRequestContentChips() {
     '胸痛',
     '意識消失',
     '意識障害',
+    '頭痛',
     '胸背部痛',
     '交通外傷',
     '転落外傷',
@@ -4048,6 +4588,26 @@ function renderAbgPills() {
   });
 }
 
+function seedExamTextIfEmpty(type) {
+  if (!state.cardr.exams[type]) return;
+  const cur = state.cardr.exam_texts[type];
+  if (cur != null && String(cur).trim() !== '') return;
+  if (!state.cardr.exam_form) state.cardr.exam_form = getDefaultExamForm();
+  syncExamFormsFromDom();
+  let text = '';
+  if (type === 'ucg') text = buildUcgExamText(state.cardr.exam_form.ucg);
+  else if (type === 'us_abd') text = DEFAULT_EXAM_US_ABD_TEXT;
+  else if (type === 'us_lung') text = buildUsLungExamText(state.cardr.exam_form.us_lung);
+  else if (type === 'us_neck') text = buildUsNeckExamText();
+  else if (type === 'ecg') text = buildEcgExamText(state.cardr.exam_form.ecg);
+  else if (type === 'fast') text = DEFAULT_EXAM_FAST_TEXT;
+  else if (type === 'efast') text = DEFAULT_EXAM_EFAST_TEXT;
+  else return;
+  state.cardr.exam_texts[type] = text;
+  const te = $(`#exam_${type}_txt`);
+  if (te) te.value = text;
+}
+
 window.toggleExam = (type) => { // グローバル化
   state.cardr.exams[type] = !state.cardr.exams[type];
   
@@ -4055,8 +4615,14 @@ window.toggleExam = (type) => { // グローバル化
     const bsArea = $('#exam_bs_area');
     if (bsArea) bsArea.style.display = state.cardr.exams[type] ? 'block' : 'none';
   } else {
-    const txtArea = $(`#exam_${type}_txt`);
-    if (txtArea) txtArea.style.display = state.cardr.exams[type] ? 'block' : 'none';
+    const wrap = $(`#exam_${type}_wrap`);
+    if (wrap) {
+      wrap.style.display = state.cardr.exams[type] ? 'block' : 'none';
+      if (state.cardr.exams[type]) seedExamTextIfEmpty(type);
+    } else {
+      const txtArea = $(`#exam_${type}_txt`);
+      if (txtArea) txtArea.style.display = state.cardr.exams[type] ? 'block' : 'none';
+    }
   }
   
   // チップを再レンダリング
@@ -4290,6 +4856,7 @@ function updateDestinationDisplay() {
 
 // 状態更新関数群 (変更なし)
 function updateState() {
+  syncExamFormsFromDom();
   state.request.type = $('#request_type')?.value || '';
   state.request.detail = $('#request_detail')?.value || '';
   state.car.request_time = $('#cardr_request_time')?.value || '';
@@ -4303,7 +4870,7 @@ function updateState() {
   state.car.scene_arrival = $('#scene_arrival')?.value || '';
   state.car.cardr_contact = $('#cardr_contact')?.value || '';
   state.car.activity_place = $('#activity_place')?.value || '';
-  state.car.transport_method = $('#transport_method')?.value || 'Uターン';
+  state.car.transport_method = $('#transport_method')?.value || null;
   state.car.scene_departure = $('#scene_departure')?.value || '';
   state.car.hospital_arrival = $('#hospital_arrival')?.value || '';
   state.ems.aware = $('#ems_aware')?.value || '';
@@ -4764,27 +5331,27 @@ function generateReport() {
     [['頭頚部',EMS_GEN_GROUPS.head,'head'],['呼吸器',EMS_GEN_GROUPS.resp,'resp'],['循環器',EMS_GEN_GROUPS.card,'card'],['腹部',EMS_GEN_GROUPS.abd,'abd'],['四肢',EMS_GEN_GROUPS.limb,'limb'],['神経',EMS_GEN_GROUPS.neuro,'neuro']].forEach(([title,def,key]) => {
       const s = extractFindings(def, state.ems.chips);
       const m = state.ems.memos?.general?.[key];
-      if(s || m) r += `【${title}】${[s,m].filter(Boolean).join('。')}\n`;
+      if(s || m) r += `${title}：${[s,m].filter(Boolean).join('。')}\n`;
     });
   } else if(tab === 'trauma') {
     r += '\n＜所見（外傷）＞\n';
     [['頭部・顔面',EMS_TRA_GROUPS.head,'head'],['頸部',EMS_TRA_GROUPS.neck,'neck'],['胸部',EMS_TRA_GROUPS.chest,'chest'],['腹部',EMS_TRA_GROUPS.abd,'abd'],['骨盤',EMS_TRA_GROUPS.pelvis,'pelvis'],['四肢',EMS_TRA_GROUPS.limb,'limb']].forEach(([title,arr,key]) => {
       const s = extractFindings(arr, state.ems.chips);
       const m = state.ems.memos?.trauma?.[key];
-      if(s || m) r += `【${title}】${[s,m].filter(Boolean).join('。')}\n`;
+      if(s || m) r += `${title}：${[s,m].filter(Boolean).join('。')}\n`;
     });
   } else if(tab === 'cpa') {
     r += '\n＜所見（CPA）＞\n';
     [['初期波形',EMS_CPA_GROUPS.rhythm],['目撃/バイスタンダー',EMS_CPA_GROUPS.witness],['気道',EMS_CPA_GROUPS.airway],['循環',EMS_CPA_GROUPS.circulation],['胸腹部',EMS_CPA_GROUPS.chest]].forEach(([title,arr]) => {
       const s = extractFindings(arr, state.ems.chips);
-      if(s) r += `【${title}】${s}\n`;
+      if(s) r += `${title}：${s}\n`;
     });
     if(state.ems.memos.cpa?.memo) r += `メモ：${state.ems.memos.cpa.memo}\n`;
   } else if(tab === 'stroke') {
     r += '\n＜所見（脳卒中）＞\n';
     [['意識',EMS_STR_GROUPS.conscious],['顔面・発語',EMS_STR_GROUPS.face],['運動',EMS_STR_GROUPS.motor],['その他',EMS_STR_GROUPS.other]].forEach(([title,arr]) => {
       const s = extractFindings(arr, state.ems.chips);
-      if(s) r += `【${title}】${s}\n`;
+      if(s) r += `${title}：${s}\n`;
     });
     if(state.ems.stroke_onset) r += `発症時刻：${state.ems.stroke_onset}\n`;
     if(state.ems.memos.stroke?.memo) r += `メモ：${state.ems.memos.stroke.memo}\n`;
@@ -4867,7 +5434,7 @@ function generateReport() {
       [['頭頚部',CARDR_GEN_GROUPS.head,'head'],['呼吸器',CARDR_GEN_GROUPS.resp,'resp'],['循環器',CARDR_GEN_GROUPS.card,'card'],['腹部',CARDR_GEN_GROUPS.abd,'abd'],['四肢',CARDR_GEN_GROUPS.limb,'limb'],['神経',CARDR_GEN_GROUPS.neuro,'neuro']].forEach(([title,def,key]) => {
         const s = extractFindings(def, state.cardr.chips);
         const m = state.cardr.memos?.general?.[key];
-        if(s || m) r += `【${title}】${[s,m].filter(Boolean).join('。')}\n`;
+        if(s || m) r += `${title}：${[s,m].filter(Boolean).join('。')}\n`;
       });
     }
     
@@ -4877,7 +5444,7 @@ function generateReport() {
       [['頭部・顔面',CARDR_TRA_GROUPS.head,'head'],['頸部',CARDR_TRA_GROUPS.neck,'neck'],['胸部',CARDR_TRA_GROUPS.chest,'chest'],['腹部',CARDR_TRA_GROUPS.abd,'abd'],['骨盤',CARDR_TRA_GROUPS.pelvis,'pelvis'],['四肢',CARDR_TRA_GROUPS.limb,'limb']].forEach(([title,arr,key]) => {
         const s = extractFindings(arr, state.cardr.chips);
         const m = state.cardr.memos?.trauma?.[key];
-        if(s || m) r += `【${title}】${[s,m].filter(Boolean).join('。')}\n`;
+        if(s || m) r += `${title}：${[s,m].filter(Boolean).join('。')}\n`;
       });
     }
     
@@ -4886,7 +5453,7 @@ function generateReport() {
       r += '神経学的所見\n';
       
       // 脳神経所見チップ
-      if(cnFindings || cnMemo) r += `【脳神経】${[cnFindings, cnMemo].filter(Boolean).join('。')}\n`;
+      if(cnFindings || cnMemo) r += `脳神経：${[cnFindings, cnMemo].filter(Boolean).join('。')}\n`;
       
       // 瞳孔・眼球（タップした場合のみ出力）
       let eyeFindings = [];
@@ -4899,7 +5466,7 @@ function generateReport() {
       if(str.plrL || str.plrR) eyeFindings.push(`対光反射 L:${str.plrL || '-'} R:${str.plrR || '-'}`);
       if(str.gaze) eyeFindings.push(`共同偏視:${str.gaze}`);
       if(str.nyst) eyeFindings.push(`眼振:${str.nyst}`);
-      if(eyeFindings.length > 0) r += `【瞳孔・眼】${eyeFindings.join('、')}\n`;
+      if(eyeFindings.length > 0) r += `瞳孔・眼：${eyeFindings.join('、')}\n`;
       
       // MMT（タップした場合のみ出力）
       if(str.mmt && Object.keys(str.mmt).length > 0) {
@@ -4916,7 +5483,7 @@ function generateReport() {
         // タップした値がある場合のみ出力
         if(mmtValues.length > 0) {
           const mmtText = mmtValues.map(m => `${m.label}:${m.value}`).join(' ');
-          r += `【運動MMT】${mmtText}\n`;
+          r += `運動MMT：${mmtText}\n`;
         }
       }
       
@@ -4942,16 +5509,16 @@ function generateReport() {
         if(str.chaddock.left === 'negative') chaddockParts.push('左:陰性');
         if(chaddockParts.length > 0) reflexFindings.push(`Chaddock反射 ${chaddockParts.join(' ')}`);
       }
-      if(reflexFindings.length > 0) r += `【反射】${reflexFindings.join('、')}\n`;
+      if(reflexFindings.length > 0) r += `反射：${reflexFindings.join('、')}\n`;
       
       // 高次脳機能
-      if(higherFindings || higherMemo) r += `【高次脳機能】${[higherFindings, higherMemo].filter(Boolean).join('。')}\n`;
+      if(higherFindings || higherMemo) r += `高次脳機能：${[higherFindings, higherMemo].filter(Boolean).join('。')}\n`;
       
       // NIHSS
       if(str.nihss && Object.keys(str.nihss).length > 0) {
         let nihssSum = 0;
         NIHSS_ITEMS.forEach(item => nihssSum += str.nihss[item.id] || 0);
-        r += `【NIHSS】${nihssSum}点\n`;
+        r += `NIHSS：${nihssSum}点\n`;
         if(str.nihssMemo) r += `NIHSSメモ：${str.nihssMemo}\n`;
       }
     }
@@ -4962,7 +5529,7 @@ function generateReport() {
     r += '\n＜CPA記録＞\n';
     state.cardr.cpaEvents.forEach((cpa, idx) => {
       const isFirst = idx === 0;
-      if(state.cardr.cpaEvents.length > 1) r += `\n【心停止イベント ${idx + 1}${!isFirst ? '（再心停止）' : ''}】\n`;
+      if(state.cardr.cpaEvents.length > 1) r += `\n心停止イベント ${idx + 1}${!isFirst ? '（再心停止）' : ''}：\n`;
       
       if(cpa.arrestTime) r += `心停止時刻：${cpa.arrestTime}\n`;
       if(cpa.rhythm) r += `初期波形：${cpa.rhythm}\n`;
@@ -5106,10 +5673,10 @@ function generateReport() {
           const details = state.cardr.drug_details[d];
           if(details.length > 1) {
             // 複数回投与の場合、詳細を列挙
-            return `${d}：${details.map(det => `${det.time} (${det.amount}mg)`).join('、')}`;
+            return `${d}：${details.map(det => `${det.time} (${formatDrugAmountForDisplay(d, det.amount)})`).join('、')}`;
           } else if (details.length === 1) {
             // 1回投与の場合
-            return `${d}(${details[0].time}、${details[0].amount}mg)`;
+            return `${d}(${details[0].time}、${formatDrugAmountForDisplay(d, details[0].amount)})`;
           }
         }
         return d;
@@ -5120,7 +5687,6 @@ function generateReport() {
   }
   r += '\n';
   
-  r += '【評価】\n';
   if(state.problems.length > 0) {
     r += '＜プロブレム＞\n';
     state.problems.forEach((p, i) => r += `#${i+1} ${p}\n`);
@@ -5138,14 +5704,14 @@ function generateReport() {
   const hospitalName = state.destination.custom || state.destination.hospital || '（未選択）';
   r += `医療機関：${hospitalName}\n`;
   if(state.destination.reason) r += `選定理由：${state.destination.reason}\n`;
-  // 搬送方法から病院着までのタイムライン情報
-  if(state.car.transport_method || state.car.scene_departure || state.car.hospital_arrival) {
-    r += `搬送方法：${state.car.transport_method || '（未選択）'}\n`;
-    // Iターン以外は現場出発と病院着を記載
-    if(state.car.transport_method !== 'Iターン') {
-      if(state.car.scene_departure) r += `現場出発：${state.car.scene_departure}\n`;
-      if(state.car.hospital_arrival) r += `病院着：${state.car.hospital_arrival}\n`;
-    }
+  // 搬送方法は選択時のみ。現場出発・病院着は Iターン 以外で記載
+  const tmOut = state.car.transport_method;
+  if(tmOut) {
+    r += `搬送方法：${tmOut}\n`;
+  }
+  if(tmOut !== 'Iターン') {
+    if(state.car.scene_departure) r += `現場出発：${state.car.scene_departure}\n`;
+    if(state.car.hospital_arrival) r += `病院着：${state.car.hospital_arrival}\n`;
   }
   r += '\n';
   
@@ -5223,7 +5789,7 @@ window.resetData = () => { // グローバル化
   state = {
     request: {type:'', detail:'', age:'', sex:'', ems_team:'', content:''},
     patient: {history:'', medication:'', allergy:'', lastWell:'', lastMeal:'', hospital:'', history_chips:{}, anticoagulant:'', anticoagulant_drugs:[], antiplatelet:'', antiplatelet_drugs:[], food_allergy:'', drug_allergy:''},
-    car: {request_time:'', departure:'', scene_arrival:'', cardr_contact:'', activity_place:'', scene_departure:'', hospital_arrival:'', transport_method:'Uターン'},
+    car: {request_time:'', departure:'', scene_arrival:'', cardr_contact:'', activity_place:'', scene_departure:'', hospital_arrival:'', transport_method:null},
     ems: {
       request_time:'', aware:'', arrival:'', contact:'', rp:'',
       vitals: [],
@@ -5242,6 +5808,7 @@ window.resetData = () => { // グローバル化
       memos: {general:{head:'',resp:'',card:'',abd:'',limb:'',neuro:''},trauma:{head:'',neck:'',chest:'',abd:'',pelvis:'',limb:''},stroke:{neuro:'',motor:'',eye:'',higher:''},cpa:{body:'',head:'',trunk:''}},
       exams: {bs:false, ucg:false, us_abd:false, us_lung:false, us_neck:false, ecg:false, fast:false, efast:false},
       exam_texts: {ucg:'', us_abd:'', us_lung:'', us_neck:'', ecg:'', fast:'', efast:''},
+      exam_form: getDefaultExamForm(),
       bs:120, abg_type:'', abg_data: [], exam_detail:'',
       cpaEvents: [],
       stroke: {
@@ -5251,10 +5818,10 @@ window.resetData = () => { // グローバル化
         nihss:{}, nihssMemo:''
       },
       procedures: {},
-      procedures_items: ['酸素投与','BVM','NPPV','気管挿管','胸腔ドレナージ','開胸','輸液','輸血','骨盤固定','止血処置','CPR','除細動','経皮ペーシング'],
+      procedures_items: ['酸素投与','BVM','NPPV','気管挿管','胸腔ドレナージ','開胸','輸血','骨盤固定','止血処置','CPR','除細動','経皮ペーシング'],
       procedure_detail:'',
       drugs: {},
-      drugs_items: ['生食','ソルアセトF','アドレナリン','ミダゾラム','ジアゼパム','アトロピン','ロクロニウム','メイロン','レペタン','トランサミン','アセリオ','メトクロプラミド','エスラックス','ブドウ糖液'],
+      drugs_items: ['生食','ソルアセトF','アドレナリン','ミダゾラム','ジアゼパム','アトロピン','ロクロニウム','メイロン','レペタン','トランサミン','アセリオ','メトクロプラミド','ブドウ糖液'],
       drug_detail:'',
       intubation: {time: '', size: '7.0'},
       nppv: {mode: '', fio2: 0.21, ipap: 10, epap: 5, peep: 5},
@@ -5331,7 +5898,7 @@ function restoreUI() {
   $('#cardr_contact').value = state.car?.cardr_contact || ''; 
   $('#activity_place').value = state.car?.activity_place || '';
   if($('#transport_method')) {
-    $('#transport_method').value = state.car?.transport_method || 'Uターン';
+    $('#transport_method').value = state.car?.transport_method != null && state.car.transport_method !== '' ? state.car.transport_method : '';
     toggleTransportTimes();
   }
   $('#scene_departure').value = state.car?.scene_departure || '';
@@ -5362,12 +5929,20 @@ function restoreUI() {
   if (examBsAreaEl) examBsAreaEl.style.display = state.cardr.exams?.bs ? 'block' : 'none';
   
   ['ucg','us_abd','us_lung','us_neck','ecg','fast','efast'].forEach(t => {
-    const txtEl = $(`#exam_${t}_txt`);
-    if (txtEl) {
-      txtEl.style.display = state.cardr.exams[t] ? 'block' : 'none';
-      txtEl.value = state.cardr.exam_texts[t] || '';
+    const wrap = $(`#exam_${t}_wrap`);
+    if (wrap) {
+      wrap.style.display = state.cardr.exams[t] ? 'block' : 'none';
+      const txtEl = $(`#exam_${t}_txt`);
+      if (txtEl) txtEl.value = state.cardr.exam_texts[t] || '';
+    } else {
+      const txtEl = $(`#exam_${t}_txt`);
+      if (txtEl) {
+        txtEl.style.display = state.cardr.exams[t] ? 'block' : 'none';
+        txtEl.value = state.cardr.exam_texts[t] || '';
+      }
     }
   });
+  restoreExamFormsToDom();
   $('#cardr_exam_detail').value = state.cardr.exam_detail || ''; 
   $('#cardr_procedure_detail').value = state.cardr.procedure_detail || ''; 
   $('#cardr_drug_detail').value = state.cardr.drug_detail || ''; 
@@ -5519,8 +6094,8 @@ function initializeStateDataStructure() {
       '鹿児島市': ['鹿児島市立病院','鹿児島大学病院','鹿児島医療センター','米盛病院','いまきいれ総合病院','今村総合病院','中央病院','鹿児島徳洲会病院','南風病院','鹿児島生協病院','厚地脳神経外科病院','池田病院','いじゅういん脳神経外科','上町いまきいれ病院','いづろ今村病院','岩尾病院','植村病院','大勝病院','小田代病院','鹿児島厚生連病院','鹿児島こども病院','鹿児島市医師会病院','鹿児島赤十字病院','河井脳神経外科','かわはら脳神経外科クリニック','木村外科内科','共立病院','キラメキテラスヘルスケアホスピタル','馬場病院','健翔会病院','済生会鹿児島病院','桜島病院','三愛病院','新成病院','豊島病院','中野脳神経外科','新村病院','林内科胃腸科病院','日高病院','増田整形外科病院','三船病院','三宅病院','みらいリハビリテーション病院']
     };
     state.ems.procedures_items = ['頚椎カラー','全身固定','吸引','酸素投与','BVM換気','気管挿管','LT挿入','静脈路確保','ブドウ糖投与','ショック輸液','圧迫止血','胸骨圧迫','LUCAS装着','除細動','アドレナリン'];
-    state.cardr.procedures_items = ['酸素投与','BVM','NPPV','気管挿管','胸腔ドレナージ','開胸','輸液','輸血','骨盤固定','止血処置','CPR','除細動','経皮ペーシング'];
-    state.cardr.drugs_items = ['生食','ソルアセトF','アドレナリン','ミダゾラム','ジアゼパム','アトロピン','ロクロニウム','メイロン','レペタン','トランサミン','アセリオ','メトクロプラミド','エスラックス','ブドウ糖液'];
+    state.cardr.procedures_items = ['酸素投与','BVM','NPPV','気管挿管','胸腔ドレナージ','開胸','輸血','骨盤固定','止血処置','CPR','除細動','経皮ペーシング'];
+    state.cardr.drugs_items = ['生食','ソルアセトF','アドレナリン','ミダゾラム','ジアゼパム','アトロピン','ロクロニウム','メイロン','レペタン','トランサミン','アセリオ','メトクロプラミド','ブドウ糖液'];
 
     // ネストされたオブジェクトの初期化
     if (!state.request.age) state.request.age = '';
@@ -5538,6 +6113,9 @@ function initializeStateDataStructure() {
     if (!state.cardr.drug_details) state.cardr.drug_details = {};
     if (!state.cardr.exams) state.cardr.exams = {bs:false, ucg:false, us_abd:false, us_lung:false, us_neck:false, ecg:false, fast:false, efast:false};
     if (!state.cardr.exam_texts) state.cardr.exam_texts = {ucg:'', us_abd:'', us_lung:'', us_neck:'', ecg:'', fast:'', efast:''};
+    if (!state.cardr.exam_form) state.cardr.exam_form = getDefaultExamForm();
+    if (state.cardr.exam_form.us_lung) state.cardr.exam_form.us_lung = normalizeUsLungForm(state.cardr.exam_form.us_lung);
+    if (state.cardr.exam_form.ecg) state.cardr.exam_form.ecg = normalizeEcgForm(state.cardr.exam_form.ecg);
     if (!state.cardr.abg_data) state.cardr.abg_data = [];
     if (!state.cardr.cpaEvents) state.cardr.cpaEvents = [];
     if (!state.cardr.exam_tab) state.cardr.exam_tab = 'general';
@@ -5807,9 +6385,11 @@ window.openDrugDetailDial = (drugName, isEditMode) => { // グローバル化
 
   const drugDetails = state.cardr.drug_details[drugName];
   
-  // 薬剤ごとの設定
+  // 薬剤ごとの設定（amountUnit: ホイール表示、discrete* がある場合は min/max レンジは使わない）
   let amountConfig = {};
   let defaultAmount = '';
+  let amountUnit = 'mg';
+  let discreteAmounts = null;
   
   switch(drugName) {
     case 'アドレナリン':
@@ -5822,7 +6402,31 @@ window.openDrugDetailDial = (drugName, isEditMode) => { // グローバル化
       amountConfig = {min: 0.1, max: 10.0, step: 0.1, decimals: 1};
       defaultAmount = 1.0; // 基準値1.0mg
       break;
-    case 'エスラックス':
+    case 'メトクロプラミド':
+      // 塩酸塩10mg製剤1アンプル相当
+      amountConfig = {min: 10, max: 10, step: 1, decimals: 0};
+      defaultAmount = 10;
+      break;
+    case 'メイロン':
+      // 20mLポリアンプル1本または2本（40mL）
+      discreteAmounts = ['20', '40'];
+      amountUnit = 'mL';
+      defaultAmount = '20';
+      break;
+    case 'レペタン':
+      // 0.2mgアンプル相当の分割量（0.1mgを初期）
+      discreteAmounts = ['0.05', '0.1', '0.2'];
+      defaultAmount = '0.1';
+      break;
+    case 'アセリオ':
+      discreteAmounts = ['500', '1000'];
+      defaultAmount = '1000';
+      break;
+    case 'トランサミン':
+      // 1g静注製剤を全量使用
+      discreteAmounts = ['1000'];
+      defaultAmount = '1000';
+      break;
     case 'ロクロニウム':
       amountConfig = {min: 1, max: 100, step: 1, decimals: 0};
       defaultAmount = 50;
@@ -5839,7 +6443,7 @@ window.openDrugDetailDial = (drugName, isEditMode) => { // グローバル化
           <h4 style="margin:0 0 4px; font-size:14px; color:var(--muted)">投与履歴:</h4>
           ${drugDetails.map((d, i) => 
               `<div style="font-size:14px; display:flex; justify-content:space-between; margin-bottom:4px; padding-right:10px;">
-                  <span>${i + 1}回目: ${d.time} (${d.amount}mg)</span>
+                  <span>${i + 1}回目: ${d.time} (${formatDrugAmountForDisplay(drugName, d.amount)})</span>
                   <button style="color:#dc2626; border:none; background:none; cursor:pointer; padding:0" onclick="removeDrugDose('${drugName}', ${i})">削除</button>
               </div>`
           ).join('')}
@@ -5849,22 +6453,41 @@ window.openDrugDetailDial = (drugName, isEditMode) => { // グローバル化
   // 投与詳細ダイアログの本体を生成
   const showDrugDial = (initialTime, initialAmount) => {
       const [h, m] = initialTime.split(':').map(String);
-      const currentAmount = parseFloat(initialAmount || defaultAmount);
       
       const hoursOptions = Array.from({length: 24}, (_, i) => ({label: String(i).padStart(2, '0'), value: String(i).padStart(2, '0')}));
       const minutesOptions = Array.from({length: 60}, (_, i) => ({label: String(i).padStart(2, '0'), value: String(i).padStart(2, '0')}));
       
-      const amounts = [];
-      for(let i = amountConfig.min; i <= amountConfig.max; i = parseFloat((i + amountConfig.step).toFixed(amountConfig.decimals))) {
+      let amounts;
+      let amountOptions;
+      if (discreteAmounts) {
+        amounts = discreteAmounts.map(a => String(a));
+        amountOptions = amounts.map(a => ({ label: a + amountUnit, value: a }));
+      } else {
+        amounts = [];
+        for(let i = amountConfig.min; i <= amountConfig.max; i = parseFloat((i + amountConfig.step).toFixed(amountConfig.decimals))) {
           const val = i.toFixed(amountConfig.decimals);
           amounts.push(val);
+        }
+        amountOptions = amounts.map(a => ({ label: a + amountUnit, value: a }));
       }
-      const amountOptions = amounts.map(a => ({label: a + 'mg', value: a}));
+      
+      let selectedAmount;
+      if (discreteAmounts) {
+        const raw = String(initialAmount != null && initialAmount !== '' ? initialAmount : defaultAmount);
+        selectedAmount = amounts.includes(raw) ? raw : String(defaultAmount);
+        if (!amounts.includes(selectedAmount)) selectedAmount = amounts[0];
+      } else {
+        const currentAmount = parseFloat(initialAmount != null && initialAmount !== '' ? initialAmount : defaultAmount);
+        selectedAmount = currentAmount.toFixed(amountConfig.decimals);
+      }
+      if (!amounts.includes(selectedAmount)) {
+        selectedAmount = amounts.includes(String(defaultAmount)) ? String(defaultAmount) : amounts[0];
+      }
       
       const wheels = [
           {options: hoursOptions, selected: h, unit: ':'},
           {options: minutesOptions, selected: m},
-          {options: amountOptions, selected: currentAmount.toFixed(amountConfig.decimals), unit: 'mg'}
+          {options: amountOptions, selected: selectedAmount, unit: amountUnit}
       ];
       
       openDial(drugName + ' 投与設定', wheels, (vals) => {
@@ -5888,7 +6511,9 @@ window.openDrugDetailDial = (drugName, isEditMode) => { // グローバル化
       const nextTime = drugDetails.length > 0 ? addMinutesToTime(drugDetails[drugDetails.length - 1].time, 4) : `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       
       // デフォルト量を文字列として渡す
-      const defaultAmountStr = defaultAmount.toFixed(amountConfig.decimals || 0);
+      const defaultAmountStr = discreteAmounts
+        ? String(defaultAmount)
+        : defaultAmount.toFixed(amountConfig.decimals || 0);
 
       const customDialog = `
           <div id="drug-custom-dialog" style="padding:20px; text-align:center;">
@@ -6184,6 +6809,9 @@ function init() {
         updateState(); 
       };
     }
+  });
+  document.querySelectorAll('.exam_ucg_wall, .exam_us_lung_site, .exam_ecg_st_elev, .exam_ecg_st_dep').forEach(el => {
+    el.addEventListener('change', () => updateState());
   });
 
   // 既往歴テキストエリアの手動変更時にチップ状態を同期
