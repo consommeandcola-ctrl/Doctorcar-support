@@ -1,0 +1,35 @@
+# Local caches and generated files
+.firebase/
+node_modules/
+dist/
+build/
+coverage/
+*.cache
+*.log
+*.tmp
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Editor and OS files
+.cursor/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Dropbox conflict copies and temporary backups
+*競合コピー*
+*.bak
+*.bak-*
+*.backup
+
+# The existing 142 MB demo video remains in Dropbox.
+*.mp4
+*.MP4
+

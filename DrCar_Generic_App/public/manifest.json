@@ -1,0 +1,21 @@
+{
+  "name": "ドクターカー活動記録",
+  "short_name": "ドクターカー",
+  "description": "ドクターカー活動記録アプリケーション",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f2f2f7",
+  "theme_color": "#f2f2f7",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["medical", "productivity"],
+  "lang": "ja",
+  "dir": "ltr"
+}
