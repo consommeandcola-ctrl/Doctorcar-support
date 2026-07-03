@@ -3456,6 +3456,88 @@ window.setNow = (id) => { // グローバル化
   }
 };
 
+// スマート時刻入力: 空の時刻フィールドがタップ（フォーカス）された時、直前の関連時刻を初期値としてセットする
+function getBaseTimeForInput(inputEl) {
+  // EMSバイタル: 同タブ内の直前のEMSバイタル、なければEMS接触時刻
+  if (inputEl.id.startsWith('ems_vital_time_')) {
+    const tab = inputEl.closest('.tab-content');
+    if (tab) {
+      const vitals = Array.from(tab.querySelectorAll('input[type="time"]'));
+      const myIndex = vitals.indexOf(inputEl);
+      for(let i = myIndex - 1; i >= 0; i--) {
+        if(vitals[i].id.startsWith('ems_vital_time_') && vitals[i].value) return vitals[i].value;
+      }
+    }
+    const emsContact = document.getElementById('ems_contact');
+    if (emsContact && emsContact.value) return emsContact.value;
+  }
+  
+  // Drバイタル: 同タブ内の直前のDrバイタル、なければDr接触時刻
+  if (inputEl.id.startsWith('cardr_vital_time_')) {
+    const tab = inputEl.closest('.tab-content');
+    if (tab) {
+      const vitals = Array.from(tab.querySelectorAll('input[type="time"]'));
+      const myIndex = vitals.indexOf(inputEl);
+      for(let i = myIndex - 1; i >= 0; i--) {
+        if(vitals[i].id.startsWith('cardr_vital_time_') && vitals[i].value) return vitals[i].value;
+      }
+    }
+    const drContact = document.getElementById('cardr_contact');
+    if (drContact && drContact.value) return drContact.value;
+  }
+
+  // タイムラインの階層的なフォールバック
+  const fallbacks = {
+    'car_departure': 'cardr_request_time',
+    'scene_arrival': 'car_departure',
+    'cardr_contact': 'scene_arrival',
+    'scene_departure': 'cardr_contact',
+    'hospital_arrival': 'scene_departure',
+    
+    'ems_arrival': 'ems_aware',
+    'ems_contact': 'ems_arrival',
+    'ems_pickup': 'ems_contact',
+    'ems_departure': 'ems_pickup',
+    'ems_rp': 'ems_departure',
+  };
+
+  let currentId = inputEl.id;
+  while (fallbacks[currentId]) {
+    const fallbackId = fallbacks[currentId];
+    const fallbackEl = document.getElementById(fallbackId);
+    if (fallbackEl && fallbackEl.value) {
+      return fallbackEl.value;
+    }
+    currentId = fallbackId;
+  }
+
+  // フォールバックが見つからない場合は、同じタブ内の直前の入力済み時刻を使う
+  const tab = inputEl.closest('.tab-content');
+  if (tab) {
+    const allTimeInputs = Array.from(tab.querySelectorAll('input[type="time"]'));
+    const myIndex = allTimeInputs.indexOf(inputEl);
+    for (let i = myIndex - 1; i >= 0; i--) {
+      if (allTimeInputs[i].value) {
+        return allTimeInputs[i].value;
+      }
+    }
+  }
+
+  return '';
+}
+
+document.addEventListener('focusin', (e) => {
+  if (e.target.matches('input[type="time"]') && !e.target.value) {
+    const baseTime = getBaseTimeForInput(e.target);
+    if (baseTime) {
+      e.target.value = baseTime;
+      // focus時にvalueをセットしてもネイティブのピッカーが開く時に反映される
+      // アプリ側の state にも反映させる
+      if(typeof updateState === 'function') updateState();
+    }
+  }
+});
+
 // チップ・所見関数群 (変更なし)
 function mkChip(label, mode, prefix) {
   const el = document.createElement('span');
