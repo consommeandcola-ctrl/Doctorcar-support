@@ -1,0 +1,5265 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>ドクターカー活動記録 v3.0 (2026/01/19) - タブ版</title>
+<style>
+:root{
+  --ink:#111827;--muted:#6b7280;--bg:#f2f2f7;--card:#fff;
+  --line:#c6c6c8;--brand:#007aff;--chip:#f2f2f7;
+  --safe-top:env(safe-area-inset-top);
+  --safe-bottom:env(safe-area-inset-bottom);
+}
+/* キーボード問題を修正するため、-webkit-tap-highlight-color: transparent を削除 */
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;overscroll-behavior:none}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;
+  color:var(--ink);background:var(--bg);
+  padding-bottom:calc(60px + var(--safe-bottom));
+}
+header{
+  position:sticky;top:0;z-index:100;
+  background:rgba(242,242,247,0.94);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:0.5px solid var(--line);
+  padding:calc(12px + var(--safe-top)) 16px 12px;
+}
+h1{margin:0;font-size:17px;font-weight:600;text-align:center}
+.version{margin:4px 0 0;color:var(--muted);font-size:12px;text-align:center}
+main{padding:12px}
+.card{
+  background:#fff;border-radius:12px;
+  margin-bottom:12px;overflow:hidden;
+}
+.card-header{
+  padding:14px 16px 10px;
+  font-size:15px;font-weight:600;
+  border-bottom:0.5px solid var(--line);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.card-body{padding:12px 16px}
+h3{margin:12px 0 8px;font-size:13px;color:var(--muted);font-weight:500}
+label{font-size:13px;color:var(--muted);display:block;margin:8px 0 4px}
+input,textarea,select{
+  width:100%;padding:12px;
+  border:none;border-radius:10px;
+  background:var(--chip);font-size:16px;
+  -webkit-appearance:none;
+}
+textarea{resize:none;min-height:80px}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.time-row{display:flex;gap:8px;align-items:center}
+.time-row input{flex:1}
+.time-btn{
+  background:var(--brand);color:#fff;
+  border:none;border-radius:8px;
+  padding:12px 14px;font-size:14px;font-weight:500;
+  white-space:nowrap;
+}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{
+  background:var(--chip);border:1.5px solid transparent;
+  border-radius:20px;padding:8px 14px;
+  font-size:12px;font-weight:500;
+  user-select:none;cursor:pointer;
+  transition:all 0.15s;
+}
+.chip:active{transform:scale(0.95)}
+.chip.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+.chip[data-state="on"]{background:#dcfce7;border-color:#4ade80;color:#15803d}
+.chip[data-state="+"]{background:#fee2e2;border-color:#f87171;color:#b91c1c}
+.chip[data-state="-"]{background:#dcfce7;border-color:#4ade80;color:#15803d}
+.chip[data-state="proc"]{background:var(--brand);color:#fff}
+.btn{
+  background:var(--brand);color:#fff;
+  border:none;border-radius:10px;
+  padding:14px 20px;font-size:15px;font-weight:600;
+  width:100%;
+}
+.btn:active{opacity:0.8}
+.btn.ghost{background:var(--chip);color:var(--ink)}
+.btn.small{padding:10px 16px;font-size:14px}
+.btn-row{display:flex;gap:10px;margin-top:12px}
+.btn-row .btn{flex:1}
+
+/* トグルボタン（目撃あり/なし等） */
+.toggle-btn{
+  background:var(--chip);
+  border:1.5px solid var(--line);
+  border-radius:10px;
+  padding:10px 16px;
+  font-size:15px;font-weight:500;
+  cursor:pointer;
+  transition:all 0.2s;
+  text-align:center;
+  user-select:none;
+}
+.toggle-btn:active{transform:scale(0.97)}
+.toggle-btn.active{
+  background:#dcfce7;
+  border-color:#4ade80;
+  color:#15803d;
+}
+
+/* 新しいチェックボックスのトグルスタイル */
+.check-toggle {
+  background: var(--chip);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  min-width: 120px; /* 見栄えのために幅を調整 */
+}
+.check-toggle:active{transform:scale(0.97)}
+.check-toggle input[type="checkbox"] {
+  display: none; /* 元のチェックボックスは非表示に */
+}
+.check-toggle.active {
+  background: #dcfce7;
+  border-color: #4ade80;
+  color: #15803d;
+}
+.check-toggle.active:before {
+  content: "✅ "; /* チェックマークを追加 */
+}
+
+/* チェックボックスクリック時の光るエフェクト */
+@keyframes checkFlash {
+  0% { background: transparent; }
+  50% { background: rgba(0, 122, 255, 0.15); }
+  100% { background: transparent; }
+}
+.check-flash {
+  animation: checkFlash 0.4s ease-out;
+  border-radius: 8px;
+}
+
+/* バイタルサイン - ダイヤル式 */
+.vital-card{
+  background:#fff;border-radius:12px;
+  margin-top:10px;overflow:hidden;
+  border:1px solid var(--line);
+}
+.vital-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 14px;background:#f9fafb;
+  border-bottom:0.5px solid var(--line);
+}
+.vital-time{
+  display:flex;align-items:center;gap:8px;
+}
+.vital-time input{
+  width:100px;padding:8px 10px;
+  font-size:15px;font-weight:600;
+  color:var(--brand);background:#fff;
+  border:1px solid var(--line);border-radius:8px;
+}
+.vital-del{
+  background:#fee2e2;color:#dc2626;
+  border:none;border-radius:8px;
+  padding:8px 12px;font-size:13px;font-weight:500;
+}
+.vital-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:1px;background:var(--line);
+}
+.vital-item{
+  background:#fff;padding:10px 8px;
+  text-align:center;cursor:pointer;
+  transition:background 0.15s;
+}
+.vital-item:active{background:#f3f4f6}
+.vital-label{font-size:11px;color:var(--muted);margin-bottom:4px}
+.vital-value{font-size:20px;font-weight:600;color:var(--ink)}
+.vital-unit{font-size:11px;color:var(--muted)}
+.vital-gcs{
+  grid-column:span 3;
+  display:flex;justify-content:center;gap:20px;
+  padding:12px;
+}
+.gcs-part{text-align:center;cursor:pointer}
+.gcs-part span{display:block}
+.gcs-part .lbl{font-size:12px;color:var(--muted)}
+.gcs-part .val{font-size:22px;font-weight:600;color:var(--brand)}
+.gcs-sum{
+  background:var(--brand);color:#fff;
+  border-radius:20px;padding:6px 16px;
+  font-size:16px;font-weight:600;
+  align-self:center;
+}
+
+/* ダイヤルピッカー */
+.dial-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.4);
+  z-index:1000;display:none;
+  align-items:flex-end;justify-content:center;
+  touch-action:none;
+  overscroll-behavior:contain;
+}
+.dial-overlay.show{display:flex}
+/* iOSキーボード問題を修正するため、position:fixedを削除し、vhで高さを固定 */
+body.dial-open{
+  height: 100vh;
+  overflow: hidden;
+  /* position: fixed; を削除 */
+} 
+.dial-container{
+  background:#fff;
+  border-radius:16px 16px 0 0;
+  width:100%;max-width:500px;
+  padding-bottom:var(--safe-bottom);
+  animation:slideUp 0.25s ease-out;
+}
+@keyframes slideUp{from{transform:translateY(100%)}}
+.dial-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 20px;border-bottom:0.5px solid var(--line);
+}
+.dial-title{font-size:17px;font-weight:600}
+.dial-done{
+  background:none;border:none;
+  color:var(--brand);font-size:17px;font-weight:600;
+}
+.dial-body{
+  display:flex;justify-content:center;
+  padding:20px;gap:10px;
+}
+.dial-wheel{
+  height:200px;width:120px;
+  overflow:hidden;position:relative;
+  touch-action:pan-y;
+}
+.dial-wheel::before,.dial-wheel::after{
+  content:'';position:absolute;left:0;right:0;
+  height:80px;pointer-events:none;z-index:2;
+}
+.dial-wheel::before{
+  top:0;
+  background:linear-gradient(to bottom,rgba(255,255,255,1),rgba(255,255,255,0));
+}
+.dial-wheel::after{
+  bottom:0;
+  background:linear-gradient(to top,rgba(255,255,255,1),rgba(255,255,255,0));
+}
+.dial-highlight{
+  position:absolute;top:50%;left:0;right:0;
+  height:40px;transform:translateY(-50%);
+  background:var(--chip);border-radius:8px;
+  z-index:1;
+}
+.dial-scroll{
+  position:relative;z-index:3;
+  padding:80px 0;
+  transition:transform 0.15s ease-out;
+}
+.dial-option{
+  height:40px;display:flex;
+  align-items:center;justify-content:center;
+  font-size:18px;font-weight:500;
+  color:#999;
+  transition:all 0.15s;
+}
+.dial-option.selected{
+  color:var(--ink);font-weight:600;
+  font-size:22px;
+}
+.dial-unit{
+  font-size:14px;color:var(--muted);
+  align-self:center;
+}
+
+/* 所見タブ */
+.exam-tabs{
+  display:flex;gap:8px;overflow-x:auto;
+  padding:0 0 10px;margin:0 -16px;padding-left:16px;
+  -webkit-overflow-scrolling:touch;
+}
+.exam-tabs::-webkit-scrollbar{display:none}
+.exam-tab{
+  flex-shrink:0;
+  padding:10px 16px;border-radius:20px;
+  background:var(--chip);font-size:14px;font-weight:500;
+  cursor:pointer;
+}
+.exam-tab.active{background:var(--brand);color:#fff}
+.exam-pane{display:none}
+.exam-pane.active{display:block}
+.memo{
+  margin-top:8px;background:var(--chip);
+  border-radius:10px;padding:12px;
+  font-size:14px;min-height:60px;
+}
+
+/* 出力エリア */
+.result{
+  white-space:pre-wrap;
+  background:#fafafa;border-radius:12px;
+  padding:14px;font-size:13px;line-height:1.7;
+  min-height:300px;
+  border:1px dashed var(--line);
+}
+
+/* 下部ナビ */
+.bottom-nav{display:none;}
+.bottom-nav .btn{flex:1;padding:12px}
+
+/* 病院リスト */
+.hospital-item{
+  display:flex;justify-content:space-between;
+  align-items:center;padding:12px 0;
+  border-bottom:0.5px solid var(--line);
+}
+.hospital-item:last-child{border-bottom:none}
+
+/* チェックライン */
+.checkline{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px}
+.checkline label{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  margin: 0;
+}
+
+.checkline input[type="checkbox"]{
+  width:22px;height:22px;
+  accent-color:var(--brand);
+}
+
+/* CPAイベントカード内のチェックラインのスタイルを改善 */
+.vital-card .checkline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  margin-bottom: 8px; /* checklineに余白がない場合に対応 */
+}
+.vital-card .checkline .check-toggle {
+    padding: 8px 12px;
+    font-size: 14px;
+    border-radius: 8px;
+    min-width: unset;
+    flex-grow: 1;
+}
+
+/* ラボピル */
+.labline{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.labpill{
+  display:flex;align-items:center;gap:6px;
+  background:var(--chip);border-radius:20px;
+  padding:8px 12px;
+}
+.labpill label{margin:0;font-size:13px;font-weight:500}
+.labpill input{
+  width:70px;padding:6px 8px;
+  background:#fff;border:1px solid var(--line);
+  border-radius:6px;font-size:14px;
+}
+.labpill .unit{font-size:12px;color:var(--muted)}
+.labpill button{
+  background:none;border:none;
+  font-size:16px;color:#dc2626;padding:0 4px;
+}
+
+/* 問題リスト */
+/* プロブレムリストのレイアウトを修正 */
+.problem-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 12px;
+  background:var(--chip);
+  border-radius:10px;
+  margin-bottom:8px;
+}
+.problem-item span{
+  font-size:14px;
+  flex:1;
+  min-width:0;
+}
+.problem-item .del-btn{
+  margin-left:12px;
+  flex-shrink:0;
+  padding:6px 12px;
+  font-size:13px;
+  background:none;
+  border:1px solid #dc2626;
+  color:#dc2626;
+  border-radius:6px;
+}
+
+/* NIHSSボタン */
+.nihss-btn{
+  min-width:36px;height:36px;
+  border:1px solid var(--line);border-radius:8px;
+  background:#fff;font-size:15px;font-weight:500;
+  cursor:pointer;
+}
+.nihss-btn.active{
+  background:var(--brand);color:#fff;border-color:var(--brand);
+}
+/* タブバー */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(56px + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: #fff;
+  border-top: 1px solid var(--line);
+  display: flex;
+  z-index: 100;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+.tab-bar-item {
+  flex: 0 0 auto;
+  min-width: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--muted);
+  font-size: 10px;
+  cursor: pointer;
+  transition: color 0.15s;
+  padding: 4px 8px;
+}
+.tab-bar-item.active { color: var(--brand); font-weight: 600; }
+.tab-bar-item svg {
+  width: 24px;
+  height: 24px;
+}
+.tab-bar-item span { font-weight: 500; }
+
+/* タブコンテンツ */
+.tab-content { display: none; padding: 12px; padding-bottom: 24px; }
+.tab-content.active { display: block; }
+
+/* mainの調整 */
+main {
+  position: fixed;
+  top: calc(var(--safe-top) + 60px);
+  bottom: calc(56px + var(--safe-bottom));
+  left: 0;
+  right: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+</style>
+</head>
+<body>
+<header>
+  <h1>🚗 ドクターカー</h1>
+  <div class="version">v3.0 (2026/01/19)</div>
+</header>
+
+<main>
+<div class="tab-content active" data-tab="patient">
+<div class="card">
+    <div class="card-header">
+      <span>📞 要請情報</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn ghost" onclick="reloadApp()" style="padding:6px 12px;font-size:12px;color:#2563eb;width:auto;flex-shrink:0">🔄 更新</button>
+        <button class="btn ghost" onclick="resetData()" style="padding:6px 12px;font-size:12px;color:#dc2626;width:auto;flex-shrink:0">🗑 リセット</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <label>要請方法</label>
+      <select id="request_type">
+        <option value="">選択してください</option>
+        <option value="キーワード要請">キーワード要請</option>
+        <option value="現着後要請">現着後要選項</option>
+      </select>
+      <label>年代</label>
+      <div class="chips" id="patient_age_chips"></div>
+      <label>性別</label>
+      <div class="chips" id="patient_sex_chips"></div>
+      <label>先行救急隊</label>
+      <div class="chips" id="ems_team_chips"></div>
+      <label>要請内容</label>
+      <div class="chips" id="request_content_chips"></div>
+      <textarea id="request_detail" placeholder="要請の詳細内容を記載"></textarea>
+      
+      <h3>患者情報</h3>
+      <label>既往歴</label>
+      <div class="chips" id="patient_history_chips"></div>
+      <textarea id="patient_history" placeholder="既往歴を記載" style="min-height:60px"></textarea>
+      <label>常用薬</label>
+      <div class="chips" id="patient_medication_chips"></div>
+      <div id="anticoagulant_accordion" style="display:none;margin-top:8px;margin-bottom:8px">
+        <details style="background:#f8fafc;border-radius:10px;padding:12px;border:1px solid var(--line)">
+          <summary style="font-weight:600;cursor:pointer">抗凝固薬選択</summary>
+          <div class="chips" id="anticoagulant_drugs" style="margin-top:8px"></div>
+        </details>
+      </div>
+      <div id="antiplatelet_accordion" style="display:none;margin-top:8px;margin-bottom:8px">
+        <details style="background:#f8fafc;border-radius:10px;padding:12px;border:1px solid var(--line)" open>
+          <summary style="font-weight:600;cursor:pointer">抗血小板薬選択（複数選択可）</summary>
+          <div class="chips" id="antiplatelet_drugs" style="margin-top:8px"></div>
+        </details>
+      </div>
+      <textarea id="patient_medication" placeholder="常用薬を記載" style="min-height:60px"></textarea>
+      <label>アレルギー</label>
+      <div class="chips" id="patient_allergy_chips"></div>
+      <textarea id="patient_allergy" placeholder="アレルギーを記載" style="min-height:60px"></textarea>
+      <label>最終健常</label>
+      <div class="time-row">
+        <input type="time" id="last_well_time">
+        <button class="time-btn" onclick="setNow('last_well_time')">Now</button>
+      </div>
+      <label>最終食事時刻</label>
+      <div class="time-row">
+        <input type="time" id="last_meal_time">
+        <button class="time-btn" onclick="setNow('last_meal_time')">Now</button>
+      </div>
+      <label>かかりつけ医療機関</label>
+      <textarea id="patient_hospital" placeholder="かかりつけ医療機関を記載" style="min-height:60px"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="tab-content" data-tab="car-time">
+<div class="card">
+    <div class="card-header">⏱️ ドクターカータイムライン</div>
+    <div class="card-body">
+      <div class="grid2">
+        <div>
+          <label>要請</label>
+          <div class="time-row">
+            <input type="time" id="cardr_request_time">
+            <button class="time-btn" onclick="setNow('cardr_request_time')">Now</button>
+          </div>
+        </div>
+        <div>
+          <label>出動</label>
+          <div class="time-row">
+            <input type="time" id="car_departure">
+            <button class="time-btn" onclick="setNow('car_departure')">Now</button>
+          </div>
+        </div>
+        <div>
+          <label>現場/RP到着</label>
+          <div class="time-row">
+            <input type="time" id="scene_arrival">
+            <button class="time-btn" onclick="setNow('scene_arrival')">Now</button>
+          </div>
+        </div>
+        <div>
+          <label>ドクターカーチーム接触</label>
+          <div class="time-row">
+            <input type="time" id="cardr_contact">
+            <button class="time-btn" onclick="setNow('cardr_contact')">Now</button>
+          </div>
+        </div>
+      </div>
+      <label style="margin-top:12px">活動場所</label>
+      <select id="activity_place">
+        <option value="">選択してください</option>
+        <option value="現場">現場</option>
+        <option value="RP（ランデブーポイント）">RP（ランデブーポイント）</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="tab-content" data-tab="ems">
+<div class="card">
+    <div class="card-header">🚑 先行救急隊</div>
+    <div class="card-body">
+      <div class="grid2">
+        <div>
+          <label>覚知</label>
+          <div class="time-row">
+            <input type="time" id="ems_aware">
+            <button class="time-btn" onclick="setNow('ems_aware')">Now</button>
+          </div>
+        </div>
+        <div>
+          <label>現着</label>
+          <div class="time-row">
+            <input type="time" id="ems_arrival">
+            <button class="time-btn" onclick="setNow('ems_arrival')">Now</button>
+          </div>
+        </div>
+        <div>
+          <label>接触</label>
+          <div class="time-row">
+            <input type="time" id="ems_contact">
+            <button class="time-btn" onclick="setNow('ems_contact')">Now</button>
+          </div>
+        </div>
+        <div>
+          <label>収容</label>
+          <div class="time-row">
+            <input type="time" id="ems_pickup">
+            <button class="time-btn" onclick="setNow('ems_pickup')">Now</button>
+          </div>
+        </div>
+        <div>
+          <label>現発</label>
+          <div class="time-row">
+            <input type="time" id="ems_departure">
+            <button class="time-btn" onclick="setNow('ems_departure')">Now</button>
+          </div>
+        </div>
+        <div>
+          <label>RP到着</label>
+          <div class="time-row">
+            <input type="time" id="ems_rp">
+            <button class="time-btn" onclick="setNow('ems_rp')">Now</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px">
+        <h3 style="margin:0">バイタルサイン</h3>
+        <button class="btn small" onclick="addEmsVital()">＋ 追加</button>
+      </div>
+      <div id="ems_vitals_container"></div>
+
+      <h3>接触時所見</h3>
+      <div class="exam-tabs" id="ems_examTabs">
+        <div class="exam-tab active" data-exam="general">汎用</div>
+        <div class="exam-tab" data-exam="trauma">外傷</div>
+        <div class="exam-tab" data-exam="stroke">脳卒中</div>
+        <div class="exam-tab" data-exam="cpa">CPA</div>
+      </div>
+
+      <div class="exam-pane active" data-pane="general">
+        <h3>頭頚部</h3>
+        <div class="chips" id="ems-gen-head"></div>
+        <textarea class="memo" id="memo-ems-gen-head" placeholder="メモ"></textarea>
+        <h3>呼吸器</h3>
+        <div class="chips" id="ems-gen-resp"></div>
+        <textarea class="memo" id="memo-ems-gen-resp" placeholder="メモ"></textarea>
+        <h3>循環器</h3>
+        <div class="chips" id="ems-gen-card"></div>
+        <textarea class="memo" id="memo-ems-gen-card" placeholder="メモ"></textarea>
+        <h3>腹部</h3>
+        <div class="chips" id="ems-gen-abd"></div>
+        <textarea class="memo" id="memo-ems-gen-abd" placeholder="メモ"></textarea>
+        <h3>四肢</h3>
+        <div class="chips" id="ems-gen-limb"></div>
+        <textarea class="memo" id="memo-ems-gen-limb" placeholder="メモ"></textarea>
+        <h3>神経</h3>
+        <div class="chips" id="ems-gen-neuro"></div>
+        <textarea class="memo" id="memo-ems-gen-neuro" placeholder="メモ"></textarea>
+      </div>
+
+      <div class="exam-pane" data-pane="trauma">
+        <h3>頭部・顔面</h3>
+        <div class="chips" id="ems-tra-head"></div>
+        <textarea class="memo" id="memo-ems-tra-head" placeholder="メモ"></textarea>
+        <h3>頸部</h3>
+        <div class="chips" id="ems-tra-neck"></div>
+        <textarea class="memo" id="memo-ems-tra-neck" placeholder="メモ"></textarea>
+        <h3>胸部</h3>
+        <div class="chips" id="ems-tra-chest"></div>
+        <textarea class="memo" id="memo-ems-tra-chest" placeholder="メモ"></textarea>
+        <h3>腹部</h3>
+        <div class="chips" id="ems-tra-abd"></div>
+        <textarea class="memo" id="memo-ems-tra-abd" placeholder="メモ"></textarea>
+        <h3>骨盤</h3>
+        <div class="chips" id="ems-tra-pelvis"></div>
+        <textarea class="memo" id="memo-ems-tra-pelvis" placeholder="メモ"></textarea>
+        <h3>四肢</h3>
+        <div class="chips" id="ems-tra-limb"></div>
+        <textarea class="memo" id="memo-ems-tra-limb" placeholder="メモ"></textarea>
+      </div>
+
+      <div class="exam-pane" data-pane="stroke">
+        <h3>意識</h3>
+        <div class="chips" id="ems-str-conscious"></div>
+        <h3>顔面・発語</h3>
+        <div class="chips" id="ems-str-face"></div>
+        <h3>運動</h3>
+        <div class="chips" id="ems-str-motor"></div>
+        <h3>その他症状</h3>
+        <div class="chips" id="ems-str-other"></div>
+        <label style="margin-top:12px">発症時刻（わかれば）</label>
+        <div class="time-row">
+          <input type="time" id="ems_stroke_onset">
+          <button class="time-btn" onclick="setNow('ems_stroke_onset')">Now</button>
+        </div>
+        <textarea class="memo" id="memo-ems-str" placeholder="脳卒中所見メモ（最終健常確認時刻など）"></textarea>
+      </div>
+
+      <div class="exam-pane" data-pane="cpa">
+        <h3>初期波形</h3>
+        <div class="chips" id="ems-cpa-rhythm"></div>
+        <h3>目撃・バイスタンダー</h3>
+        <div class="chips" id="ems-cpa-witness"></div>
+        <h3>気道</h3>
+        <div class="chips" id="ems-cpa-airway"></div>
+        <h3>循環</h3>
+        <div class="chips" id="ems-cpa-circulation"></div>
+        <h3>胸腹部</h3>
+        <div class="chips" id="ems-cpa-chest"></div>
+        <textarea class="memo" id="memo-ems-cpa" placeholder="CPA所見メモ"></textarea>
+      </div>
+
+      <h3>実施処置</h3>
+      <div class="chips" id="ems_procedures"></div>
+      <div id="ems_o2_amount" style="display:none;margin-top:8px">
+        <label>酸素投与量</label>
+        <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer;display:inline-block;min-width:100px" onclick="openO2FlowDial()">
+          <div id="o2_flow_display" style="font-size:20px;font-weight:600;color:var(--brand)">－</div>
+        </div>
+      </div>
+      <label>処置詳細</label>
+      <textarea id="ems_procedures_detail" placeholder="その他の処置"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="tab-content" data-tab="doctor">
+<div class="card">
+    <div class="card-header">👨‍⚕️ ドクターカーチーム</div>
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0">バイタルサイン</h3>
+        <button class="btn small" onclick="addCarDrVital()">＋ 追加</button>
+      </div>
+      <div id="cardr_vitals_container"></div>
+
+      <h3 style="margin-top:16px">身体所見</h3>
+      <div class="exam-tabs" id="cardr_examTabs">
+        <div class="exam-tab active" data-exam="general">汎用</div>
+        <div class="exam-tab" data-exam="trauma">外傷</div>
+        <div class="exam-tab" data-exam="stroke">脳卒中</div>
+        <div class="exam-tab" data-exam="cpa">CPA</div>
+      </div>
+
+      <div class="exam-pane active" data-pane="general">
+        <h3>頭頚部</h3>
+        <div class="chips" id="cardr-gen-head"></div>
+        <textarea class="memo" id="memo-cardr-gen-head" placeholder="メモ"></textarea>
+        <h3>呼吸器</h3>
+        <div class="chips" id="cardr-gen-resp"></div>
+        <textarea class="memo" id="memo-cardr-gen-resp" placeholder="メモ"></textarea>
+        <h3>循環器</h3>
+        <div class="chips" id="cardr-gen-card"></div>
+        <textarea class="memo" id="memo-cardr-gen-card" placeholder="メモ"></textarea>
+        <h3>腹部</h3>
+        <div class="chips" id="cardr-gen-abd"></div>
+        <textarea class="memo" id="memo-cardr-gen-abd" placeholder="メモ"></textarea>
+        <h3>四肢</h3>
+        <div class="chips" id="cardr-gen-limb"></div>
+        <textarea class="memo" id="memo-cardr-gen-limb" placeholder="メモ"></textarea>
+        <h3>神経</h3>
+        <div class="chips" id="cardr-gen-neuro"></div>
+        <textarea class="memo" id="memo-cardr-gen-neuro" placeholder="メモ"></textarea>
+      </div>
+
+      <div class="exam-pane" data-pane="trauma">
+        <h3>頭部・顔面</h3>
+        <div class="chips" id="cardr-tra-head"></div>
+        <textarea class="memo" id="memo-cardr-tra-head" placeholder="メモ"></textarea>
+        <h3>頸部</h3>
+        <div class="chips" id="cardr-tra-neck"></div>
+        <textarea class="memo" id="memo-cardr-tra-neck" placeholder="メモ"></textarea>
+        <h3>胸部</h3>
+        <div class="chips" id="cardr-tra-chest"></div>
+        <textarea class="memo" id="memo-cardr-tra-chest" placeholder="メモ"></textarea>
+        <h3>腹部</h3>
+        <div class="chips" id="cardr-tra-abd"></div>
+        <textarea class="memo" id="memo-cardr-tra-abd" placeholder="メモ"></textarea>
+        <h3>骨盤</h3>
+        <div class="chips" id="cardr-tra-pelvis"></div>
+        <textarea class="memo" id="memo-cardr-tra-pelvis" placeholder="メモ"></textarea>
+        <h3>四肢</h3>
+        <div class="chips" id="cardr-tra-limb"></div>
+        <textarea class="memo" id="memo-cardr-tra-limb" placeholder="メモ"></textarea>
+      </div>
+
+      <div class="exam-pane" data-pane="stroke">
+        <h3>脳神経所見</h3>
+        <div class="chips" id="cardr-str-cn"></div>
+        <textarea class="memo" id="memo-cardr-str-cn" placeholder="脳神経メモ（視力・視野、眼球運動など）"></textarea>
+
+        <h3>瞳孔・眼球運動</h3>
+        <div class="grid2">
+          <div>
+            <label>瞳孔径 左(mm)</label>
+            <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;text-align:center" onclick="openPupilDial('L')">
+              <span class="vital-value" id="pupilL_display">3.0</span>
+            </div>
+          </div>
+          <div>
+            <label>瞳孔径 右(mm)</label>
+            <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;text-align:center" onclick="openPupilDial('R')">
+              <span class="vital-value" id="pupilR_display">3.0</span>
+            </div>
+          </div>
+        </div>
+        <div class="grid2" style="margin-top:8px">
+          <div>
+            <label>対光反射 左</label>
+            <select id="plrL">
+              <option value="">--</option>
+              <option value="迅速">迅速</option>
+              <option value="遅延">遅延</option>
+              <option value="消失">消失</option>
+            </select>
+          </div>
+          <div>
+            <label>対光反射 右</label>
+            <select id="plrR">
+              <option value="">--</option>
+              <option value="迅速">迅速</option>
+              <option value="遅延">遅延</option>
+              <option value="消失">消失</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid2" style="margin-top:8px">
+          <div>
+            <label>共同偏視</label>
+            <select id="str_gaze">
+              <option value="">--</option>
+              <option value="なし">なし</option>
+              <option value="右方">右方</option>
+              <option value="左方">左方</option>
+            </select>
+          </div>
+          <div>
+            <label>眼振</label>
+            <select id="str_nyst">
+              <option value="">--</option>
+              <option value="なし">なし</option>
+              <option value="水平">水平</option>
+              <option value="垂直">垂直</option>
+              <option value="回旋">回旋</option>
+            </select>
+          </div>
+        </div>
+        <textarea class="memo" id="memo-cardr-str-eye" placeholder="眼所見メモ（追視障害、複視など）"></textarea>
+
+        <h3>運動（MMT 0-5）</h3>
+        <div class="grid2">
+          <div>
+            <label>右上肢</label>
+            <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;text-align:center" onclick="openMmtDial('ru')">
+              <span class="vital-value" id="mmt_ru_display">5</span>
+            </div>
+          </div>
+          <div>
+            <label>左上肢</label>
+            <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;text-align:center" onclick="openMmtDial('lu')">
+              <span class="vital-value" id="mmt_lu_display">5</span>
+            </div>
+          </div>
+          <div>
+            <label>右下肢</label>
+            <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;text-align:center" onclick="openMmtDial('rl')">
+              <span class="vital-value" id="mmt_rl_display">5</span>
+            </div>
+          </div>
+          <div>
+            <label>左下肢</label>
+            <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;text-align:center" onclick="openMmtDial('ll')">
+              <span class="vital-value" id="mmt_ll_display">5</span>
+            </div>
+          </div>
+        </div>
+        <textarea class="memo" id="memo-cardr-str-motor" placeholder="運動所見メモ（片麻痺優位側、ドロップアームなど）"></textarea>
+
+        <h3>反射・錐体路</h3>
+        <div class="grid2">
+          <div>
+            <label>BTR</label>
+            <select id="str_btr">
+              <option value="">--</option>
+              <option value="正常">正常</option>
+              <option value="亢進">亢進</option>
+              <option value="低下">低下</option>
+            </select>
+          </div>
+          <div>
+            <label>PTR</label>
+            <select id="str_ptr">
+              <option value="">--</option>
+              <option value="正常">正常</option>
+              <option value="亢進">亢進</option>
+              <option value="低下">低下</option>
+            </select>
+          </div>
+        </div>
+        <div class="checkline" style="margin-top:8px">
+          <label><input type="checkbox" id="str_babinski"> Babinski陽性</label>
+          <label><input type="checkbox" id="str_chaddock"> Chaddock陽性</label>
+        </div>
+        <textarea class="memo" id="memo-cardr-str-reflex" placeholder="反射メモ"></textarea>
+
+        <h3>高次脳機能・小脳</h3>
+        <div class="chips" id="cardr-str-higher"></div>
+        <textarea class="memo" id="memo-cardr-str-higher" placeholder="見当識、失語の型、アタキシアなど"></textarea>
+
+        <details style="margin-top:12px;background:#f8fafc;border-radius:10px;padding:12px;border:1px solid var(--line)">
+          <summary style="font-weight:600;cursor:pointer">NIHSS（タップで展開）<span id="nihss_sum" style="margin-left:8px;background:var(--brand);color:#fff;padding:2px 10px;border-radius:12px;font-size:13px">0点</span></summary>
+          <div style="margin-top:12px" id="nihss_area"></div>
+          <label style="margin-top:8px">NIHSSメモ</label>
+          <textarea class="memo" id="nihss_memo" placeholder="評価時の注意点"></textarea>
+        </details>
+      </div>
+
+      <div class="exam-pane" data-pane="cpa">
+        <h3>心停止イベント</h3>
+        <div id="cpa_events_container"></div>
+        <button class="btn small" style="margin-top:12px" onclick="addCpaEvent()">＋ 心停止イベントを追加</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-content" data-tab="exam">
+<div class="card">
+    <div class="card-header">🧪 検査・処置・薬剤</div>
+    <div class="card-body">
+      <div class="chips" id="exam_chips"></div>
+      <div id="exam_bs_area" style="display:none;margin-top:8px">
+        <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer;display:inline-block;min-width:100px" onclick="openBsDial()">
+          <div class="vital-value" id="cardr_bs_display">120</div>
+          <div class="vital-unit">mg/dL</div>
+        </div>
+        <input type="hidden" id="cardr_bs" value="120">
+      </div>
+      <textarea id="exam_ucg_txt" placeholder="UCG所見" style="display:none;margin-top:8px"></textarea>
+      <textarea id="exam_us_abd_txt" placeholder="腹部US所見" style="display:none;margin-top:8px"></textarea>
+      <textarea id="exam_us_lung_txt" placeholder="肺US所見" style="display:none;margin-top:8px"></textarea>
+      <textarea id="exam_us_neck_txt" placeholder="頸部血管US所見" style="display:none;margin-top:8px"></textarea>
+      <textarea id="exam_ecg_txt" placeholder="12誘導心電図所見" style="display:none;margin-top:8px"></textarea>
+      <textarea id="exam_fast_txt" placeholder="FAST所見" style="display:none;margin-top:8px"></textarea>
+      <textarea id="exam_efast_txt" placeholder="eFAST所見" style="display:none;margin-top:8px"></textarea>
+      
+      <div class="grid2" style="margin-top:8px">
+        <div>
+          <label>血ガス</label>
+          <select id="cardr_abg_type" onchange="toggleAbg()">
+            <option value="">未実施</option>
+            <option value="ABG">ABG</option>
+            <option value="VBG">VBG</option>
+          </select>
+        </div>
+      </div>
+      <div id="abg_area" style="display:none;margin-top:10px">
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <button class="btn small" onclick="addAbgSet()">セット追加</button>
+          <button class="btn small ghost" onclick="clearAbg()">クリア</button>
+        </div>
+        <div id="abg_pills" class="labline"></div>
+      </div>
+      
+      <label>検査詳細</label>
+      <textarea id="cardr_exam_detail" placeholder="その他検査所見"></textarea>
+
+      <h3>実施処置</h3>
+      <div class="chips" id="cardr_procedures"></div>
+      <label>処置詳細</label>
+      <textarea id="cardr_procedure_detail" placeholder="処置の詳細"></textarea>
+
+      <h3>薬剤投与</h3>
+      <div class="chips" id="cardr_drugs"></div>
+      <label>薬剤詳細</label>
+      <textarea id="cardr_drug_detail" placeholder="投与量やタイミング"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="tab-content" data-tab="assess">
+<div class="card">
+    <div class="card-header">📋 評価</div>
+    <div class="card-body">
+      <h3>プロブレムリスト</h3>
+      <!-- プロブレムリストのレイアウト修正済み -->
+      <div style="display:flex; gap:8px; margin-bottom:10px; align-items:flex-end;">
+        <input type="text" id="new_problem" placeholder="プロブレムを入力" style="flex:1">
+        <button class="btn small" style="padding:10px 12px; width:auto; flex-shrink:0" onclick="addProblem()">追加</button>
+      </div>
+      <div id="problems"></div>
+      
+      <label>考察</label>
+      <textarea id="consideration" placeholder="病態生理や臨床推論"></textarea>
+    </div>
+  </div>
+  
+<div class="card">
+  <div class="card-header">📊 JTAS / NACA</div>
+  <div class="card-body">
+    <h3>JTAS</h3>
+    <div class="chips" id="triage_chips"></div>
+    
+    <h3>NACA</h3>
+    <div class="chips" id="severity_chips"></div>
+  </div>
+</div>
+</div>
+
+<div class="tab-content" data-tab="consider">
+<div class="card">
+    <div class="card-header">🏥 搬送先</div>
+    <div class="card-body">
+      <label>医療機関（簡易選択）</label>
+      <div class="chips" id="destination_chips"></div>
+      <label>その他（自由記載）</label>
+      <input type="text" id="destination_custom" placeholder="上記以外の医療機関名を入力">
+      <div id="destination_display" style="margin-top:8px;padding:10px;background:#e0f2fe;border-radius:8px;display:none">
+        <span style="font-size:13px;color:#0369a1">選択中：</span>
+        <strong id="destination_selected"></strong>
+      </div>
+      <label style="margin-top:12px">選定理由</label>
+      <textarea id="selection_reason" placeholder="搬送先選定の理由"></textarea>
+      
+      <h3>搬送方法</h3>
+      <select id="transport_method" onchange="toggleTransportTimes()">
+        <option value="Uターン">Uターン</option>
+        <option value="Jターン">Jターン</option>
+        <option value="Iターン">Iターン</option>
+      </select>
+      
+      <div id="transport_times" style="display:block">
+        <div class="grid2" style="margin-top:10px">
+          <div>
+            <label>現場出発</label>
+            <div class="time-row">
+              <input type="time" id="scene_departure">
+              <button class="time-btn" onclick="setNow('scene_departure')">Now</button>
+            </div>
+          </div>
+          <div>
+            <label>病院着</label>
+            <div class="time-row">
+              <input type="time" id="hospital_arrival">
+              <button class="time-btn" onclick="setNow('hospital_arrival')">Now</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-content" data-tab="symptom">
+<div class="card">
+  <div class="card-header">📝 症状詳記</div>
+  <div class="card-body">
+    <label>① 要請理由・キーワード</label>
+    <input type="text" id="inputTrigger" placeholder="選択または入力" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:14px;margin-bottom:8px">
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="btn ghost" onclick="toggleTriggerCategory('trauma')" id="trigger_trauma_btn" style="flex:1">外傷</button>
+      <button class="btn ghost" onclick="toggleTriggerCategory('internal')" id="trigger_internal_btn" style="flex:1">内因</button>
+    </div>
+    <div id="trigger_chips_container" style="display:none"></div>
+
+    <label style="margin-top:12px">② 疑い病態・診断名</label>
+    <input type="text" id="inputSuspicion" placeholder="選択または入力" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:14px;margin-bottom:8px">
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="btn ghost" onclick="toggleSuspicionCategory('trauma')" id="suspicion_trauma_btn" style="flex:1">外傷</button>
+      <button class="btn ghost" onclick="toggleSuspicionCategory('internal')" id="suspicion_internal_btn" style="flex:1">内因</button>
+    </div>
+    <div id="suspicion_chips_container" style="display:none"></div>
+
+    <label style="margin-top:12px">③ 監視の主な目的（リスク）</label>
+    <select id="selectRisk" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:#fff">
+      <option value="general">汎用（状態不良・急変リスク）</option>
+      <option value="shock_hemorrhagic">ショック・大量出血</option>
+      <option value="shock_cardiogenic">心停止・致死的不整脈</option>
+      <option value="shock_anaphylaxis">アナフィラキシー</option>
+      <option value="resp_failure">呼吸不全・気道管理</option>
+      <option value="resp_sedation">鎮静・鎮痛下の管理</option>
+      <option value="neuro_icp">脳卒中・脳圧管理</option>
+      <option value="neuro_seizure">痙攣・てんかん</option>
+      <option value="pain_control">疼痛管理・外傷搬送</option>
+      <option value="pediatric">小児・乳幼児</option>
+      <option value="maternal">妊婦・胎児管理</option>
+      <option value="agitation">不穏・精神科救急</option>
+    </select>
+
+    <button onclick="updateReason()" class="btn" style="margin-top:12px;width:100%">文章生成</button>
+    
+    <label style="margin-top:12px">出力結果（コピー可）</label>
+    <textarea id="outputReason" rows="4" placeholder="生成された文章が表示されます" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:14px;min-height:100px"></textarea>
+  </div>
+</div>
+</div>
+
+<div class="tab-content" data-tab="output">
+<div class="card">
+    <div class="card-header">📄 活動記録</div>
+    <div class="card-body">
+      <div class="result" id="outText"></div>
+    
+<div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+  <button class="btn" id="copyOut" style="flex:1;min-width:120px">📋 コピー</button>
+  <button class="btn ghost" onclick="saveData()" style="flex:1;min-width:120px">💾 保存</button>
+  <button class="btn ghost" onclick="loadData()" style="flex:1;min-width:120px">📂 読込</button>
+  <button class="btn ghost" onclick="reloadApp()" style="flex:1;min-width:120px;color:#2563eb">🔄 アプリを更新</button>
+  <button class="btn ghost" onclick="resetData()" style="flex:1;min-width:120px;color:#dc2626">🗑 リセット</button>
+</div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<nav class="tab-bar">
+  <div class="tab-bar-item active" data-tab="patient">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+    <span>患者</span>
+  </div>
+  <div class="tab-bar-item" data-tab="car-time">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span>カー時刻</span>
+  </div>
+  <div class="tab-bar-item" data-tab="ems">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+    <span>救急隊</span>
+  </div>
+  <div class="tab-bar-item" data-tab="doctor">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    <span>所見</span>
+  </div>
+  <div class="tab-bar-item" data-tab="exam">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+    <span>検査</span>
+  </div>
+  <div class="tab-bar-item" data-tab="assess">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+    <span>評価</span>
+  </div>
+  <div class="tab-bar-item" data-tab="consider">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+    <span>搬送先</span>
+  </div>
+  <div class="tab-bar-item" data-tab="symptom">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-6m-7-1a3 3 0 110-6 3 3 0 010 6z"/></svg>
+    <span>症状詳記</span>
+  </div>
+  <div class="tab-bar-item" data-tab="output">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    <span>出力</span>
+  </div>
+</nav>
+
+
+
+
+<div class="dial-overlay" id="dialOverlay" onclick="closeDial(event)">
+  <div class="dial-container" onclick="event.stopPropagation()" ontouchmove="event.stopPropagation()">
+    <div class="dial-header">
+      <span class="dial-title" id="dialTitle">値を選択</span>
+      <button class="dial-done" onclick="confirmDial()">完了</button>
+    </div>
+    <div class="dial-body" id="dialBody"></div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+// グローバルスコープに関数を定義して、インラインイベントハンドラからアクセスできるようにする
+window.switchTab = (tab) => {
+  if (!tab) return;
+  
+  $$('.tab-content').forEach(el => el.classList.remove('active'));
+  $$('.tab-bar-item').forEach(el => el.classList.remove('active'));
+  const content = $(`.tab-content[data-tab="${tab}"]`);
+  const navItem = $(`.tab-bar-item[data-tab="${tab}"]`);
+  
+  if (!content) {
+    console.warn(`Tab content not found for: ${tab}`);
+    return;
+  }
+  
+  if (!navItem) {
+    console.warn(`Tab bar item not found for: ${tab}`);
+    return;
+  }
+  
+  content.classList.add('active');
+  navItem.classList.add('active');
+  
+  // タブバーのアクティブなタブが画面内に表示されるようにスクロール
+  setTimeout(() => {
+    navItem.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }, 50);
+  
+  if (tab === 'output') render();
+  
+  // ヘッダーのタイトルを更新
+  const tabNames = {
+    'patient': '患者',
+    'car-time': 'カー時刻',
+    'ems': '救急隊',
+    'doctor': '所見',
+    'exam': '検査',
+    'assess': '評価',
+    'consider': '搬送先',
+    'symptom': '症状詳記',
+    'output': '出力'
+  };
+  const headerTitle = $('header h1');
+  if (headerTitle && tabNames[tab]) {
+    headerTitle.textContent = `🚗 ドクターカー - ${tabNames[tab]}`;
+  }
+  
+  // 症状詳記タブが表示された時の処理（特に必要な処理なし）
+};
+
+// 症状詳記ジェネレーターモジュール
+const MedicalReasonGenerator = {
+  riskTypes: {
+    shock_hemorrhagic: {
+      label: "出血性ショック・外傷",
+      text: "活動性出血による循環血液量減少性ショックへの移行や急激なバイタル変動を早期に探知し、輸液・輸血管理を行うために厳重な全身監視が必要であった。"
+    },
+    shock_cardiogenic: {
+      label: "心原性ショック・不整脈",
+      text: "致死的不整脈の出現や心停止に至るリスクが極めて高く、除細動器装着下での即時処置および循環作動薬の反応を監視するために持続モニタリングが必要であった。"
+    },
+    shock_anaphylaxis: {
+      label: "アナフィラキシー",
+      text: "気道閉塞や急激な血圧低下が進行するリスクがあり、アドレナリン投与後の再燃（二相性反応）を含めた呼吸循環の厳重な監視が必要であった。"
+    },
+    resp_failure: {
+      label: "呼吸不全・気道緊急",
+      text: "呼吸状態の悪化やSpO2低下に対し、酸素投与や気道確保（挿管・外科的気道確保等）の介入を遅滞なく行うため、持続的な呼吸循環監視が必要であった。"
+    },
+    resp_sedation: {
+      label: "鎮静・鎮痛下",
+      text: "搬送の安全確保のために実施した鎮静・鎮痛薬による呼吸抑制や血圧低下の副作用を監視し、気道管理を継続するために常時モニタリングが必要であった。"
+    },
+    neuro_icp: {
+      label: "脳圧亢進・脳卒中",
+      text: "脳ヘルニアの進行や再出血を防ぐため、搬送中の厳格な降圧管理および意識レベルの推移を病院到着まで監視する必要があった。"
+    },
+    neuro_seizure: {
+      label: "痙攣・てんかん",
+      text: "搬送中の痙攣再発や重積化のリスクがあり、抗痙攣薬投与後の呼吸抑制監視および誤嚥防止のために持続的な全身管理が必要であった。"
+    },
+    pain_control: {
+      label: "疼痛管理・中等症外傷",
+      text: "疼痛による迷走神経反射やショックの誘発を防ぎ、鎮痛処置後の反応を観察しながら安全に搬送するために監視が必要であった。"
+    },
+    pediatric: {
+      label: "小児・乳幼児",
+      text: "小児特有の急激な代償不全（Shock index等の変動）や低体温のリスクがあり、成人と比較してより厳密なバイタルサインの持続監視が必要であった。"
+    },
+    maternal: {
+      label: "妊婦・産科救急",
+      text: "母体のショックが胎児機能不全に直結するため、左側臥位保持等の体位管理と併せて、母体の呼吸循環動態を厳重に監視する必要があった。"
+    },
+    agitation: {
+      label: "不穏・精神科救急",
+      text: "著しい不穏状態により自身や周囲への危険が及ぶ可能性があり、鎮静処置および身体拘束下での安全な搬送を行うために、呼吸循環の常時監視が必要であった。"
+    },
+    general: {
+      label: "汎用・状態不良",
+      text: "搬送中の急変リスクが高く、状態変化に対し即座に医師による介入を行えるよう、病院到着まで持続的な呼吸循環監視が必要であった。"
+    }
+  },
+  triggers: {
+    trauma: {
+      head: ["頭部打撲", "顔面外傷", "高所転落", "高エネルギー外傷"],
+      neck: ["頸部外傷", "頸部打撲"],
+      chest: ["胸壁外傷", "交通外傷(車内)", "交通外傷(歩行者)", "バイク事故"],
+      abdomen: ["腹部外傷", "挟まれ・巻き込まれ"],
+      pelvis: ["骨盤外傷", "骨盤骨折疑い"],
+      limb: ["四肢の変形", "刺創・切創", "開放創"],
+      other: ["広範囲熱傷", "溺水", "低体温"]
+    },
+    internal: {
+      head: ["突然の意識消失", "激しい頭痛", "麻痺・構語障害", "痙攣発作", "CPA(蘇生後)", "小児の意識障害"],
+      chest: ["激しい胸痛", "背部痛", "呼吸困難", "喘鳴", "喀血"],
+      abdomen: ["吐血・下血", "激しい腹痛"],
+      other: ["薬物過量内服(OD)", "アナフィラキシー疑い", "熱中症疑い", "分娩進行・破水"]
+    }
+  },
+  suspicions: {
+    trauma: {
+      head: ["脳挫傷・急性硬膜下血腫", "急性硬膜外血腫", "頭蓋骨骨折", "顔面骨骨折"],
+      neck: ["頸椎損傷", "脊髄損傷"],
+      chest: ["肺挫傷", "血胸", "緊張性気胸", "気道熱傷", "肋骨骨折", "胸骨骨折"],
+      abdomen: ["腹腔内出血(肝・脾損傷)", "消化管穿孔", "腎損傷"],
+      pelvis: ["骨盤骨折", "膀胱損傷", "尿道損傷"],
+      limb: ["大腿骨骨折", "開放骨折", "クラッシュ症候群", "四肢切断"],
+      spine: ["脊椎・脊髄損傷"]
+    },
+    internal: {
+      head: ["脳出血・くも膜下出血", "脳梗塞", "てんかん重積", "脳炎・髄膜炎"],
+      chest: ["急性冠症候群(ACS)", "急性心不全", "致死的不整脈", "大動脈解離", "肺塞栓症", "心タンポナーデ", "COPD増悪", "重症喘息発作", "窒息・気道異物"],
+      abdomen: ["消化管出血", "腸閉塞", "急性膵炎", "急性腹膜炎"],
+      other: ["敗血症性ショック", "低血糖昏睡", "DKA/HHS", "急性薬物中毒", "重症脱水症", "深部体温異常"]
+    }
+  },
+  generate: function(trigger, suspicion, riskKey) {
+    const risk = this.riskTypes[riskKey] || this.riskTypes['general'];
+    return `${trigger}で要請され、初期評価にて${suspicion}の可能性が考えられたため、${risk.text}`;
+  }
+};
+
+// 要請理由カテゴリー切り替え
+let currentTriggerCategory = null;
+window.toggleTriggerCategory = function(category) {
+  currentTriggerCategory = category;
+  const traumaBtn = $('#trigger_trauma_btn');
+  const internalBtn = $('#trigger_internal_btn');
+  const container = $('#trigger_chips_container');
+  
+  if(traumaBtn && internalBtn) {
+    traumaBtn.classList.remove('active');
+    internalBtn.classList.remove('active');
+    if(category === 'trauma') {
+      traumaBtn.classList.add('active');
+    } else {
+      internalBtn.classList.add('active');
+    }
+  }
+  
+  if(container && MedicalReasonGenerator.triggers[category]) {
+    container.innerHTML = '';
+    container.style.display = 'block';
+    
+    const categories = MedicalReasonGenerator.triggers[category];
+    const categoryNames = {
+      head: '頭部',
+      neck: '頸部',
+      chest: '胸部',
+      abdomen: '腹部',
+      pelvis: '骨盤',
+      limb: '四肢',
+      spine: '脊椎',
+      other: 'その他'
+    };
+    
+    Object.keys(categories).forEach(key => {
+      if(categories[key].length > 0) {
+        const h4 = document.createElement('h4');
+        h4.textContent = categoryNames[key] || key;
+        h4.style.marginTop = '12px';
+        h4.style.marginBottom = '8px';
+        h4.style.fontSize = '14px';
+        h4.style.fontWeight = '600';
+        container.appendChild(h4);
+        
+        const chipsDiv = document.createElement('div');
+        chipsDiv.className = 'chips';
+        categories[key].forEach(item => {
+          const chip = document.createElement('button');
+          chip.className = 'chip';
+          chip.textContent = item;
+          chip.onclick = () => {
+            $('#inputTrigger').value = item;
+            container.style.display = 'none';
+            traumaBtn.classList.remove('active');
+            internalBtn.classList.remove('active');
+            currentTriggerCategory = null;
+            updateState();
+          };
+          chipsDiv.appendChild(chip);
+        });
+        container.appendChild(chipsDiv);
+      }
+    });
+  }
+};
+
+// 疑い病態カテゴリー切り替え
+let currentSuspicionCategory = null;
+window.toggleSuspicionCategory = function(category) {
+  currentSuspicionCategory = category;
+  const traumaBtn = $('#suspicion_trauma_btn');
+  const internalBtn = $('#suspicion_internal_btn');
+  const container = $('#suspicion_chips_container');
+  
+  if(traumaBtn && internalBtn) {
+    traumaBtn.classList.remove('active');
+    internalBtn.classList.remove('active');
+    if(category === 'trauma') {
+      traumaBtn.classList.add('active');
+    } else {
+      internalBtn.classList.add('active');
+    }
+  }
+  
+  if(container && MedicalReasonGenerator.suspicions[category]) {
+    container.innerHTML = '';
+    container.style.display = 'block';
+    
+    const categories = MedicalReasonGenerator.suspicions[category];
+    const categoryNames = {
+      head: '頭部',
+      neck: '頸部',
+      chest: '胸部',
+      abdomen: '腹部',
+      pelvis: '骨盤',
+      limb: '四肢',
+      spine: '脊椎',
+      other: 'その他'
+    };
+    
+    Object.keys(categories).forEach(key => {
+      if(categories[key].length > 0) {
+        const h4 = document.createElement('h4');
+        h4.textContent = categoryNames[key] || key;
+        h4.style.marginTop = '12px';
+        h4.style.marginBottom = '8px';
+        h4.style.fontSize = '14px';
+        h4.style.fontWeight = '600';
+        container.appendChild(h4);
+        
+        const chipsDiv = document.createElement('div');
+        chipsDiv.className = 'chips';
+        categories[key].forEach(item => {
+          const chip = document.createElement('button');
+          chip.className = 'chip';
+          chip.textContent = item;
+          chip.onclick = () => {
+            $('#inputSuspicion').value = item;
+            container.style.display = 'none';
+            traumaBtn.classList.remove('active');
+            internalBtn.classList.remove('active');
+            currentSuspicionCategory = null;
+            updateState();
+          };
+          chipsDiv.appendChild(chip);
+        });
+        container.appendChild(chipsDiv);
+      }
+    });
+  }
+};
+
+// 症状詳記生成関数
+window.updateReason = function() {
+  const trigger = $('#inputTrigger')?.value || '';
+  const suspicion = $('#inputSuspicion')?.value || '';
+  const riskKey = $('#selectRisk')?.value || 'general';
+  
+  if(!trigger || !suspicion) {
+    alert("要請理由と疑い病態を入力してください");
+    return;
+  }
+
+  const text = MedicalReasonGenerator.generate(trigger, suspicion, riskKey);
+  const outputEl = $('#outputReason');
+  if(outputEl) {
+    outputEl.value = text;
+    state.symptom_detail = text;
+    updateState();
+  }
+};
+
+// 所見定義
+const EMS_GEN_GROUPS = {
+  head: {normal:['意識清明','顔色良好'], abn:['意識障害','顔面蒼白','チアノーゼ','冷汗','発熱']},
+  resp: {normal:['呼吸安定','呼吸苦なし'], abn:['呼吸困難','努力呼吸','頻呼吸','起坐呼吸','陥没呼吸']},
+  card: {normal:['脈拍整','末梢温かい'], abn:['脈拍不整','頻脈','徐脈','末梢冷感','冷汗']},
+  abd: {normal:['腹部平坦','圧痛なし'], abn:['腹部膨満','圧痛','筋性防御','嘔吐']},
+  limb: {normal:['四肢冷感なし','浮腫なし'], abn:['四肢冷感','下腿浮腫','変形']},
+  neuro: {normal:['麻痺なし','痙攣なし'], abn:['片麻痺','痙攣','瞳孔左右差']}
+};
+const EMS_TRA_GROUPS = {
+  head: {normal:[], abn:['前額部打撲','前額部血腫','前額部挫創','側頭部打撲','側頭部血腫','後頭部打撲','後頭部挫創','顔面打撲','顔面挫創','顔面変形','眼周囲腫脹','鼻出血','耳出血','口腔内出血','歯牙損傷']},
+  neck: {normal:['後頸部圧痛なし','気管偏位なし'], abn:['頸部打撲','頸部挫創','後頸部圧痛','頸部皮下気腫','頸静脈怒張','気管偏位']},
+  chest: {normal:['呼吸音左右差なし'], abn:['胸壁打撲','胸壁挫創','胸壁圧痛','胸郭変形','動揺胸郭','胸壁皮下気腫','右呼吸音減弱','左呼吸音減弱']},
+  abd: {normal:[], abn:['腹壁打撲','腹壁挫創','腹部圧痛','腹部膨満','筋性防御','シートベルトサイン','ハンドル痕']},
+  pelvis: {normal:['骨盤動揺なし'], abn:['骨盤圧痛','骨盤動揺','会陰部出血','下腹部膨満']},
+  limb: {normal:['末梢動脈触知良好'], abn:['上肢打撲','上肢挫創','上肢変形','上肢腫脹','下肢打撲','下肢挫創','下肢変形','下肢腫脹','開放創','末梢冷感','末梢動脈触知不良']}
+};
+const EMS_CPA_GROUPS = {
+  rhythm: {normal:[], abn:['Vf','Pulseless VT','PEA','Asystole']},
+  witness: {normal:['目撃あり','バイスタンダーCPRあり'], abn:['目撃なし','バイスタンダーCPRなし']},
+  airway: {normal:['口腔内異物なし','気道開通良好'], abn:['口腔内異物','気道閉塞','吐物','出血']},
+  circulation: {normal:[], abn:['頸動脈触知不可','橈骨動脈触知不可','対光反射消失','瞳孔散大固定']},
+  chest: {normal:['胸郭挙上良好','呼吸音左右差なし','腹部膨隆なし'], abn:['胸郭挙上不良','右呼吸音減弱','左呼吸音減弱','皮下気腫','腹部膨隆','下腿浮腫']}
+};
+const EMS_STR_GROUPS = {
+  conscious: {normal:['意識清明'], abn:['意識障害','JCS 1桁','JCS 2桁','JCS 3桁']},
+  face: {normal:['顔面麻痺なし','構音障害なし'], abn:['顔面麻痺','構音障害','呂律障害']},
+  motor: {normal:['上肢挙上保持可','下肢挙上保持可'], abn:['上肢挙上不可(右)','上肢挙上不可(左)','下肢挙上不可(右)','下肢挙上不可(左)','片麻痺(右)','片麻痺(左)']},
+  other: {normal:[], abn:['瞳孔不同','共同偏視','頭痛','嘔吐','めまい','痙攣','失語']}
+};
+const CARDR_GEN_GROUPS = {
+  head: {normal:['意識清明','顔面蒼白なし','チアノーゼなし'], abn:['意識障害','顔面蒼白','チアノーゼ','発熱']},
+  resp: {normal:['呼吸音清','喘鳴なし'], abn:['呼吸困難','喘鳴','湿性ラ音','coarse crackles','fine crackles']},
+  card: {normal:['心音純','不整なし','下腿浮腫なし'], abn:['ショック兆候','心雑音','不整脈','冷汗','下腿浮腫']},
+  abd: {normal:['腹部平坦軟','圧痛なし','反跳痛なし'], abn:['腹痛','圧痛','反跳痛','筋性防御','板状硬']},
+  limb: {normal:['四肢冷感なし','浮腫なし'], abn:['四肢冷感','浮腫','変形','末梢循環不全']},
+  neuro: {normal:['麻痺なし','痙攣なし'], abn:['片麻痺','痙攣','瞳孔不同','対光反射異常']}
+};
+const CARDR_TRA_GROUPS = {
+  head: {normal:[], abn:['前額部打撲血腫','側頭部打撲血腫','後頭部挫創','頭皮裂傷','顔面挫創','顔面腫脹','パンダの目徴候','バトルサイン','鼻根部腫脹','右頬部変形腫脹','左頬部変形腫脹','鼻出血','耳出血','髄液耳漏','髄液鼻漏','口腔内出血','歯牙損傷','結膜出血','角膜損傷','眼球偏位','複視']},
+  neck: {normal:['気管正中','頸部皮下気腫なし','頸静脈怒張なし','後頸部圧痛なし'], abn:['気管偏位','頸部皮下気腫','頸静脈怒張','後頸部圧痛','頸部打撲','頸部挫創','頸部血腫']},
+  chest: {normal:['胸郭対称','呼吸音清左右差なし','心音整'], abn:['胸郭変形','動揺胸郭','胸壁打撲','胸壁挫創','胸壁圧痛','胸壁皮下気腫','右呼吸音減弱','左呼吸音減弱','右呼吸音消失','左呼吸音消失','心音減弱']},
+  abd: {normal:['腹部平坦軟'], abn:['腹壁打撲','腹壁挫創','シートベルトサイン','ハンドル痕','腹部圧痛','右上腹部圧痛','左上腹部圧痛','下腹部圧痛','筋性防御','反跳痛','腹部膨満','腸蠕動音減弱']},
+  pelvis: {normal:['骨盤動揺なし','直腸診異常なし'], abn:['骨盤動揺','骨盤圧痛','恥骨圧痛','会陰部出血','尿道出血']},
+  limb: {normal:['末梢動脈触知良好'], abn:['右上肢打撲','右上肢挫創','右上肢変形','右上肢腫脹','左上肢打撲','左上肢挫創','左上肢変形','左上肢腫脹','右下肢打撲','右下肢挫創','右下肢変形','右下肢腫脹','左下肢打撲','左下肢挫創','左下肢変形','左下肢腫脹','開放創','骨露出','末梢動脈触知不良','末梢冷感','CRT延長']}
+};
+const CARDR_STR_GROUPS = {
+  cn: {normal:[], abn:['視力低下','視野欠損','複視','眼瞼下垂','顔面麻痺','顔面感覚低下','聴力低下','めまい','構音障害','嚥下障害','舌偏位','カーテン徴候']},
+  higher: {normal:[], abn:['失語','運動性失語','感覚性失語','構音障害','失行','失認','半側空間無視','注意障害','見当識障害','小脳失調','指鼻試験異常','踵膝試験異常']}
+};
+const CARDR_CPA_GROUPS = {
+  rhythm: ['Vf','Pulseless VT','PEA','Asystole'],
+  witness: ['目撃あり','目撃なし','バイスタンダーCPRあり','バイスタンダーCPRなし'],
+  body: {normal:[], abn:['心停止','呼吸停止','チアノーゼ','四肢冷感','皮膚蒼白','死斑','死後硬直']},
+  head: {normal:[], abn:['頸動脈触知不可','対光反射消失','瞳孔散大固定']},
+  trunk: {normal:[], abn:['心音聴取不可','呼吸音聴取不可','腹部膨隆']}
+};
+
+// 状態
+let state = {
+  request: {type:'', detail:'', age:'', sex:'', ems_team:'', content:''},
+  patient: {history:'', medication:'', allergy:'', lastWell:'', lastMeal:'', hospital:'', history_chips:{}, anticoagulant:'', anticoagulant_drugs:[], antiplatelet:'', antiplatelet_drugs:[], food_allergy:'', drug_allergy:''},
+  car: {request_time:'', departure:'', scene_arrival:'', cardr_contact:'', activity_place:'', scene_departure:'', hospital_arrival:'', transport_method:'Uターン'},
+  ems: {
+    aware:'', arrival:'', contact:'', pickup:'', departure:'', rp:'',
+    vitals: [],
+    exam_tab: 'general',
+    chips: {},
+    memos: {general:{head:'',resp:'',card:'',abd:'',limb:'',neuro:''},trauma:{head:'',neck:'',chest:'',abd:'',pelvis:'',limb:''},stroke:{memo:''},cpa:{memo:''}},
+    stroke_onset: '',
+    procedures: {},
+    procedures_items: ['頚椎カラー','全身固定','吸引','酸素投与','BVM換気','気管挿管','LT挿入','静脈路確保','ブドウ糖投与','ショック輸液','圧迫止血','胸骨圧迫','LUCAS装着','除細動','アドレナリン'],
+    o2_flow:'', procedures_detail:''
+  },
+  cardr: {
+    vitals: [],
+    exam_tab: 'general',
+    chips: {},
+    memos: {general:{head:'',resp:'',card:'',abd:'',limb:'',neuro:''},trauma:{head:'',neck:'',chest:'',abd:'',pelvis:'',limb:''},stroke:{neuro:'',motor:'',eye:'',higher:''},cpa:{body:'',head:'',trunk:''}},
+    exams: {bs:false, ucg:false, us_abd:false, us_lung:false, us_neck:false, ecg:false, fast:false, efast:false},
+    exam_texts: {ucg:'', us_abd:'', us_lung:'', us_neck:'', ecg:'', fast:'', efast:''},
+    bs:120, abg_type:'', abg_data: [], exam_detail:'',
+    cpaEvents: [],
+    stroke: {
+      pupilL:3.0, pupilR:3.0, plrL:'', plrR:'', gaze:'', nyst:'', 
+      mmt:{ru:5, lu:5, rl:5, ll:5},
+      btr:'', ptr:'', babinski:false, chaddock:false,
+      nihss:{}, nihssMemo:''
+    },
+    procedures: {},
+    procedures_items: ['酸素投与','BVM','気管挿管','胸腔ドレナージ','開胸','輸液','輸血','骨盤固定','止血処置','CPR','除細動','経皮ペーシング'],
+    procedure_detail:'',
+    drugs: {},
+    // 薬剤マスタを更新
+    drugs_items: ['生食','ソルアセトF','アドレナリン','ミダゾラム','ジアゼパム','アトロピン','ロクロニウム','メイロン','レペタン','トランサミン','アセリオ','メトクロプラミド','エスラックス','ブドウ糖液'],
+    drug_detail:'',
+    intubation: {time: '', size: '7.0'},
+    // 薬剤投与の詳細情報を格納。キーは薬剤名。値は {time: 'HH:mm', amount: 'X.X'} の配列。
+    drug_details: {}
+  },
+  problems: [],
+  consideration: '',
+  triage: null,
+  severity: null,
+  symptom_detail: '',
+  destination: {hospital:'', custom:'', reason:''},
+  hospitals: {
+    '鹿児島市': ['鹿児島市立病院','鹿児島大学病院','鹿児島医療センター','米盛病院','いまきいれ総合病院','今村総合病院','中央病院','鹿児島徳洲会病院','南風病院','鹿児島生協病院','厚地脳神経外科病院','池田病院','いじゅういん脳神経外科','上町いまきいれ病院','いづろ今村病院','岩尾病院','植村病院','大勝病院','小田代病院','鹿児島厚生連病院','鹿児島こども病院','鹿児島市医師会病院','鹿児島赤十字病院','河井脳神経外科','かわはら脳神経外科クリニック','木村外科内科','共立病院','キラメキテラスヘルスケアホスピタル','馬場病院','健翔会病院','済生会鹿児島病院','桜島病院','三愛病院','新成病院','豊島病院','中野脳神経外科','新村病院','林内科胃腸科病院','日高病院','増田整形外科病院','三船病院','三宅病院','みらいリハビリテーション病院']
+  }
+};
+
+// ダイヤルピッカー (ヘリ v3.3から移植)
+let dialCallback = null;
+let dialWheels = [];
+
+let scrollPosition = 0;
+
+function openDial(title, wheels, callback) {
+  // 背景スクロール防止
+  scrollPosition = window.pageYOffset;
+  document.body.classList.add('dial-open');
+  document.body.style.top = `-${scrollPosition}px`;
+  
+  dialCallback = callback;
+  dialWheels = wheels;
+  $('#dialTitle').textContent = title;
+  const body = $('#dialBody');
+  body.innerHTML = '';
+  
+  wheels.forEach((w, wi) => {
+    const wheel = document.createElement('div');
+    wheel.className = 'dial-wheel';
+    wheel.innerHTML = '<div class="dial-highlight"></div>';
+    
+    const scroll = document.createElement('div');
+    scroll.className = 'dial-scroll';
+    scroll.dataset.wheelIndex = wi;
+    
+    w.options.forEach((opt, oi) => {
+      const div = document.createElement('div');
+      div.className = 'dial-option';
+      // ラベルが指定されていなければvalueをそのまま使用
+      div.textContent = opt.label !== undefined ? opt.label : opt.value;
+      div.dataset.value = opt.value;
+      div.dataset.index = oi;
+      if(String(opt.value) === String(w.selected)) div.classList.add('selected');
+      scroll.appendChild(div);
+    });
+    
+    wheel.appendChild(scroll);
+    body.appendChild(wheel);
+    
+    if(w.unit) {
+      const unit = document.createElement('div');
+      unit.className = 'dial-unit';
+      unit.textContent = w.unit;
+      body.appendChild(unit);
+    }
+    
+    // 現在の選択位置を記憶
+    let currentIndex = w.options.findIndex(o => String(o.value) === String(w.selected));
+    if(currentIndex < 0) {
+        currentIndex = 0; // 見つからなかった場合は一番上
+        if (w.options.length > 0) w.selected = w.options[0].value;
+    }
+    
+    // タッチスクロール（加速度付き）
+    let startY = 0, lastY = 0, lastTime = 0;
+    let currentOffset = -currentIndex * 40;
+    let velocityY = 0;
+    let animationId = null;
+    
+    const stopAnimation = () => {
+      if(animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+    };
+    
+    const snapToNearest = () => {
+      const optionHeight = 40;
+      let newIndex = Math.round(-currentOffset / optionHeight);
+      newIndex = Math.max(0, Math.min(w.options.length - 1, newIndex));
+      
+      currentOffset = -newIndex * optionHeight;
+      currentIndex = newIndex;
+      if (w.options[newIndex]) w.selected = w.options[newIndex].value; // 選択値を更新
+      
+      scroll.style.transition = 'transform 0.2s ease-out';
+      scroll.style.transform = `translateY(${currentOffset}px)`;
+      updateDialSelection(scroll, newIndex);
+    };
+    
+    const momentumScroll = () => {
+      const friction = 0.92;
+      const minVelocity = 0.5;
+      
+      velocityY *= friction;
+      currentOffset += velocityY;
+      
+      const maxOffset = 0;
+      const minOffset = -(w.options.length - 1) * 40;
+      
+      if(currentOffset > maxOffset) {
+        currentOffset = maxOffset;
+        velocityY = 0;
+      } else if(currentOffset < minOffset) {
+        currentOffset = minOffset;
+        velocityY = 0;
+      }
+      
+      scroll.style.transform = `translateY(${currentOffset}px)`;
+      
+      if(Math.abs(velocityY) > minVelocity) {
+        animationId = requestAnimationFrame(momentumScroll);
+      } else {
+        snapToNearest();
+      }
+    };
+    
+    scroll.addEventListener('touchstart', e => {
+      e.preventDefault();
+      stopAnimation();
+      scroll.style.transition = 'none';
+      startY = e.touches[0].clientY;
+      lastY = startY;
+      lastTime = Date.now();
+      velocityY = 0;
+    }, {passive: false});
+    
+    scroll.addEventListener('touchmove', e => {
+      e.preventDefault();
+      const y = e.touches[0].clientY;
+      const dy = y - lastY;
+      
+      const acceleration = 1.5;
+      currentOffset += dy * acceleration;
+      
+      scroll.style.transform = `translateY(${currentOffset}px)`;
+      
+      const now = Date.now();
+      const dt = now - lastTime;
+      if(dt > 0) {
+        velocityY = (dy * acceleration) / dt * 16;
+      }
+      
+      lastY = y;
+      lastTime = now;
+    }, {passive: false});
+    
+    scroll.addEventListener('touchend', e => {
+      e.preventDefault();
+      
+      if(Math.abs(velocityY) > 2) {
+        animationId = requestAnimationFrame(momentumScroll);
+      } else {
+        snapToNearest();
+      }
+    }, {passive: false});
+    
+    // マウス操作対応
+    let isMouseDown = false;
+    
+    scroll.addEventListener('mousedown', e => {
+      e.preventDefault();
+      isMouseDown = true;
+      stopAnimation();
+      scroll.style.transition = 'none';
+      startY = e.clientY;
+      lastY = startY;
+      lastTime = Date.now();
+      velocityY = 0;
+    });
+    
+    document.addEventListener('mousemove', e => {
+      if(!isMouseDown) return;
+      e.preventDefault();
+      const y = e.clientY;
+      const dy = y - lastY;
+      
+      const acceleration = 1.5;
+      currentOffset += dy * acceleration;
+      
+      scroll.style.transform = `translateY(${currentOffset}px)`;
+      
+      const now = Date.now();
+      const dt = now - lastTime;
+      if(dt > 0) {
+        velocityY = (dy * acceleration) / dt * 16;
+      }
+      
+      lastY = y;
+      lastTime = now;
+    });
+    
+    document.addEventListener('mouseup', e => {
+      if(!isMouseDown) return;
+      isMouseDown = false;
+      
+      if(Math.abs(velocityY) > 2) {
+        animationId = requestAnimationFrame(momentumScroll);
+      } else {
+        snapToNearest();
+      }
+    });
+    
+    // マウスホイール対応
+    wheel.addEventListener('wheel', e => {
+      e.preventDefault();
+      stopAnimation();
+      scroll.style.transition = 'none';
+      
+      currentOffset -= e.deltaY * 0.5;
+      
+      const maxOffset = 0;
+      const minOffset = -(w.options.length - 1) * 40;
+      currentOffset = Math.max(minOffset, Math.min(maxOffset, currentOffset));
+      
+      scroll.style.transform = `translateY(${currentOffset}px)`;
+      
+      clearTimeout(wheel.snapTimeout);
+      wheel.snapTimeout = setTimeout(snapToNearest, 150);
+    }, {passive: false});
+    
+    // クリックで直接選択＆自動決定
+    scroll.querySelectorAll('.dial-option').forEach((opt, oi) => {
+      opt.addEventListener('click', e => {
+        e.stopPropagation();
+        currentIndex = oi;
+        currentOffset = -oi * 40;
+        w.selected = w.options[oi].value;
+        scroll.style.transition = 'transform 0.2s ease-out';
+        scroll.style.transform = `translateY(${currentOffset}px)`;
+        updateDialSelection(scroll, oi);
+        
+        // 単一ホイールの場合は即確定
+        if(dialWheels.length === 1) {
+          setTimeout(confirmDial, 200);
+        }
+      });
+    });
+    
+    // 初期位置設定（選択値を中央に）
+    scroll.style.transform = `translateY(${currentOffset}px)`;
+    updateDialSelection(scroll, currentIndex);
+  });
+  
+  $('#dialOverlay').classList.add('show');
+  
+  // オーバーレイ全体のタッチスクロール防止
+  $('#dialOverlay').ontouchmove = e => e.preventDefault();
+}
+
+function updateDialSelection(scroll, index) {
+  scroll.querySelectorAll('.dial-option').forEach((o, i) => {
+    o.classList.toggle('selected', i === index);
+  });
+  const wi = parseInt(scroll.dataset.wheelIndex);
+  // w.options[index]が存在することを確認
+  if (dialWheels[wi] && dialWheels[wi].options[index]) {
+    dialWheels[wi].selected = dialWheels[wi].options[index].value;
+  }
+}
+
+function closeDial(e) {
+  if(e && e.target !== $('#dialOverlay')) return;
+  $('#dialOverlay').classList.remove('show');
+  // 背景スクロール復元
+  document.body.classList.remove('dial-open');
+  // スクロール位置を復元
+  window.scrollTo(0, scrollPosition); 
+}
+
+function confirmDial() {
+  if(dialCallback) {
+    const values = dialWheels.map(w => w.selected);
+    dialCallback(values);
+  }
+  $('#dialOverlay').classList.remove('show');
+  // 背景スクロール復元
+  document.body.classList.remove('dial-open');
+  // スクロール位置を復元
+  window.scrollTo(0, scrollPosition); 
+}
+
+// 共通レンジ生成
+function genRange(from, to, step) {
+  const arr = [];
+  for(let i = from; i <= to; i = parseFloat((i + step).toFixed(2))) { // 浮動小数点誤差対策
+    const value = parseFloat(i.toFixed(2));
+    arr.push({label: String(value), value: value});
+  }
+  return arr;
+}
+
+// バイタル用ダイヤル
+window.openVitalDial = (type, idx, field) => { // グローバル化
+  const v = state[type].vitals[idx];
+  let wheels = [];
+  let title = '';
+  
+  switch(field) {
+    case 'bp':
+      title = '血圧';
+      wheels = [
+        {options: genRange(0, 250, 1), selected: v.sbp, unit: '/'},
+        {options: genRange(0, 150, 1), selected: v.dbp, unit: 'mmHg'}
+      ];
+      break;
+    case 'hr':
+      title = '心拍数';
+      wheels = [{options: genRange(0, 250, 1), selected: v.hr, unit: 'bpm'}];
+      break;
+    case 'rr':
+      title = '呼吸数';
+      wheels = [{options: genRange(0, 45, 1), selected: v.rr, unit: '/min'}];
+      break;
+    case 'spo2':
+      title = 'SpO₂';
+      wheels = [{options: genRange(40, 100, 1), selected: v.spo2, unit: '%'}];
+      break;
+    case 'bt':
+      title = '体温';
+      wheels = [{options: genRangeBT(), selected: v.bt, unit: '℃'}];
+      break;
+    case 'gcs_e':
+      title = 'GCS - E';
+      wheels = [{options: [{label:'1',value:1},{label:'2',value:2},{label:'3',value:3},{label:'4',value:4}], selected: v.gcs.e}];
+      break;
+    case 'gcs_v':
+      title = 'GCS - V';
+      wheels = [{options: [{label:'1',value:1},{label:'2',value:2},{label:'3',value:3},{label:'4',value:4},{label:'5',value:5},{label:'T',value:'T'}], selected: v.gcs.v}];
+      break;
+    case 'gcs_m':
+      title = 'GCS - M';
+      wheels = [{options: [{label:'1',value:1},{label:'2',value:2},{label:'3',value:3},{label:'4',value:4},{label:'5',value:5},{label:'6',value:6}], selected: v.gcs.m}];
+      break;
+    case 'jcs':
+      title = 'JCS';
+      wheels = [{options: [
+        {label:'0 (清明)',value:'0'},{label:'I-1',value:'1'},{label:'I-2',value:'2'},{label:'I-3',value:'3'},
+        {label:'II-10',value:'10'},{label:'II-20',value:'20'},{label:'II-30',value:'30'},
+        {label:'III-100',value:'100'},{label:'III-200',value:'200'},{label:'III-300',value:'300'}
+      ], selected: v.jcs}];
+      break;
+  }
+  
+  openDial(title, wheels, vals => {
+    switch(field) {
+      case 'bp': v.sbp = vals[0]; v.dbp = vals[1]; break;
+      case 'hr': v.hr = vals[0]; break;
+      case 'rr': v.rr = vals[0]; break;
+      case 'spo2': v.spo2 = vals[0]; break;
+      case 'bt': v.bt = vals[0]; break;
+      case 'gcs_e': v.gcs.e = vals[0]; break;
+      case 'gcs_v': v.gcs.v = vals[0]; break;
+      case 'gcs_m': v.gcs.m = vals[0]; break;
+      case 'jcs': v.jcs = vals[0]; break;
+    }
+    if(type === 'ems') renderEmsVitals();
+    else renderCarDrVitals();
+    updateState();
+  });
+};
+
+function genRangeBT() {
+  const arr = [];
+  for(let i = 32.0; i <= 42.0; i += 0.1) {
+    arr.push({label: i.toFixed(1), value: parseFloat(i.toFixed(1))});
+  }
+  return arr;
+}
+
+// 血糖値ダイヤル
+window.openBsDial = () => { // グローバル化
+  const currentBs = state.cardr.bs || 120;
+  const wheels = [{options: genRange(0, 600, 1), selected: currentBs, unit: 'mg/dL'}];
+  
+  openDial('血糖値', wheels, vals => {
+    state.cardr.bs = vals[0];
+    $('#cardr_bs').value = vals[0];
+    $('#cardr_bs_display').textContent = vals[0];
+    updateState();
+  });
+};
+
+// CPA イベント管理関数群 (変更なし)
+window.addCpaEvent = () => { // グローバル化
+  const now = new Date();
+  const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  
+  const newEvent = {
+    arrestTime: time,
+    rhythm: 'Asystole',
+    witnessed: false,
+    bystander: false,
+    cprStart: '',
+    ivTime: '',
+    adrenalineTimes: [],
+    lt: false,
+    intubation: false,
+    intubationTime: '',
+    pericardio: false,
+    pericardioTime: '',
+    roscTime: '',
+    memo: ''
+  };
+  
+  state.cardr.cpaEvents.push(newEvent);
+  renderCpaEvents();
+  updateState();
+};
+
+window.deleteCpaEvent = (idx) => { // グローバル化
+  if(confirm('この心停止イベントを削除しますか?')) {
+    state.cardr.cpaEvents.splice(idx, 1);
+    renderCpaEvents();
+    updateState();
+  }
+};
+
+function renderCpaEvents() {
+  const container = $('#cpa_events_container');
+  if(!container) return;
+  container.innerHTML = '';
+  
+  if(state.cardr.cpaEvents.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">心停止イベントを追加してください</div>';
+    return;
+  }
+  
+  state.cardr.cpaEvents.forEach((event, idx) => {
+    const card = document.createElement('div');
+    card.className = 'vital-card';
+    card.style.marginBottom = '12px';
+    
+    // イベント1（初回心停止）の場合
+    if(idx === 0) {
+      card.innerHTML = `
+      <div class="vital-header">
+        <div style="font-weight:600">心停止イベント ${idx + 1}${event.roscTime ? ' (ROSC)' : ''}</div>
+        <button class="vital-del" onclick="deleteCpaEvent(${idx})">削除</button>
+      </div>
+      <div style="padding:12px">
+        <div class="grid2" style="margin-bottom:12px">
+          <div>
+            <label>心停止時刻</label>
+            <div class="time-row">
+              <input type="time" value="${event.arrestTime}" onchange="updateCpaEventField(${idx}, 'arrestTime', this.value)">
+              <button class="time-btn" onclick="setCpaEventNow(${idx}, 'arrestTime')">Now</button>
+            </div>
+          </div>
+          <div>
+            <label>初期波形</label>
+            <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:10px;cursor:pointer;text-align:center" onclick="openCpaRhythmDial(${idx})">
+              <div class="vital-value" style="font-size:16px">${event.rhythm}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="grid2" style="margin-top:12px">
+          <div class="toggle-btn ${event.witnessed ? 'active' : ''}" onclick="toggleCpaField(${idx}, 'witnessed')">
+            ${event.witnessed ? '目撃あり' : '目撃なし'}
+          </div>
+          <div class="toggle-btn ${event.bystander ? 'active' : ''}" onclick="toggleCpaField(${idx}, 'bystander')">
+            ${event.bystander ? 'バイスタンダーCPRあり' : 'バイスタンダーCPRなし'}
+          </div>
+        </div>
+        
+        <h3 style="margin-top:12px">蘇生処置</h3>
+        <div class="grid2">
+          <div>
+            <label>胸骨圧迫開始</label>
+            <div class="time-row">
+              <input type="time" value="${event.cprStart}" onchange="updateCpaEventField(${idx}, 'cprStart', this.value)">
+              <button class="time-btn" onclick="setCpaEventNow(${idx}, 'cprStart')">Now</button>
+            </div>
+          </div>
+          <div>
+            <label>末梢確保</label>
+            <div class="time-row">
+              <input type="time" value="${event.ivTime}" onchange="updateCpaEventField(${idx}, 'ivTime', this.value)">
+              <button class="time-btn" onclick="setCpaEventNow(${idx}, 'ivTime')">Now</button>
+            </div>
+          </div>
+        </div>
+        
+        <h3 style="margin-top:12px">アドレナリン投与</h3>
+        <div id="adrenaline_times_${idx}"></div>
+        <button class="btn small" style="margin-top:8px" onclick="addAdrenalineTime(${idx})">＋ アドレナリン追加</button>
+        
+        <h3 style="margin-top:12px">気道確保</h3>
+        <div class="checkline">
+          <label class="check-toggle ${event.lt ? 'active' : ''}" data-event-index="${idx}" data-target="lt">
+            <input type="checkbox" id="cpa_lt_check_${idx}" ${event.lt ? 'checked' : ''} onchange="updateCpaEventField(${idx}, 'lt', this.checked); toggleCheckState(this)"> LT挿入
+          </label>
+        </div>
+        <div class="checkline">
+          <label class="check-toggle ${event.intubation ? 'active' : ''}" data-event-index="${idx}" data-target="intubation">
+            <input type="checkbox" id="cpa_intubation_check_${idx}" ${event.intubation ? 'checked' : ''} onchange="toggleCpaIntubation(this)"> 気管挿管
+          </label>
+        </div>
+        <div id="cpa_intubation_time_area_${idx}" style="${event.intubation ? '' : 'display:none'};margin-top:8px">
+          <div class="time-row">
+            <input type="time" value="${event.intubationTime}" onchange="updateCpaEventField(${idx}, 'intubationTime', this.value)">
+            <button class="time-btn" onclick="setCpaEventNow(${idx}, 'intubationTime')">Now</button>
+          </div>
+        </div>
+        
+        <h3 style="margin-top:12px">その他処置</h3>
+        <div class="checkline">
+          <label class="check-toggle ${event.pericardio ? 'active' : ''}" data-event-index="${idx}" data-target="pericardio">
+            <input type="checkbox" id="cpa_pericardio_check_${idx}" ${event.pericardio ? 'checked' : ''} onchange="toggleCpaPericardio(this)"> 心膜腔穿刺
+          </label>
+        </div>
+        <div id="cpa_pericardio_time_area_${idx}" style="${event.pericardio ? '' : 'display:none'};margin-top:8px">
+          <div class="time-row">
+            <input type="time" value="${event.pericardioTime}" onchange="updateCpaEventField(${idx}, 'pericardioTime', this.value)">
+            <button class="time-btn" onclick="setCpaEventNow(${idx}, 'pericardioTime')">Now</button>
+          </div>
+        </div>
+        
+        <h3 style="margin-top:12px">転帰</h3>
+        <div>
+          <label>心拍再開(ROSC)時刻</label>
+          <div class="time-row">
+            <input type="time" value="${event.roscTime}" onchange="updateCpaEventField(${idx}, 'roscTime', this.value)">
+            <button class="time-btn" onclick="setCpaEventNow(${idx}, 'roscTime')">Now</button>
+          </div>
+        </div>
+        
+        <div id="flow_times_${idx}" style="margin-top:12px;padding:12px;background:#f0f9ff;border-radius:10px;border:1px solid #0ea5e9">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span style="font-weight:600;color:#0369a1">No Flow Time</span>
+            <span id="no_flow_time_${idx}" style="font-weight:600;color:#0369a1">-- 分</span>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="font-weight:600;color:#0369a1">Low Flow Time</span>
+            <span id="low_flow_time_${idx}" style="font-weight:600;color:#0369a1">-- 分</span>
+          </div>
+        </div>
+        
+        <label style="margin-top:12px">メモ</label>
+        <textarea class="memo" placeholder="このイベントに関するメモ" onchange="updateCpaEventField(${idx}, 'memo', this.value)">${event.memo}</textarea>
+      </div>
+    `;
+    } else {
+      // イベント2以降（再心停止）の場合
+      card.innerHTML = `
+      <div class="vital-header">
+        <div style="font-weight:600">心停止イベント ${idx + 1}（再心停止）${event.roscTime ? ' (ROSC)' : ''}</div>
+        <button class="vital-del" onclick="deleteCpaEvent(${idx})">削除</button>
+      </div>
+      <div style="padding:12px">
+        <div class="grid2" style="margin-bottom:12px">
+          <div>
+            <label>心停止時刻</label>
+            <div class="time-row">
+              <input type="time" value="${event.arrestTime}" onchange="updateCpaEventField(${idx}, 'arrestTime', this.value)">
+              <button class="time-btn" onclick="setCpaEventNow(${idx}, 'arrestTime')">Now</button>
+            </div>
+          </div>
+          <div>
+            <label>波形</label>
+            <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:10px;cursor:pointer;text-align:center" onclick="openCpaRhythmDial(${idx})">
+              <div class="vital-value" style="font-size:16px">${event.rhythm}</div>
+            </div>
+          </div>
+        </div>
+        
+        <h3 style="margin-top:12px">アドレナリン投与</h3>
+        <div id="adrenaline_times_${idx}"></div>
+        <button class="btn small" style="margin-top:8px" onclick="addAdrenalineTime(${idx})">＋ アドレナリン追加</button>
+        
+        <h3 style="margin-top:12px">転帰</h3>
+        <div>
+          <label>心拍再開(ROSC)時刻</label>
+          <div class="time-row">
+            <input type="time" value="${event.roscTime}" onchange="updateCpaEventField(${idx}, 'roscTime', this.value)">
+            <button class="time-btn" onclick="setCpaEventNow(${idx}, 'roscTime')">Now</button>
+          </div>
+        </div>
+        
+        <div id="flow_times_${idx}" style="margin-top:12px;padding:12px;background:#f0f9ff;border-radius:10px;border:1px solid #0ea5e9">
+          <div style="display:flex;justify-content:space-between">
+            <span style="font-weight:600;color:#0369a1">Low Flow Time</span>
+            <span id="low_flow_time_${idx}" style="font-weight:600;color:#0369a1">-- 分</span>
+          </div>
+        </div>
+        
+        <label style="margin-top:12px">メモ</label>
+        <textarea class="memo" placeholder="このイベントに関するメモ" onchange="updateCpaEventField(${idx}, 'memo', this.value)">${event.memo}</textarea>
+      </div>
+    `;
+    }
+    
+    container.appendChild(card);
+    renderAdrenalineTimes(idx);
+    calcFlowTimes(idx);
+  });
+}
+
+function updateCpaEventField(idx, field, value) {
+  if (state.cardr.cpaEvents[idx]) {
+    state.cardr.cpaEvents[idx][field] = value;
+    if(field === 'arrestTime' || field === 'cprStart' || field === 'roscTime') {
+      calcFlowTimes(idx);
+    }
+    updateState();
+  }
+}
+
+window.toggleCpaField = (idx, field) => { // グローバル化
+  if (state.cardr.cpaEvents[idx]) {
+    state.cardr.cpaEvents[idx][field] = !state.cardr.cpaEvents[idx][field];
+    renderCpaEvents();
+    updateState();
+  }
+};
+
+window.toggleCheckState = (checkbox) => { // グローバル化
+  const label = checkbox.closest('.check-toggle');
+  label.classList.toggle('active', checkbox.checked);
+  
+  // LT挿入の場合、イベント状態も更新
+  if(label.dataset.target === 'lt') {
+    const idx = parseInt(label.dataset.eventIndex);
+    if (state.cardr.cpaEvents[idx]) {
+      state.cardr.cpaEvents[idx].lt = checkbox.checked;
+      updateState();
+    }
+  }
+};
+
+
+window.setCpaEventNow = (idx, field) => { // グローバル化
+  const now = new Date();
+  const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  if (state.cardr.cpaEvents[idx]) {
+    state.cardr.cpaEvents[idx][field] = time;
+    renderCpaEvents();
+    updateState();
+  }
+};
+
+window.openCpaRhythmDial = (idx) => { // グローバル化
+  const rhythms = ['Asystole', 'PEA', 'Vf', 'Pulseless VT'];
+  const current = state.cardr.cpaEvents[idx]?.rhythm;
+  const options = rhythms.map(r => ({label: r, value: r}));
+  const wheels = [{options, selected: current}];
+  
+  openDial(`初期波形`, wheels, vals => {
+    if (state.cardr.cpaEvents[idx]) {
+      state.cardr.cpaEvents[idx].rhythm = vals[0];
+      renderCpaEvents();
+      updateState();
+    }
+  });
+};
+
+window.toggleCpaIntubation = (checkbox) => { // グローバル化
+  const label = checkbox.closest('.check-toggle');
+  label.classList.toggle('active', checkbox.checked);
+  
+  const idx = parseInt(label.dataset.eventIndex);
+  if (state.cardr.cpaEvents[idx]) {
+    state.cardr.cpaEvents[idx].intubation = checkbox.checked;
+    
+    const timeArea = $(`#cpa_intubation_time_area_${idx}`);
+    if(timeArea) {
+      timeArea.style.display = checkbox.checked ? 'block' : 'none';
+    }
+    updateState();
+  }
+};
+
+window.toggleCpaPericardio = (checkbox) => { // グローバル化
+  const label = checkbox.closest('.check-toggle');
+  label.classList.toggle('active', checkbox.checked);
+  
+  const idx = parseInt(label.dataset.eventIndex);
+  if (state.cardr.cpaEvents[idx]) {
+    state.cardr.cpaEvents[idx].pericardio = checkbox.checked;
+    
+    const timeArea = $(`#cpa_pericardio_time_area_${idx}`);
+    if(timeArea) {
+      timeArea.style.display = checkbox.checked ? 'block' : 'none';
+    }
+    updateState();
+  }
+};
+
+window.addAdrenalineTime = (idx) => { // グローバル化
+  if(!state.cardr.cpaEvents[idx]) return;
+
+  if(!state.cardr.cpaEvents[idx].adrenalineTimes) state.cardr.cpaEvents[idx].adrenalineTimes = [];
+  
+  let newTime;
+  if(state.cardr.cpaEvents[idx].adrenalineTimes.length === 0) {
+    const now = new Date();
+    newTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  } else {
+    const lastTime = state.cardr.cpaEvents[idx].adrenalineTimes[state.cardr.cpaEvents[idx].adrenalineTimes.length - 1];
+    // 最新時刻の1分後を開始時刻とする (4分ルールは手動調整を推奨)
+    newTime = addMinutesToTime(lastTime, 1);
+  }
+  
+  state.cardr.cpaEvents[idx].adrenalineTimes.push(newTime);
+  renderAdrenalineTimes(idx);
+  updateState();
+};
+
+function addMinutesToTime(timeStr, minutes) {
+  const [h, m] = timeStr.split(':').map(Number);
+  const totalMinutes = h * 60 + m + minutes;
+  const newH = Math.floor(totalMinutes / 60) % 24;
+  const newM = totalMinutes % 60;
+  return `${String(newH).padStart(2,'0')}:${String(newM).padStart(2,'0')}`;
+}
+
+window.removeAdrenalineTime = (idx, adrIdx) => { // グローバル化
+  if (state.cardr.cpaEvents[idx]?.adrenalineTimes) {
+    state.cardr.cpaEvents[idx].adrenalineTimes.splice(adrIdx, 1);
+    renderAdrenalineTimes(idx);
+    updateState();
+  }
+};
+
+function renderAdrenalineTimes(idx) {
+  const container = $(`#adrenaline_times_${idx}`);
+  if(!container) return;
+  container.innerHTML = '';
+  
+  const times = state.cardr.cpaEvents[idx]?.adrenalineTimes || [];
+  times.forEach((time, adrIdx) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px';
+    row.innerHTML = `
+      <span style="font-weight:500;min-width:60px">${adrIdx + 1}回目</span>
+      <div class="vital-item" style="border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer;flex:1;text-align:center" onclick="openAdrenalineTimeDial(${idx}, ${adrIdx})">
+        <span style="font-size:18px;font-weight:600;color:var(--brand)">${time}</span>
+      </div>
+      <button class="btn small ghost" style="padding:8px 12px;width:auto" onclick="removeAdrenalineTime(${idx}, ${adrIdx})">削除</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+window.openAdrenalineTimeDial = (idx, adrIdx) => { // グローバル化
+  const currentTime = state.cardr.cpaEvents[idx]?.adrenalineTimes?.[adrIdx] || '00:00';
+  const [h, m] = currentTime.split(':').map(Number);
+  
+  const hours = Array.from({length: 24}, (_, i) => ({label: String(i).padStart(2,'0'), value: String(i).padStart(2,'0')}));
+  const minutes = Array.from({length: 60}, (_, i) => ({label: String(i).padStart(2,'0'), value: String(i).padStart(2,'0')}));
+  
+  const wheels = [
+    {options: hours, selected: String(h).padStart(2,'0'), unit: ':'},
+    {options: minutes, selected: String(m).padStart(2,'0'), unit: ''}
+  ];
+  
+  openDial(`アドレナリン ${adrIdx + 1}回目`, wheels, vals => {
+    if (state.cardr.cpaEvents[idx]?.adrenalineTimes) {
+      const newTime = `${vals[0]}:${vals[1]}`;
+      state.cardr.cpaEvents[idx].adrenalineTimes[adrIdx] = newTime;
+      renderAdrenalineTimes(idx);
+      updateState();
+    }
+  });
+};
+
+// Flow Time計算関数群 (変更なし)
+function calcFlowTimes(idx) {
+  const event = state.cardr.cpaEvents[idx];
+  if (!event) return;
+  
+  const arrestTime = event.arrestTime;
+  const cprStart = event.cprStart;
+  const roscTime = event.roscTime;
+  
+  // イベント1（初回）の場合のみNo Flow Timeを計算
+  if(idx === 0) {
+    // No Flow Time = 心停止から胸骨圧迫開始まで
+    if(arrestTime && cprStart) {
+      const noFlow = calcTimeDiffMinutes(arrestTime, cprStart);
+      const el = $(`#no_flow_time_${idx}`);
+      if(el) el.textContent = noFlow >= 0 ? `${noFlow} 分` : '-- 分';
+    } else {
+      const el = $(`#no_flow_time_${idx}`);
+      if(el) el.textContent = '-- 分';
+    }
+    
+    // Low Flow Time = 胸骨圧迫開始からROSCまで
+    if(cprStart && roscTime) {
+      const lowFlow = calcTimeDiffMinutes(cprStart, roscTime);
+      const el = $(`#low_flow_time_${idx}`);
+      if(el) el.textContent = lowFlow >= 0 ? `${lowFlow} 分` : '-- 分';
+    } else {
+      const el = $(`#low_flow_time_${idx}`);
+      if(el) el.textContent = '-- 分';
+    }
+  } else {
+    // イベント2以降（再心停止）の場合はLow Flow Timeのみ = 心停止からROSCまで
+    if(arrestTime && roscTime) {
+      const lowFlow = calcTimeDiffMinutes(arrestTime, roscTime);
+      const el = $(`#low_flow_time_${idx}`);
+      if(el) el.textContent = lowFlow >= 0 ? `${lowFlow} 分` : '-- 分';
+    } else {
+      const el = $(`#low_flow_time_${idx}`);
+      if(el) el.textContent = '-- 分';
+    }
+  }
+}
+
+function calcTimeDiffMinutes(startTime, endTime) {
+  const [sh, sm] = startTime.split(':').map(Number);
+  const [eh, em] = endTime.split(':').map(Number);
+  const startMinutes = sh * 60 + sm;
+  const endMinutes = eh * 60 + em;
+  // 日付をまたぐ場合の考慮（23:50 -> 00:10 の場合、20分として計算）
+  return endMinutes >= startMinutes ? endMinutes - startMinutes : (endMinutes + 24 * 60) - startMinutes;
+}
+
+// 瞳孔径ダイヤル関数群 (変更なし)
+window.openPupilDial = (side) => { // グローバル化
+  // state.cardr.strokeが未定義の場合を考慮して初期化
+  if(!state.cardr.stroke) state.cardr.stroke = {mmt:{}, nihss:{}, pupilL:3.0, pupilR:3.0};
+  
+  const current = state.cardr.stroke[`pupil${side}`] ?? 3.0;
+  const options = [];
+  for(let i = 1; i <= 9; i += 0.5) {
+    // valueは小数を含む文字列として保持
+    const val = i.toFixed(1);
+    options.push({label: val, value: val});
+  }
+  const wheels = [{options, selected: current.toFixed(1), unit: 'mm'}];
+  
+  openDial(`瞳孔径 ${side === 'L' ? '左' : '右'}`, wheels, vals => {
+    state.cardr.stroke[`pupil${side}`] = parseFloat(vals[0]);
+    $(`#pupil${side}_display`).textContent = vals[0];
+    updateState();
+  });
+};
+
+// MMTダイヤル関数群 (変更なし)
+window.openMmtDial = (limb) => { // グローバル化
+  const labels = {ru:'右上肢', lu:'左上肢', rl:'右下肢', ll:'左下肢'};
+  // state.cardr.stroke.mmtが未定義の場合を考慮して初期化
+  if(!state.cardr.stroke) state.cardr.stroke = {mmt:{}, nihss:{}};
+  if(!state.cardr.stroke.mmt) state.cardr.stroke.mmt = {};
+  
+  const current = state.cardr.stroke.mmt[limb] ?? 5;
+  const options = [];
+  for(let i = 0; i <= 5; i++) {
+    options.push({label: i.toString(), value: i});
+  }
+  const wheels = [{options, selected: current}];
+  
+  openDial(`MMT ${labels[limb]}`, wheels, vals => {
+    state.cardr.stroke.mmt[limb] = vals[0];
+    $(`#mmt_${limb}_display`).textContent = vals[0];
+    updateState();
+  });
+};
+
+// NIHSS関数群 (変更なし)
+const NIHSS_ITEMS = [
+  {id:'1a', label:'1a 意識水準', hint:'0:覚醒 1:軽度鈍麻 2:強い刺激で開眼 3:反応なし', max:3},
+  {id:'1b', label:'1b 質問（年齢/月）', hint:'0:両方正解 1:1つ正解 2:両方不正解', max:2},
+  {id:'1c', label:'1c 従命（開閉眼/握手）', hint:'0:両方正解 1:1つ正解 2:両方不正解', max:2},
+  {id:'2', label:'2 注視', hint:'0:正常 1:部分的注視麻痺 2:完全注視麻痺', max:2},
+  {id:'3', label:'3 視野', hint:'0:正常 1:部分的半盲 2:完全半盲 3:両側性', max:3},
+  {id:'4', label:'4 顔面麻痺', hint:'0:なし 1:軽度 2:部分的 3:完全', max:3},
+  {id:'5a', label:'5a 上肢運動 右', hint:'0:保持 1-4:落下程度', max:4},
+  {id:'5b', label:'5b 上肢運動 左', hint:'0:保持 1-4:落下程度', max:4},
+  {id:'6a', label:'6a 下肢運動 右', hint:'0:保持 1-4:落下程度', max:4},
+  {id:'6b', label:'6b 下肢運動 左', hint:'0:保持 1-4:落下程度', max:4},
+  {id:'7', label:'7 運動失調', hint:'0:なし 1:1肢 2:2肢', max:2},
+  {id:'8', label:'8 感覚', hint:'0:正常 1:軽度低下 2:重度低下', max:2},
+  {id:'9', label:'9 言語', hint:'0:正常 1:軽度 2:重度 3:全失語', max:3},
+  {id:'10', label:'10 構音障害', hint:'0:正常 1:軽度 2:重度', max:2},
+  {id:'11', label:'11 消去/注意障害', hint:'0:なし 1:軽度 2:重度', max:2}
+];
+
+function renderNihss() {
+  const container = $('#nihss_area');
+  if(!container) return;
+  container.innerHTML = '';
+  
+  NIHSS_ITEMS.forEach(item => {
+    const val = state.cardr.stroke?.nihss?.[item.id] ?? 0;
+    
+    const row = document.createElement('div');
+    row.style.cssText = 'margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #e5e7eb';
+    
+    row.innerHTML = `
+      <div style="font-weight:600;font-size:13px">${item.label}</div>
+      <div style="font-size:11px;color:#6b7280;margin:2px 0 6px">${item.hint}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${Array.from({length: item.max + 1}, (_, i) => 
+          `<button class="nihss-btn ${val === i ? 'active' : ''}" data-item="${item.id}" data-val="${i}" onclick="setNihss('${item.id}',${i})">${i}</button>`
+        ).join('')}
+      </div>
+    `;
+    container.appendChild(row);
+  });
+  
+  calcNihssSum();
+}
+
+function setNihss(itemId, val) {
+  if(!state.cardr.stroke) state.cardr.stroke = {mmt:{}, nihss:{}};
+  if(!state.cardr.stroke.nihss) state.cardr.stroke.nihss = {};
+
+  state.cardr.stroke.nihss[itemId] = val;
+  
+  $$(`[data-item="${itemId}"]`).forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.val) === val);
+  });
+  
+  calcNihssSum();
+  updateState();
+}
+
+function calcNihssSum() {
+  const nihss = state.cardr.stroke?.nihss || {};
+  let sum = 0;
+  NIHSS_ITEMS.forEach(item => {
+    sum += nihss[item.id] || 0;
+  });
+  const el = $('#nihss_sum');
+  if(el) el.textContent = `${sum}点`;
+  return sum;
+}
+
+// バイタル追加・描画関数群 (変更なし)
+window.addEmsVital = () => { // グローバル化
+  const now = new Date();
+  const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  
+  let newVital;
+  if(state.ems.vitals.length > 0) {
+    const prev = state.ems.vitals[state.ems.vitals.length - 1];
+    newVital = {
+      time,
+      sbp: prev.sbp,
+      dbp: prev.dbp,
+      hr: prev.hr,
+      rr: prev.rr,
+      spo2: prev.spo2,
+      bt: prev.bt,
+      gcs: {e: prev.gcs.e, v: prev.gcs.v, m: prev.gcs.m},
+      jcs: prev.jcs
+    };
+  } else {
+    newVital = {time, sbp:120, dbp:80, hr:80, rr:16, spo2:98, bt:36.5, gcs:{e:4,v:5,m:6}, jcs:'0'};
+  }
+  
+  state.ems.vitals.push(newVital);
+  renderEmsVitals();
+  updateState();
+};
+
+window.addCarDrVital = () => { // グローバル化
+  const now = new Date();
+  const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  
+  let newVital;
+  if(state.cardr.vitals.length > 0) {
+    const prev = state.cardr.vitals[state.cardr.vitals.length - 1];
+    newVital = {
+      time,
+      sbp: prev.sbp,
+      dbp: prev.dbp,
+      hr: prev.hr,
+      rr: prev.rr,
+      spo2: prev.spo2,
+      bt: prev.bt,
+      gcs: {e: prev.gcs.e, v: prev.gcs.v, m: prev.gcs.m},
+      jcs: prev.jcs
+    };
+  } else {
+    newVital = {time, sbp:120, dbp:80, hr:80, rr:16, spo2:98, bt:36.5, gcs:{e:4,v:5,m:6}, jcs:'0'};
+  }
+  
+  state.cardr.vitals.push(newVital);
+  renderCarDrVitals();
+  updateState();
+};
+
+window.removeVital = (type, idx) => { // グローバル化
+  if(confirm('削除しますか？')) {
+    state[type].vitals.splice(idx, 1);
+    if(type === 'ems') renderEmsVitals();
+    else renderCarDrVitals();
+    updateState();
+  }
+};
+
+function renderEmsVitals() {
+  const c = $('#ems_vitals_container');
+  if(c) c.innerHTML = '';
+  if(c) state.ems.vitals.forEach((v, i) => c.appendChild(createVitalCard('ems', i, v)));
+}
+
+function renderCarDrVitals() {
+  const c = $('#cardr_vitals_container');
+  if(c) c.innerHTML = '';
+  if(c) state.cardr.vitals.forEach((v, i) => c.appendChild(createVitalCard('cardr', i, v)));
+}
+
+function createVitalCard(type, idx, v) {
+  const card = document.createElement('div');
+  card.className = 'vital-card';
+  
+  const gcsV = v.gcs.v === 'T' ? 'T' : parseInt(v.gcs.v);
+  const gcsM = parseInt(v.gcs.m);
+  const gcsSum = v.gcs.v === 'T' ? `${v.gcs.e + gcsM}T` : (v.gcs.e + gcsV + gcsM);
+  const spo2Display = v.spo2 === 0 ? '--' : v.spo2;
+  
+  card.innerHTML = `
+    <div class="vital-header">
+      <div class="vital-time">
+        <input type="time" value="${v.time}" onchange="state.${type}.vitals[${idx}].time=this.value;updateState()">
+      </div>
+      <button class="vital-del" onclick="removeVital('${type}',${idx})">削除</button>
+    </div>
+    <div class="vital-grid">
+      <div class="vital-item" onclick="openVitalDial('${type}',${idx},'bp')">
+        <div class="vital-label">BP</div>
+        <div class="vital-value">${v.sbp}/${v.dbp}</div>
+        <div class="vital-unit">mmHg</div>
+      </div>
+      <div class="vital-item" onclick="openVitalDial('${type}',${idx},'hr')">
+        <div class="vital-label">HR</div>
+        <div class="vital-value">${v.hr}</div>
+        <div class="vital-unit">bpm</div>
+      </div>
+      <div class="vital-item" onclick="openVitalDial('${type}',${idx},'rr')">
+        <div class="vital-label">RR</div>
+        <div class="vital-value">${v.rr}</div>
+        <div class="vital-unit">/min</div>
+      </div>
+      <div class="vital-item" onclick="openVitalDial('${type}',${idx},'spo2')">
+        <div class="vital-label">SpO₂</div>
+        <div class="vital-value">${spo2Display}</div>
+        <div class="vital-unit">%</div>
+      </div>
+      <div class="vital-item" onclick="openVitalDial('${type}',${idx},'bt')">
+        <div class="vital-label">BT</div>
+        <div class="vital-value">${v.bt}</div>
+        <div class="vital-unit">℃</div>
+      </div>
+      <div class="vital-item" onclick="openVitalDial('${type}',${idx},'jcs')">
+        <div class="vital-label">JCS</div>
+        <div class="vital-value">${v.jcs}</div>
+      </div>
+      <div class="vital-gcs">
+        <div class="gcs-part" onclick="openVitalDial('${type}',${idx},'gcs_e')">
+          <span class="lbl">E</span>
+          <span class="val">${v.gcs.e}</span>
+        </div>
+        <div class="gcs-part" onclick="openVitalDial('${type}',${idx},'gcs_v')">
+          <span class="lbl">V</span>
+          <span class="val">${v.gcs.v}</span>
+        </div>
+        <div class="gcs-part" onclick="openVitalDial('${type}',${idx},'gcs_m')">
+          <span class="lbl">M</span>
+          <span class="val">${v.gcs.m}</span>
+        </div>
+        <div class="gcs-sum">${gcsSum}</div>
+      </div>
+    </div>
+  `;
+  return card;
+}
+
+// 時刻設定関数群
+window.setNow = (id) => { // グローバル化
+  const el = $(`#${id}`);
+  if(el) {
+    const now = new Date();
+    el.value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    updateState();
+  }
+};
+
+// チップ・所見関数群 (変更なし)
+function mkChip(label, mode, prefix) {
+  const el = document.createElement('span');
+  el.className = 'chip';
+  el.textContent = label;
+  el.dataset.state = state[prefix].chips[label] || '';
+  
+  el.onclick = () => {
+    const cur = el.dataset.state || '';
+    let nxt = '';
+    // 'normal'モードはON/OFFのトグル
+    if(mode === 'normal') nxt = cur === 'on' ? '' : 'on';
+    // 'abn'モードは空 -> + -> - -> 空 のトグル
+    else nxt = cur === '' ? '+' : cur === '+' ? '-' : '';
+    el.dataset.state = nxt;
+    if(nxt) state[prefix].chips[label] = nxt;
+    else delete state[prefix].chips[label];
+    updateState();
+  };
+  return el;
+}
+
+function mountChips(id, def, prefix) {
+  const box = $(id);
+  if(!box) return;
+  box.innerHTML = '';
+  if(Array.isArray(def)) {
+    def.forEach(x => box.appendChild(mkChip(x, 'abn', prefix)));
+  } else {
+    (def.normal || []).forEach(x => box.appendChild(mkChip(x, 'normal', prefix)));
+    (def.abn || []).forEach(x => box.appendChild(mkChip(x, 'abn', prefix)));
+  }
+}
+
+// 処置・薬剤チップ (機能拡張)
+function renderProcedureChips(containerId, items, stateObj) {
+  const c = $(`#${containerId}`);
+  if (!c) return;
+  
+  c.innerHTML = '';
+  
+  // 念のため、intubationとdrug_detailsの初期化
+  if (containerId === 'cardr_procedures' && !state.cardr.intubation) state.cardr.intubation = {time: '', size: '7.0'};
+  if (containerId === 'cardr_drugs' && !state.cardr.drug_details) state.cardr.drug_details = {};
+
+  items.forEach(item => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    
+    let chipText = item;
+    
+    // 薬剤投与チップのテキスト表示を、投与回数で更新
+    if(containerId === 'cardr_drugs' && state.cardr.drugs[item] && state.cardr.drug_details[item]?.length > 0) {
+        const details = state.cardr.drug_details[item];
+        const lastDetail = details[details.length - 1];
+        if(details.length > 1) {
+            chipText = `${item} (${details.length}回)`;
+        } else {
+            // 点滴/輸液は量ではなく開始のみ
+            if(['生食', 'ソルアセトF', 'ブドウ糖液'].includes(item)) {
+                chipText = `${item} ${lastDetail.time} (開始)`;
+            } else {
+                chipText = `${item} ${lastDetail.time} (${lastDetail.amount}mg)`;
+            }
+        }
+    } else if(containerId === 'cardr_procedures' && item === '気管挿管' && state.cardr.procedures[item] && state.cardr.intubation.time) {
+        // 気管挿管は複数回ないのでそのまま
+        chipText = `${item} ${state.cardr.intubation.time} (${state.cardr.intubation.size}mm)`;
+    }
+    // 選択されている場合はチェックマークを追加
+    if(stateObj[item]) {
+      chip.textContent = `✓ ${chipText}`;
+      chip.dataset.state = 'proc';
+    } else {
+      chip.textContent = chipText;
+    }
+    
+    chip.onclick = () => {
+      // 薬剤チップ（点滴/その他）
+      if(containerId === 'cardr_drugs') {
+          // 生食、ソルアセトF、ブドウ糖液は投与量/時刻の入力なし（単純なチェック）
+          if(['生食', 'ソルアセトF', 'ブドウ糖液'].includes(item)) {
+              if (stateObj[item]) {
+                  // 既にONの場合、時刻を記録済みの場合は解除を尋ねる
+                  if(state.cardr.drug_details[item]?.length > 0) {
+                     // 既存の時刻を削除し、状態をOFFにする
+                     stateObj[item] = false;
+                     delete state.cardr.drug_details[item];
+                  } else {
+                     // 未記録でONだった場合、初回記録ダイアログを開く
+                     stateObj[item] = true;
+                     openIVStartDial(item);
+                     return;
+                  }
+              } else {
+                  // OFFの場合、ONにして時刻を記録
+                  stateObj[item] = true;
+                  openIVStartDial(item);
+              }
+          }
+          
+          // その他の薬剤はダイヤルを開く
+          else {
+              if(stateObj[item]) {
+                  // 既に投与済みの場合は、追加投与または解除のダイアログを開く
+                  openDrugDetailDial(item, true); // true: 複数回投与モード
+              } else {
+                  // 初回投与の場合は、投与時刻と量を設定する
+                  stateObj[item] = true;
+                  openDrugDetailDial(item, false);
+              }
+          }
+          
+          // 状態変更があった場合はレンダリングを反映
+          renderProcedureChips('cardr_drugs', state.cardr.drugs_items, state.cardr.drugs);
+          updateState();
+          return;
+      }
+      
+      // 気管挿管はダイヤルを開く (修正ポイント)
+      if(containerId === 'cardr_procedures' && item === '気管挿管') {
+        if(stateObj[item]) {
+            // 既にONの場合: 解除処理
+            if(confirm('気管挿管の記録を解除しますか？')) {
+                stateObj[item] = false;
+                // 気管挿管のデータを初期値にリセット
+                state.cardr.intubation = {time: '', size: '7.0'}; 
+            } else {
+                // 解除しない場合は何もしない (ダイアルも開かない)
+                return;
+            }
+        } else {
+            // OFFの場合: 記録ダイアルを開く
+            stateObj[item] = true;
+            openIntubationDial();
+        }
+        
+        // 状態変更を反映させるために再レンダリングを呼び出す
+        renderProcedureChips('cardr_procedures', state.cardr.procedures_items, state.cardr.procedures); 
+        updateState();
+        return;
+      }
+      
+      // 通常のトグル
+      stateObj[item] = !stateObj[item];
+      chip.dataset.state = stateObj[item] ? 'proc' : '';
+      
+      if(containerId === 'ems_procedures' && item === '酸素投与') {
+        const o2AmountEl = $('#ems_o2_amount');
+        if (o2AmountEl) {
+          o2AmountEl.style.display = stateObj[item] ? 'block' : 'none';
+          if(stateObj[item] && !state.ems.o2_flow) {
+            setTimeout(() => openO2FlowDial(), 100);
+          }
+        }
+      }
+      
+      updateState();
+    };
+    c.appendChild(chip);
+  });
+}
+
+// 既往歴のテキストからチップ状態を同期する関数
+function syncHistoryChipsFromText() {
+  if (!state.patient.history_chips) {
+    state.patient.history_chips = {};
+  }
+  
+  const historyTextarea = $('#patient_history');
+  if (!historyTextarea) return;
+  
+  const historyItems = ['高血圧', '糖尿病', '脂質異常症', '虚血性心疾患', '脳血管障害', '喘息', 'COPD', '悪性腫瘍', 'てんかん', '緑内障'];
+  const currentValue = historyTextarea.value || state.patient.history || '';
+  
+  if (currentValue) {
+    const items = currentValue.split('、').map(item => item.trim());
+    historyItems.forEach(item => {
+      state.patient.history_chips[item] = items.includes(item);
+    });
+  } else {
+    // テキストが空の場合はすべてfalse
+    historyItems.forEach(item => {
+      state.patient.history_chips[item] = false;
+    });
+  }
+}
+
+// 既往歴チップレンダリング関数
+function renderHistoryChips() {
+  const c = $('#patient_history_chips');
+  if (!c) return;
+  
+  c.innerHTML = '';
+  
+  const historyItems = ['高血圧', '糖尿病', '脂質異常症', '虚血性心疾患', '脳血管障害', '喘息', 'COPD', '悪性腫瘍', 'てんかん', '緑内障'];
+  
+  if (!state.patient.history_chips) {
+    state.patient.history_chips = {};
+  }
+  
+  historyItems.forEach(item => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    
+    const isSelected = state.patient.history_chips[item] || false;
+    if (isSelected) chip.classList.add('on');
+    chip.textContent = item;
+    
+    chip.onclick = () => {
+      // トグル処理
+      const currentState = state.patient.history_chips[item] || false;
+      state.patient.history_chips[item] = !currentState;
+      
+      // チップの表示を更新
+      if (state.patient.history_chips[item]) {
+        chip.classList.add('on');
+      } else {
+        chip.classList.remove('on');
+      }
+      
+      // テキストエリアに反映
+      updateHistoryTextarea();
+      updateState();
+    };
+    
+    c.appendChild(chip);
+  });
+}
+
+// 既往歴テキストエリアを更新する関数
+function updateHistoryTextarea() {
+  const historyTextarea = $('#patient_history');
+  if (!historyTextarea) return;
+  
+  const historyItems = ['高血圧', '糖尿病', '脂質異常症', '虚血性心疾患', '脳血管障害', '喘息', 'COPD', '悪性腫瘍', 'てんかん', '緑内障'];
+  
+  // 選択されているチップのリストを取得
+  const selectedItems = Object.keys(state.patient.history_chips || {})
+    .filter(key => state.patient.history_chips[key]);
+  
+  // テキストエリアの現在の値を取得
+  const currentValue = historyTextarea.value || '';
+  
+  // 既存の値からチップ項目を抽出（手動入力された項目を保持）
+  const existingItems = currentValue.split('、').map(item => item.trim()).filter(item => item);
+  const manualItems = existingItems.filter(item => !historyItems.includes(item));
+  
+  // 選択されたチップ項目と手動入力項目を結合
+  const allItems = [...new Set([...selectedItems, ...manualItems])];
+  const newValue = allItems.join('、');
+  
+  historyTextarea.value = newValue;
+  
+  // stateも更新
+  state.patient.history = newValue;
+}
+
+// 抗凝固薬・抗血小板薬チップレンダリング関数
+function renderMedicationChips() {
+  const c = $('#patient_medication_chips');
+  if (!c) return;
+  
+  c.innerHTML = '';
+  
+  if (!state.patient.anticoagulant) state.patient.anticoagulant = '';
+  if (!state.patient.antiplatelet) state.patient.antiplatelet = '';
+  if (!state.patient.anticoagulant_drugs) state.patient.anticoagulant_drugs = [];
+  if (!state.patient.antiplatelet_drugs) state.patient.antiplatelet_drugs = [];
+  
+  // 抗凝固薬チップ
+  const anticoagulantChip = document.createElement('div');
+  anticoagulantChip.className = 'chip';
+  const anticoagulantState = state.patient.anticoagulant || '';
+  if (anticoagulantState === 'なし') {
+    // 緑点灯
+    anticoagulantChip.classList.add('on');
+  } else if (anticoagulantState === 'あり') {
+    // 赤点灯
+    anticoagulantChip.style.background = '#fee2e2';
+    anticoagulantChip.style.borderColor = '#f87171';
+    anticoagulantChip.style.color = '#b91c1c';
+  }
+  anticoagulantChip.textContent = '抗凝固薬' + (anticoagulantState ? `(${anticoagulantState})` : '');
+  anticoagulantChip.onclick = () => {
+    // 初期 -> なし -> あり -> 初期の3状態トグル
+    const current = state.patient.anticoagulant || '';
+    if (current === '') {
+      state.patient.anticoagulant = 'なし';
+      state.patient.anticoagulant_drugs = [];
+    } else if (current === 'なし') {
+      state.patient.anticoagulant = 'あり';
+      state.patient.anticoagulant_drugs = [];
+    } else {
+      state.patient.anticoagulant = '';
+      state.patient.anticoagulant_drugs = [];
+    }
+    renderMedicationChips();
+    updateMedicationTextarea();
+    updateState();
+  };
+  c.appendChild(anticoagulantChip);
+  
+  // 抗血小板薬チップ
+  const antiplateletChip = document.createElement('div');
+  antiplateletChip.className = 'chip';
+  const antiplateletState = state.patient.antiplatelet || '';
+  if (antiplateletState === 'なし') {
+    // 緑点灯
+    antiplateletChip.classList.add('on');
+  } else if (antiplateletState === 'あり') {
+    // 赤点灯
+    antiplateletChip.style.background = '#fee2e2';
+    antiplateletChip.style.borderColor = '#f87171';
+    antiplateletChip.style.color = '#b91c1c';
+  }
+  antiplateletChip.textContent = '抗血小板薬' + (antiplateletState ? `(${antiplateletState})` : '');
+  antiplateletChip.onclick = () => {
+    // 初期 -> なし -> あり -> 初期の3状態トグル
+    const current = state.patient.antiplatelet || '';
+    if (current === '') {
+      state.patient.antiplatelet = 'なし';
+      state.patient.antiplatelet_drugs = [];
+    } else if (current === 'なし') {
+      state.patient.antiplatelet = 'あり';
+      state.patient.antiplatelet_drugs = [];
+    } else {
+      state.patient.antiplatelet = '';
+      state.patient.antiplatelet_drugs = [];
+    }
+    renderMedicationChips();
+    updateMedicationTextarea();
+    updateState();
+  };
+  c.appendChild(antiplateletChip);
+  
+  // 抗凝固薬アコーディオンの表示/非表示
+  const anticoagulantAccordion = $('#anticoagulant_accordion');
+  if (anticoagulantAccordion) {
+    anticoagulantAccordion.style.display = state.patient.anticoagulant === 'あり' ? 'block' : 'none';
+  }
+  
+  // 抗血小板薬アコーディオンの表示/非表示
+  const antiplateletAccordion = $('#antiplatelet_accordion');
+  if (antiplateletAccordion) {
+    antiplateletAccordion.style.display = state.patient.antiplatelet === 'あり' ? 'block' : 'none';
+  }
+  
+  // 抗凝固薬の薬剤チップをレンダリング
+  if (state.patient.anticoagulant === 'あり') {
+    renderAnticoagulantDrugs();
+  }
+  
+  // 抗血小板薬の薬剤チップをレンダリング
+  if (state.patient.antiplatelet === 'あり') {
+    renderAntiplateletDrugs();
+  }
+}
+
+// 抗凝固薬の薬剤チップをレンダリング
+function renderAnticoagulantDrugs() {
+  const c = $('#anticoagulant_drugs');
+  if (!c) return;
+  
+  c.innerHTML = '';
+  
+  const drugs = ['ワーファリン', 'イグザレルト', 'エリキュース', 'リクシアナ', 'プラザキサ'];
+  
+  drugs.forEach(drug => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    const isSelected = state.patient.anticoagulant_drugs.includes(drug);
+    if (isSelected) chip.classList.add('on');
+    chip.textContent = drug;
+    
+    chip.onclick = () => {
+      // 抗凝固薬は単一選択
+      if (state.patient.anticoagulant_drugs.includes(drug)) {
+        state.patient.anticoagulant_drugs = [];
+      } else {
+        state.patient.anticoagulant_drugs = [drug];
+      }
+      renderAnticoagulantDrugs();
+      updateMedicationTextarea();
+      updateState();
+    };
+    
+    c.appendChild(chip);
+  });
+}
+
+// 抗血小板薬の薬剤チップをレンダリング
+function renderAntiplateletDrugs() {
+  const c = $('#antiplatelet_drugs');
+  if (!c) return;
+  
+  c.innerHTML = '';
+  
+  const drugs = ['バイアスピリン', 'プラビックス', 'エフィエント', 'チクロピジン', 'プレタール', 'アンプラーグ', 'プロレナール', 'コンプラビン配合錠'];
+  
+  drugs.forEach(drug => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    const isSelected = state.patient.antiplatelet_drugs.includes(drug);
+    if (isSelected) chip.classList.add('on');
+    chip.textContent = drug;
+    
+    chip.onclick = () => {
+      // 抗血小板薬は複数選択可能
+      const index = state.patient.antiplatelet_drugs.indexOf(drug);
+      if (index > -1) {
+        state.patient.antiplatelet_drugs.splice(index, 1);
+      } else {
+        state.patient.antiplatelet_drugs.push(drug);
+      }
+      renderAntiplateletDrugs();
+      updateMedicationTextarea();
+      updateState();
+    };
+    
+    c.appendChild(chip);
+  });
+}
+
+// 常用薬テキストエリアを更新する関数
+window.updateMedicationTextarea = function() {
+  const medicationTextarea = $('#patient_medication');
+  if (!medicationTextarea) return;
+  
+  const items = [];
+  
+  // 抗凝固薬の処理
+  if (state.patient.anticoagulant === 'あり') {
+    if (state.patient.anticoagulant_drugs.length > 0) {
+      items.push(`抗凝固薬 ${state.patient.anticoagulant_drugs.join('、')}`);
+    } else {
+      items.push('抗凝固薬 あり');
+    }
+  } else if (state.patient.anticoagulant === 'なし') {
+    items.push('抗凝固薬 なし');
+  }
+  
+  // 抗血小板薬の処理
+  if (state.patient.antiplatelet === 'あり') {
+    if (state.patient.antiplatelet_drugs.length > 0) {
+      items.push(`抗血小板薬 ${state.patient.antiplatelet_drugs.join('、')}`);
+    } else {
+      items.push('抗血小板薬 あり');
+    }
+  } else if (state.patient.antiplatelet === 'なし') {
+    items.push('抗血小板薬 なし');
+  }
+  
+  const chipText = items.join('、');
+  const currentValue = medicationTextarea.value || '';
+  
+  // 既存の値からチップ項目を抽出（手動入力された項目を保持）
+  const existingItems = currentValue.split('、').map(item => item.trim()).filter(item => item);
+  const manualItems = existingItems.filter(item => 
+    !item.startsWith('抗凝固薬 ') && !item.startsWith('抗血小板薬 ')
+  );
+  
+  // 選択されたチップ項目と手動入力項目を結合
+  const allItems = [...new Set([...items, ...manualItems])];
+  const newValue = allItems.join('、');
+  
+  medicationTextarea.value = newValue;
+  
+  // stateも更新
+  state.patient.medication = newValue;
+}
+
+// アレルギーチップレンダリング関数
+function renderAllergyChips() {
+  const c = $('#patient_allergy_chips');
+  if (!c) return;
+  
+  c.innerHTML = '';
+  
+  if (!state.patient.food_allergy) state.patient.food_allergy = '';
+  if (!state.patient.drug_allergy) state.patient.drug_allergy = '';
+  
+  // 食物アレルギーチップ
+  const foodAllergyChip = document.createElement('div');
+  foodAllergyChip.className = 'chip';
+  const foodAllergyState = state.patient.food_allergy || '';
+  if (foodAllergyState === 'なし') {
+    // 緑点灯
+    foodAllergyChip.classList.add('on');
+  } else if (foodAllergyState === 'あり') {
+    // 赤点灯
+    foodAllergyChip.style.background = '#fee2e2';
+    foodAllergyChip.style.borderColor = '#f87171';
+    foodAllergyChip.style.color = '#b91c1c';
+  }
+  foodAllergyChip.textContent = '食物アレルギー' + (foodAllergyState ? `(${foodAllergyState})` : '');
+  foodAllergyChip.onclick = () => {
+    // 初期 -> なし -> あり -> 初期の3状態トグル
+    const current = state.patient.food_allergy || '';
+    if (current === '') {
+      state.patient.food_allergy = 'なし';
+    } else if (current === 'なし') {
+      state.patient.food_allergy = 'あり';
+    } else {
+      state.patient.food_allergy = '';
+    }
+    renderAllergyChips();
+    updateAllergyTextarea();
+    updateState();
+  };
+  c.appendChild(foodAllergyChip);
+  
+  // 薬剤アレルギーチップ
+  const drugAllergyChip = document.createElement('div');
+  drugAllergyChip.className = 'chip';
+  const drugAllergyState = state.patient.drug_allergy || '';
+  if (drugAllergyState === 'なし') {
+    // 緑点灯
+    drugAllergyChip.classList.add('on');
+  } else if (drugAllergyState === 'あり') {
+    // 赤点灯
+    drugAllergyChip.style.background = '#fee2e2';
+    drugAllergyChip.style.borderColor = '#f87171';
+    drugAllergyChip.style.color = '#b91c1c';
+  }
+  drugAllergyChip.textContent = '薬剤アレルギー' + (drugAllergyState ? `(${drugAllergyState})` : '');
+  drugAllergyChip.onclick = () => {
+    // 初期 -> なし -> あり -> 初期の3状態トグル
+    const current = state.patient.drug_allergy || '';
+    if (current === '') {
+      state.patient.drug_allergy = 'なし';
+    } else if (current === 'なし') {
+      state.patient.drug_allergy = 'あり';
+    } else {
+      state.patient.drug_allergy = '';
+    }
+    renderAllergyChips();
+    updateAllergyTextarea();
+    updateState();
+  };
+  c.appendChild(drugAllergyChip);
+}
+
+// アレルギーテキストエリアを更新する関数
+window.updateAllergyTextarea = function() {
+  const allergyTextarea = $('#patient_allergy');
+  if (!allergyTextarea) return;
+  
+  const items = [];
+  
+  // 食物アレルギーの処理
+  if (state.patient.food_allergy === 'あり') {
+    items.push('食物アレルギー あり');
+  } else if (state.patient.food_allergy === 'なし') {
+    items.push('食物アレルギー なし');
+  }
+  
+  // 薬剤アレルギーの処理
+  if (state.patient.drug_allergy === 'あり') {
+    items.push('薬剤アレルギー あり');
+  } else if (state.patient.drug_allergy === 'なし') {
+    items.push('薬剤アレルギー なし');
+  }
+  
+  const chipText = items.join('、');
+  const currentValue = allergyTextarea.value || '';
+  
+  // 既存の値からチップ項目を抽出（手動入力された項目を保持）
+  const existingItems = currentValue.split('、').map(item => item.trim()).filter(item => item);
+  const manualItems = existingItems.filter(item => 
+    !item.startsWith('食物アレルギー ') && !item.startsWith('薬剤アレルギー ')
+  );
+  
+  // 選択されたチップ項目と手動入力項目を結合
+  const allItems = [...new Set([...items, ...manualItems])];
+  const newValue = allItems.join('、');
+  
+  allergyTextarea.value = newValue;
+  
+  // stateも更新
+  state.patient.allergy = newValue;
+}
+
+// 年代・性別・先行救急隊チップレンダリング関数
+function renderRequestInfoChips() {
+  // 年代チップ
+  const ageChips = $('#patient_age_chips');
+  if (ageChips) {
+    ageChips.innerHTML = '';
+    const ageOptions = ['10代', '20代', '30代', '40代', '50代', '60代', '70代', '80代', '90代以上'];
+    ageOptions.forEach(age => {
+      const chip = document.createElement('div');
+      chip.className = 'chip' + (state.request.age === age ? ' active' : '');
+      chip.textContent = age;
+      chip.onclick = () => {
+        state.request.age = state.request.age === age ? '' : age;
+        renderRequestInfoChips();
+        updateState();
+      };
+      ageChips.appendChild(chip);
+    });
+  }
+  
+  // 性別チップ
+  const sexChips = $('#patient_sex_chips');
+  if (sexChips) {
+    sexChips.innerHTML = '';
+    const sexOptions = ['男性', '女性', '不明'];
+    sexOptions.forEach(sex => {
+      const chip = document.createElement('div');
+      chip.className = 'chip' + (state.request.sex === sex ? ' active' : '');
+      chip.textContent = sex;
+      chip.onclick = () => {
+        state.request.sex = state.request.sex === sex ? '' : sex;
+        renderRequestInfoChips();
+        updateState();
+      };
+      sexChips.appendChild(chip);
+    });
+  }
+  
+  // 先行救急隊チップ
+  const emsTeamChips = $('#ems_team_chips');
+  if (emsTeamChips) {
+    emsTeamChips.innerHTML = '';
+    const emsTeams = [
+      { "id": "chuo", "name": "中央救急隊" },
+      { "id": "nanrinji", "name": "南林寺救急隊" },
+      { "id": "uemachi", "name": "上町救急隊" },
+      { "id": "konan", "name": "甲南救急隊" },
+      { "id": "yoshino", "name": "吉野救急隊" },
+      { "id": "yoshida", "name": "吉田救急隊" },
+      { "id": "sakurajima_e", "name": "桜島東救急隊" },
+      { "id": "sakurajima_w", "name": "桜島西救急隊" },
+      { "id": "nishi", "name": "西本署" },
+      { "id": "ishiki", "name": "伊敷救急隊" },
+      { "id": "matsumoto", "name": "松元救急隊" },
+      { "id": "koriyama", "name": "郡山救急隊" },
+      { "id": "minami", "name": "南本署" },
+      { "id": "taniyama", "name": "谷山救急隊" },
+      { "id": "taniyama_kita", "name": "谷山北救急隊" },
+      { "id": "korimoto", "name": "郡元救急隊" },
+      { "id": "kiire", "name": "喜入救急隊" }
+    ];
+    
+    // 選択されている場合は選択されたチップだけを表示
+    if (state.request.ems_team) {
+      const selectedTeam = emsTeams.find(t => t.id === state.request.ems_team);
+      if (selectedTeam) {
+        const chip = document.createElement('div');
+        chip.className = 'chip active';
+        chip.textContent = selectedTeam.name;
+        chip.onclick = () => {
+          state.request.ems_team = '';
+          renderRequestInfoChips();
+          updateState();
+        };
+        emsTeamChips.appendChild(chip);
+        
+        // 変更ボタンを追加
+        const changeBtn = document.createElement('div');
+        changeBtn.className = 'chip';
+        changeBtn.style.cssText = 'background:#f3f4f6;color:#6b7280;border:1.5px solid #d1d5db';
+        changeBtn.textContent = '変更';
+        changeBtn.onclick = () => {
+          state.request.ems_team = '';
+          renderRequestInfoChips();
+          updateState();
+        };
+        emsTeamChips.appendChild(changeBtn);
+      }
+    } else {
+      // 選択されていない場合は全チップを表示
+      emsTeams.forEach(team => {
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+        chip.textContent = team.name;
+        chip.onclick = () => {
+          state.request.ems_team = team.id;
+          renderRequestInfoChips();
+          updateState();
+        };
+        emsTeamChips.appendChild(chip);
+      });
+    }
+  }
+}
+
+function renderRequestContentChips() {
+  const contentChips = $('#request_content_chips');
+  if (!contentChips) return;
+  
+  contentChips.innerHTML = '';
+  
+  const contentItems = [
+    '心肺停止',
+    '窒息',
+    '呼吸困難',
+    '胸痛',
+    '意識消失',
+    '意識障害',
+    '胸背部痛',
+    '交通外傷',
+    '転落外傷',
+    'けいれん'
+  ];
+  
+  // 選択されている場合は選択されたチップだけを表示
+  if (state.request.content) {
+    const chip = document.createElement('div');
+    chip.className = 'chip active';
+    chip.textContent = state.request.content;
+    chip.onclick = () => {
+      state.request.content = '';
+      $('#request_detail').value = '';
+      renderRequestContentChips();
+      updateState();
+    };
+    contentChips.appendChild(chip);
+    
+    // 変更ボタンを追加
+    const changeBtn = document.createElement('div');
+    changeBtn.className = 'chip';
+    changeBtn.style.cssText = 'background:#f3f4f6;color:#6b7280;border:1.5px solid #d1d5db';
+    changeBtn.textContent = '変更';
+    changeBtn.onclick = () => {
+      state.request.content = '';
+      $('#request_detail').value = '';
+      renderRequestContentChips();
+      updateState();
+    };
+    contentChips.appendChild(changeBtn);
+  } else {
+    // 選択されていない場合は全チップを表示
+    contentItems.forEach(item => {
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.textContent = item;
+      chip.onclick = () => {
+        state.request.content = item;
+        $('#request_detail').value = item;
+        renderRequestContentChips();
+        updateState();
+      };
+      contentChips.appendChild(chip);
+    });
+  }
+}
+
+// 点滴・輸液開始時刻ダイヤル
+window.openIVStartDial = (drugName) => {
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    
+    // 時間と分のホイールを定義
+    const hoursOptions = Array.from({length: 24}, (_, i) => ({label: String(i).padStart(2, '0'), value: String(i).padStart(2, '0')}));
+    const minutesOptions = Array.from({length: 60}, (_, i) => ({label: String(i).padStart(2, '0'), value: String(i).padStart(2, '0')}));
+    
+    const [h, m] = currentTime.split(':').map(String);
+
+    const wheels = [
+        {options: hoursOptions, selected: h, unit: ':'},
+        {options: minutesOptions, selected: m}
+    ];
+
+    openDial(`${drugName} 開始時刻`, wheels, (vals) => {
+        const newTime = `${vals[0]}:${vals[1]}`;
+        
+        // 記録をリセットして新しい開始時刻を1回目として格納 (量='開始'と仮定)
+        state.cardr.drug_details[drugName] = [{
+            time: newTime,
+            amount: '開始'
+        }];
+        
+        // チップの状態をONに確定
+        state.cardr.drugs[drugName] = true;
+        
+        renderProcedureChips('cardr_drugs', state.cardr.drugs_items, state.cardr.drugs);
+        updateState();
+    });
+};
+
+// タブ・UI制御関数群 (toggleAbgを修正)
+function setupExamTabs(prefix) {
+  const container = $(`#${prefix}_examTabs`);
+  if (!container) {
+    console.warn(`setupExamTabs: Container not found for prefix "${prefix}"`);
+    return;
+  }
+  
+  const tabs = container.querySelectorAll('.exam-tab');
+  if (!tabs || tabs.length === 0) {
+    console.warn(`setupExamTabs: No tabs found for prefix "${prefix}"`);
+    return;
+  }
+  
+  if (!state[prefix]) {
+    console.warn(`setupExamTabs: state[${prefix}] is not defined`);
+    return;
+  }
+  
+  tabs.forEach(tab => {
+    tab.onclick = function() {
+      container.querySelectorAll('.exam-tab').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+      const examType = this.dataset.exam;
+      if (state[prefix]) {
+        state[prefix].exam_tab = examType;
+      }
+      const card = this.closest('.card');
+      if (card) {
+        card.querySelectorAll('.exam-pane').forEach(p => p.classList.remove('active'));
+        const pane = card.querySelector(`.exam-pane[data-pane="${examType}"]`);
+        if (pane) pane.classList.add('active');
+      }
+      
+      // CPAタブ選択時にバイタル初期値をCPA用に設定（確認ダイアログ付き）
+      if(prefix === 'cardr' && examType === 'cpa') {
+        setCpaVitalDefaults();
+        // 心停止イベントが空の場合は自動的に追加
+        if(state.cardr && state.cardr.cpaEvents && state.cardr.cpaEvents.length === 0) {
+          addCpaEvent();
+          // 追加後、少し待ってからスクロール
+          setTimeout(() => {
+            const container = $('#cpa_events_container');
+            if(container && container.children.length > 0) {
+              container.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+            }
+          }, 100);
+        }
+      }
+      
+      updateState();
+    };
+  });
+}
+
+function setCpaVitalDefaults() {
+  if(!confirm('CPAモードに切り替えます。\nバイタルサインをCPA初期値（BP:0, HR:0, RR:0, SpO2:測定不能, JCS:300, GCS:E1V1M1）に設定しますか？')) {
+    return;
+  }
+  
+  state.ems.vitals.forEach(v => {
+    v.sbp = 0; v.dbp = 0; v.hr = 0; v.rr = 0; v.spo2 = 0; 
+    v.jcs = '300'; v.gcs = {e: 1, v: 1, m: 1};
+  });
+  
+  state.cardr.vitals.forEach(v => {
+    v.sbp = 0; v.dbp = 0; v.hr = 0; v.rr = 0; v.spo2 = 0; 
+    v.jcs = '300'; v.gcs = {e: 1, v: 1, m: 1};
+  });
+  
+  renderEmsVitals();
+  renderCarDrVitals();
+  updateState();
+}
+
+window.toggleTransportTimes = () => { // グローバル化
+  const method = $('#transport_method')?.value;
+  const timesDiv = $('#transport_times');
+  if(timesDiv) {
+    timesDiv.style.display = (method === 'Iターン') ? 'none' : 'block';
+  }
+  updateState();
+};
+
+function bindMemos() {
+  const bind = (id, obj, key) => {
+    const el = $(id);
+    if(el) {
+      el.value = obj[key] || '';
+      el.oninput = () => { obj[key] = el.value; updateState(); };
+    }
+  };
+  ['head','resp','card','abd','limb','neuro'].forEach(k => bind(`#memo-ems-gen-${k}`, state.ems.memos.general, k));
+  ['head','neck','chest','abd','pelvis','limb'].forEach(k => bind(`#memo-ems-tra-${k}`, state.ems.memos.trauma, k));
+  if(!state.ems.memos.cpa) state.ems.memos.cpa = {memo:''};
+  bind('#memo-ems-cpa', state.ems.memos.cpa, 'memo');
+  if(!state.ems.memos.stroke) state.ems.memos.stroke = {memo:''};
+  bind('#memo-ems-str', state.ems.memos.stroke, 'memo');
+  
+  ['head','resp','card','abd','limb','neuro'].forEach(k => bind(`#memo-cardr-gen-${k}`, state.cardr.memos.general, k));
+  ['head','neck','chest','abd','pelvis','limb'].forEach(k => bind(`#memo-cardr-tra-${k}`, state.cardr.memos.trauma, k));
+  
+  // 脳卒中詳細メモ
+  ['cn','eye','motor','reflex','higher'].forEach(k => {
+    const el = $(`#memo-cardr-str-${k}`);
+    if(el) {
+      if(!state.cardr.memos.stroke) state.cardr.memos.stroke = {};
+      el.value = state.cardr.memos.stroke[k] || '';
+      el.oninput = () => { state.cardr.memos.stroke[k] = el.value; updateState(); };
+    }
+  });
+  
+  // CPAメモ
+  if(!state.cardr.memos.cpa) state.cardr.memos.cpa = {}; 
+  bind('#memo-cardr-cpa-body', state.cardr.memos.cpa, 'body');
+  bind('#memo-cardr-cpa-head', state.cardr.memos.cpa, 'head');
+  bind('#memo-cardr-cpa-trunk', state.cardr.memos.cpa, 'trunk');
+}
+
+// 血ガス (ABG_DIAL_CONFIG, toggleAbg, openAbgDialを修正)
+const ABG_ITEMS = [{item:'pH',unit:'',normal:'7.40'},{item:'pCO2',unit:'mmHg',normal:'40'},{item:'pO2',unit:'mmHg',normal:'95'},{item:'HCO3-',unit:'mmol/L',normal:'24'},{item:'BE',unit:'mEq/L',normal:'1.0'},{item:'Lac',unit:'mmol/L',normal:'1.0'},{item:'Na',unit:'mEq/L',normal:'140'},{item:'Cr',unit:'mg/dL',normal:'0.8'}];
+
+const ABG_DIAL_CONFIG = {
+  'pH': {min: 6.80, max: 7.80, step: 0.01, decimals: 2},
+  'pCO2': {min: 10, max: 150, step: 1, decimals: 0},
+  'pO2': {min: 10, max: 500, step: 1, decimals: 0},
+  'HCO3-': {min: 0, max: 50, step: 1, decimals: 0},
+  'BE': {min: -30, max: 30, step: 0.1, decimals: 1}, // 0.1刻みに変更
+  'Lac': {min: 0, max: 30, step: 0.1, decimals: 1},
+  'Na': {min: 100, max: 180, step: 1, decimals: 0},
+  'Cr': {min: 0.1, max: 15, step: 0.1, decimals: 1}
+};
+
+window.toggleAbg = () => { // グローバル化
+  state.cardr.abg_type = $('#cardr_abg_type')?.value;
+  const abgArea = $('#abg_area');
+  const isSelected = state.cardr.abg_type === 'ABG' || state.cardr.abg_type === 'VBG';
+  
+  if (abgArea) {
+    abgArea.style.display = isSelected ? 'block' : 'none';
+  }
+  
+  // 未実施に戻したらデータをクリア
+  if (!isSelected) {
+    state.cardr.abg_data = [];
+    renderAbgPills();
+  } else if (state.cardr.abg_data.length === 0) {
+    // 選択されたがデータがない場合は初期セットを追加
+    addAbgSet();
+  }
+  
+  updateState();
+};
+
+window.addAbgSet = () => { // グローバル化
+  ABG_ITEMS.forEach(item => {
+    // 既に存在する項目は追加しない
+    if(!state.cardr.abg_data.some(x => x.item === item.item)) {
+      // 値を文字列として格納 (小数点調整のため)
+      const initialValue = parseFloat(item.normal).toFixed(ABG_DIAL_CONFIG[item.item]?.decimals ?? 0);
+      state.cardr.abg_data.push({item: item.item, unit: item.unit, val: initialValue});
+    }
+  });
+  renderAbgPills();
+  updateState();
+};
+
+window.clearAbg = () => { // グローバル化
+  if(confirm('血ガスデータをすべてクリアしますか？')) {
+    state.cardr.abg_data = [];
+    renderAbgPills();
+    updateState();
+  }
+};
+
+window.openAbgDial = (index) => { // グローバル化
+  const rec = state.cardr.abg_data[index];
+  const config = ABG_DIAL_CONFIG[rec.item];
+  if(!config) return;
+  
+  const options = [];
+  for(let v = config.min; v <= config.max; v = parseFloat((v + config.step).toFixed(config.decimals))) {
+    const val = v.toFixed(config.decimals);
+    options.push({label: val, value: val});
+  }
+  
+  const currentVal = (parseFloat(rec.val) || config.min).toFixed(config.decimals);
+  
+  const wheels = [{
+    options: options,
+    selected: currentVal,
+    unit: rec.unit
+  }];
+  
+  openDial(`${rec.item}`, wheels, vals => {
+    rec.val = vals[0];
+    renderAbgPills();
+    updateState();
+  });
+};
+
+window.openAbgManualInput = (index) => { // グローバル化
+  const rec = state.cardr.abg_data[index];
+  const newVal = prompt(`${rec.item} の値を入力してください`, rec.val);
+  if(newVal !== null && newVal.trim() !== '') {
+    rec.val = newVal.trim();
+    renderAbgPills();
+    updateState();
+  }
+};
+
+function renderAbgPills() {
+  const c = $('#abg_pills');
+  if (!c) return;
+  
+  c.innerHTML = '';
+  state.cardr.abg_data.forEach((rec, i) => {
+    const pill = document.createElement('div');
+    pill.className = 'labpill';
+    pill.style.cursor = 'pointer';
+    pill.innerHTML = `
+      <label>${rec.item}</label>
+      <span class="abg-val" style="min-width:50px;text-align:right;font-weight:600;color:var(--brand)">${rec.val}</span>
+      <span class="unit">${rec.unit}</span>
+      <button onclick="event.stopPropagation();state.cardr.abg_data.splice(${i},1);renderAbgPills();updateState()">×</button>
+    `;
+    
+    let pressTimer = null;
+    let isLongPress = false;
+    
+    const valSpan = pill.querySelector('.abg-val');
+    
+    const handleStart = () => {
+        isLongPress = false;
+        pressTimer = setTimeout(() => {
+            isLongPress = true;
+            openAbgManualInput(i);
+        }, 500);
+    };
+
+    const handleEnd = () => {
+        clearTimeout(pressTimer);
+        if(!isLongPress) {
+            openAbgDial(i);
+        }
+    };
+
+    const handleMove = () => {
+        clearTimeout(pressTimer);
+    };
+
+    // Touch events
+    valSpan.addEventListener('touchstart', handleStart);
+    valSpan.addEventListener('touchend', handleEnd);
+    valSpan.addEventListener('touchmove', handleMove);
+
+    // Mouse events (for desktop support)
+    valSpan.addEventListener('mousedown', handleStart);
+    valSpan.addEventListener('mouseup', handleEnd);
+    valSpan.addEventListener('mouseleave', handleMove);
+    
+    c.appendChild(pill);
+  });
+}
+
+window.toggleExam = (type) => { // グローバル化
+  state.cardr.exams[type] = !state.cardr.exams[type];
+  
+  if(type === 'bs') {
+    const bsArea = $('#exam_bs_area');
+    if (bsArea) bsArea.style.display = state.cardr.exams[type] ? 'block' : 'none';
+  } else {
+    const txtArea = $(`#exam_${type}_txt`);
+    if (txtArea) txtArea.style.display = state.cardr.exams[type] ? 'block' : 'none';
+  }
+  
+  // チップを再レンダリング
+  renderExamChips();
+  updateState();
+};
+
+function renderExamChips() {
+  const c = $('#exam_chips');
+  if (!c) return;
+  
+  c.innerHTML = '';
+  
+  const examItems = [
+    { id: 'bs', name: '血糖' },
+    { id: 'ucg', name: 'UCG' },
+    { id: 'us_abd', name: '腹部US' },
+    { id: 'us_lung', name: '肺US' },
+    { id: 'us_neck', name: '頸部血管US' },
+    { id: 'ecg', name: '12誘導心電図' },
+    { id: 'fast', name: 'FAST' },
+    { id: 'efast', name: 'eFAST' }
+  ];
+  
+  examItems.forEach(item => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = item.name;
+    
+    // 選択されている場合は点灯（背景色変更）
+    if(state.cardr.exams[item.id]) {
+      chip.dataset.state = 'proc';
+    }
+    
+    chip.onclick = () => {
+      toggleExam(item.id);
+    };
+    
+    c.appendChild(chip);
+  });
+}
+
+// プロブレム関数群
+window.addProblem = () => { // グローバル化
+  const input = $('#new_problem');
+  const text = input?.value.trim();
+  if(text) {
+    state.problems.push(text);
+    if(input) input.value = '';
+    renderProblems();
+    updateState();
+  }
+};
+
+function renderProblems() {
+  const c = $('#problems');
+  if (!c) return;
+  
+  c.innerHTML = state.problems.map((p, i) => `
+    <div class="problem-item">
+      <span>#${i+1} ${p}</span>
+      <button class="del-btn" onclick="state.problems.splice(${i},1);renderProblems();updateState()">削除</button>
+    </div>
+  `).join('');
+}
+
+// トリアージ・重症度分類チップレンダリング関数
+function renderTriageChips() {
+  const c = $('#triage_chips');
+  if (!c) return;
+  
+  c.innerHTML = '';
+  
+  const triageOptions = [
+    { "value": 1, "label": "Lv1: 蘇生 (直ちに)", "color": "#ff0000" },
+    { "value": 2, "label": "Lv2: 緊急 (15分以内)", "color": "#ff8800" },
+    { "value": 3, "label": "Lv3: 準緊急 (30分以内)", "color": "#ffff00" },
+    { "value": 4, "label": "Lv4: 低緊急 (60分以内)", "color": "#00ff00" },
+    { "value": 5, "label": "Lv5: 非緊急 (120分以内)", "color": "#ffffff" }
+  ];
+  
+  triageOptions.forEach(option => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = option.label;
+    
+    // 選択されている場合は点灯
+    if(state.triage === option.value) {
+      chip.classList.add('active');
+      chip.style.background = option.color;
+      chip.style.borderColor = option.color;
+      chip.style.color = option.value === 5 ? '#000' : '#fff';
+    }
+    
+    chip.onclick = () => {
+      state.triage = state.triage === option.value ? null : option.value;
+      renderTriageChips();
+      updateState();
+    };
+    
+    c.appendChild(chip);
+  });
+}
+
+function renderSeverityChips() {
+  const c = $('#severity_chips');
+  if (!c) return;
+  
+  c.innerHTML = '';
+  
+  const severityOptions = [
+    { "value": 0, "label": "0: 傷病なし" },
+    { "value": 1, "label": "I: 軽微 (医療不要)" },
+    { "value": 2, "label": "II: 軽症 (外来レベル)" },
+    { "value": 3, "label": "III: 中等症 (要入院・生命危機なし)" },
+    { "value": 4, "label": "IV: 重症 (生命危機の可能性あり)" },
+    { "value": 5, "label": "V: 重篤 (生命危機切迫)" },
+    { "value": 6, "label": "VI: 蘇生 (CPA・蘇生後)" },
+    { "value": 7, "label": "VII: 死亡" }
+  ];
+  
+  severityOptions.forEach(option => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = option.label;
+    
+    // 選択されている場合は点灯
+    if(state.severity === option.value) {
+      chip.classList.add('active');
+    }
+    
+    chip.onclick = () => {
+      state.severity = state.severity === option.value ? null : option.value;
+      renderSeverityChips();
+      updateState();
+    };
+    
+    c.appendChild(chip);
+  });
+}
+
+// 病院選択関数群 (変更なし)
+let selectedRegion = '鹿児島市';
+let hospitalsShowAll = {}; // 地域ごとの表示状態を管理
+
+function renderHospitalChips() {
+  const container = $('#destination_chips');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  // 地域タブ
+  const regionTabs = document.createElement('div');
+  regionTabs.className = 'region-tabs';
+  regionTabs.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line)';
+  
+  Object.keys(state.hospitals).forEach(region => {
+    const tab = document.createElement('div');
+    tab.className = 'region-tab';
+    tab.style.cssText = `padding:6px 12px;border-radius:16px;font-size:13px;cursor:pointer;${selectedRegion === region ? 'background:var(--brand);color:#fff' : 'background:var(--chip)'}`;
+    tab.textContent = region;
+    tab.onclick = () => {
+      selectedRegion = region;
+      renderHospitalChips();
+    };
+    regionTabs.appendChild(tab);
+  });
+  container.appendChild(regionTabs);
+  
+  // 医療機関チップ
+  const hospitals = state.hospitals[selectedRegion] || [];
+  const initialShowCount = 10;
+  const isAllShown = hospitalsShowAll[selectedRegion] || false;
+  const hospitalsToShow = isAllShown ? hospitals : hospitals.slice(0, initialShowCount);
+  
+  const hospitalsContainer = document.createElement('div');
+  hospitalsContainer.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px';
+  hospitalsContainer.id = 'hospitals_container';
+  
+  hospitalsToShow.forEach(h => {
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (state.destination.hospital === h ? ' active' : '');
+    chip.textContent = h;
+    chip.onclick = () => selectHospital(h);
+    hospitalsContainer.appendChild(chip);
+  });
+  
+  // その他ボタン（病院が10以上ある場合のみ表示）
+  if(hospitals.length > initialShowCount && !isAllShown) {
+    const moreBtn = document.createElement('div');
+    moreBtn.className = 'chip';
+    moreBtn.style.cssText = 'background:#e0f2fe;color:#0369a1;font-weight:600;border:1.5px solid #0ea5e9';
+    moreBtn.textContent = `その他 (${hospitals.length - initialShowCount})`;
+    moreBtn.onclick = () => {
+      hospitalsShowAll[selectedRegion] = true;
+      renderHospitalChips();
+    };
+    hospitalsContainer.appendChild(moreBtn);
+  }
+  
+  container.appendChild(hospitalsContainer);
+  
+  updateDestinationDisplay();
+}
+
+function selectHospital(name) {
+  // 同じ病院をタップしたら選択解除
+  if(state.destination.hospital === name) {
+    state.destination.hospital = '';
+  } else {
+    state.destination.hospital = name;
+    state.destination.custom = ''; // 簡易選択時は自由記載をクリア
+    const customEl = $('#destination_custom');
+    if (customEl) customEl.value = '';
+  }
+  renderHospitalChips();
+  updateState();
+}
+
+function updateDestinationDisplay() {
+  const display = $('#destination_display');
+  const selected = $('#destination_selected');
+  const hospital = state.destination.custom || state.destination.hospital;
+  if(hospital && display && selected) {
+    display.style.display = 'block';
+    selected.textContent = hospital;
+  } else if (display) {
+    display.style.display = 'none';
+  }
+}
+
+// 状態更新関数群 (変更なし)
+function updateState() {
+  state.request.type = $('#request_type')?.value || '';
+  state.request.detail = $('#request_detail')?.value || '';
+  state.car.request_time = $('#cardr_request_time')?.value || '';
+  state.patient.history = $('#patient_history')?.value || '';
+  state.patient.medication = $('#patient_medication')?.value || '';
+  state.patient.allergy = $('#patient_allergy')?.value || '';
+  state.patient.lastWell = $('#last_well_time')?.value || '';
+  state.patient.lastMeal = $('#last_meal_time')?.value || '';
+  state.patient.hospital = $('#patient_hospital')?.value || '';
+  state.car.departure = $('#car_departure')?.value || '';
+  state.car.scene_arrival = $('#scene_arrival')?.value || '';
+  state.car.cardr_contact = $('#cardr_contact')?.value || '';
+  state.car.activity_place = $('#activity_place')?.value || '';
+  state.car.transport_method = $('#transport_method')?.value || 'Uターン';
+  state.car.scene_departure = $('#scene_departure')?.value || '';
+  state.car.hospital_arrival = $('#hospital_arrival')?.value || '';
+  state.ems.aware = $('#ems_aware')?.value || '';
+  state.ems.arrival = $('#ems_arrival')?.value || '';
+  state.ems.contact = $('#ems_contact')?.value || '';
+  state.ems.pickup = $('#ems_pickup')?.value || '';
+  state.ems.departure = $('#ems_departure')?.value || '';
+  state.ems.rp = $('#ems_rp')?.value || '';
+  state.ems.o2_flow = $('#ems_o2_flow')?.value || '';
+  state.ems.procedures_detail = $('#ems_procedures_detail')?.value || '';
+  state.ems.stroke_onset = $('#ems_stroke_onset')?.value || '';
+  state.cardr.bs = $('#cardr_bs')?.value || 120;
+  state.cardr.exam_detail = $('#cardr_exam_detail')?.value || '';
+  state.cardr.procedure_detail = $('#cardr_procedure_detail')?.value || '';
+  state.cardr.drug_detail = $('#cardr_drug_detail')?.value || '';
+  
+  // 検査テキストエリア（状態はtoggleExamで管理）
+  ['ucg','us_abd','us_lung','us_neck','ecg','fast','efast'].forEach(t => { 
+    const txtEl = $(`#exam_${t}_txt`);
+    if(txtEl) state.cardr.exam_texts[t] = txtEl.value; 
+  });
+
+  // 脳卒中情報（state.cardr.stroke の存在を保証）
+  if($('#plrL')) {
+    if(!state.cardr.stroke) state.cardr.stroke = {mmt:{}, nihss:{}, pupilL:3.0, pupilR:3.0};
+    state.cardr.stroke.plrL = $('#plrL')?.value || '';
+    state.cardr.stroke.plrR = $('#plrR')?.value || '';
+    state.cardr.stroke.gaze = $('#str_gaze')?.value || '';
+    state.cardr.stroke.nyst = $('#str_nyst')?.value || '';
+    state.cardr.stroke.btr = $('#str_btr')?.value || '';
+    state.cardr.stroke.ptr = $('#str_ptr')?.value || '';
+    state.cardr.stroke.babinski = $('#str_babinski')?.checked || false;
+    state.cardr.stroke.chaddock = $('#str_chaddock')?.checked || false;
+    state.cardr.stroke.nihssMemo = $('#nihss_memo')?.value || '';
+  }
+  
+  state.consideration = $('#consideration')?.value || '';
+  state.symptom_detail = $('#outputReason')?.value || '';
+  
+  const customHospital = $('#destination_custom')?.value.trim() || '';
+  if(customHospital) {
+    state.destination.custom = customHospital;
+    if(state.destination.hospital) {
+      state.destination.hospital = '';
+      renderHospitalChips();
+    }
+  } else {
+    state.destination.custom = '';
+  }
+  state.destination.reason = $('#selection_reason')?.value || '';
+  updateDestinationDisplay();
+  
+  render();
+  // `localStorage`の使用はそのまま維持しますが、実運用ではFirestoreなどを使用してください。
+  localStorage.setItem('doctorCarV1', JSON.stringify(state));
+}
+
+function render() {
+  const outEl = $('#outText');
+  if(outEl) outEl.textContent = generateReport();
+}
+
+function fmtFinding(lbl, st) {
+  if(st === 'on') return lbl;
+  if(st === '+') return `${lbl}（＋）`;
+  if(st === '-') return `${lbl}（-）`;
+  return null;
+}
+
+function extractFindings(def, chips) {
+  const arr = [];
+  // defが配列の場合とオブジェクトの場合に対応
+  const labels = Array.isArray(def) ? def : (def.normal || []).concat(def.abn || []);
+  labels.forEach(lbl => {
+    const st = chips[lbl];
+    if(st) { const s = fmtFinding(lbl, st); if(s) arr.push(s); }
+  });
+  return arr.join('、');
+}
+
+function generateReport() {
+  let r = '━━━━━━━━━━━━━━━━━━━━\n　病院前医療活動記録（ドクターカー）\n━━━━━━━━━━━━━━━━━━━━\n\n';
+  
+  r += '【要請情報】\n';
+  r += `要請方法：${state.request.type || '（未選択）'}\n`;
+  if(state.request.age) r += `年代：${state.request.age}\n`;
+  if(state.request.sex) r += `性別：${state.request.sex}\n`;
+  if(state.request.ems_team) {
+    const emsTeams = [
+      { "id": "chuo", "name": "中央救急隊" },
+      { "id": "nanrinji", "name": "南林寺救急隊" },
+      { "id": "uemachi", "name": "上町救急隊" },
+      { "id": "konan", "name": "甲南救急隊" },
+      { "id": "yoshino", "name": "吉野救急隊" },
+      { "id": "yoshida", "name": "吉田救急隊" },
+      { "id": "sakurajima_e", "name": "桜島東救急隊" },
+      { "id": "sakurajima_w", "name": "桜島西救急隊" },
+      { "id": "nishi", "name": "西本署" },
+      { "id": "ishiki", "name": "伊敷救急隊" },
+      { "id": "matsumoto", "name": "松元救急隊" },
+      { "id": "koriyama", "name": "郡山救急隊" },
+      { "id": "minami", "name": "南本署" },
+      { "id": "taniyama", "name": "谷山救急隊" },
+      { "id": "taniyama_kita", "name": "谷山北救急隊" },
+      { "id": "korimoto", "name": "郡元救急隊" },
+      { "id": "kiire", "name": "喜入救急隊" }
+    ];
+    const team = emsTeams.find(t => t.id === state.request.ems_team);
+    if (team) r += `先行救急隊：${team.name}\n`;
+  }
+  if(state.request.detail) r += `要請内容：${state.request.detail}\n`;
+  r += '\n';
+  
+  // 患者情報
+  const hasPatientInfo = state.patient?.history || state.patient?.medication || state.patient?.allergy || state.patient?.lastWell || state.patient?.lastMeal || state.patient?.hospital;
+  if(hasPatientInfo) {
+    r += '【患者情報】\n';
+    if(state.patient.history) r += `既往歴：${state.patient.history}\n`;
+    if(state.patient.medication) r += `常用薬：${state.patient.medication}\n`;
+    if(state.patient.allergy) r += `アレルギー：${state.patient.allergy}\n`;
+    if(state.patient.lastWell) r += `最終健常：${state.patient.lastWell}\n`;
+    if(state.patient.lastMeal) r += `最終食事：${state.patient.lastMeal}\n`;
+    if(state.patient.hospital) r += `かかりつけ：${state.patient.hospital}\n`;
+    r += '\n';
+  }
+  
+  r += '【先行救急隊活動】\n';
+  // 救急隊のタイムライン
+  if(state.ems.aware || state.ems.arrival || state.ems.contact || state.ems.pickup || state.ems.departure || (state.ems.rp && state.car.activity_place === 'RP（ランデブーポイント）')) {
+    r += '＜タイムライン＞\n';
+    if(state.ems.aware) r += `覚知：${state.ems.aware}\n`;
+    if(state.ems.arrival) r += `現着：${state.ems.arrival}\n`;
+    if(state.ems.contact) r += `接触：${state.ems.contact}\n`;
+    if(state.ems.pickup) r += `収容：${state.ems.pickup}\n`;
+    if(state.ems.departure) r += `現発：${state.ems.departure}\n`;
+    if(state.ems.rp && state.car.activity_place === 'RP（ランデブーポイント）') r += `RP到着：${state.ems.rp}\n`;
+    r += '\n';
+  }
+  if(state.ems.vitals.length > 0) {
+    r += '＜バイタル＞\n';
+    state.ems.vitals.forEach(v => {
+      const gcsV = v.gcs.v === 'T' ? 'T' : v.gcs.v;
+      const gcsSum = v.gcs.v === 'T' ? `${v.gcs.e + parseInt(v.gcs.m)}T` : (v.gcs.e + parseInt(v.gcs.v) + parseInt(v.gcs.m));
+      const gcs = `E${v.gcs.e}V${gcsV}M${v.gcs.m}(${gcsSum})`;
+      const spo2 = v.spo2 === 0 ? '測定不能' : `${v.spo2}%`;
+      r += `[${v.time}] BP:${v.sbp}/${v.dbp} HR:${v.hr} RR:${v.rr} SpO2:${spo2} BT:${v.bt}℃ GCS:${gcs} JCS:${v.jcs}\n`;
+    });
+  }
+  
+  const tab = state.ems.exam_tab;
+  if(tab === 'general') {
+    r += '\n＜所見＞\n';
+    [['頭頚部',EMS_GEN_GROUPS.head,'head'],['呼吸器',EMS_GEN_GROUPS.resp,'resp'],['循環器',EMS_GEN_GROUPS.card,'card'],['腹部',EMS_GEN_GROUPS.abd,'abd'],['四肢',EMS_GEN_GROUPS.limb,'limb'],['神経',EMS_GEN_GROUPS.neuro,'neuro']].forEach(([title,def,key]) => {
+      const s = extractFindings(def, state.ems.chips);
+      const m = state.ems.memos?.general?.[key];
+      if(s || m) r += `【${title}】${[s,m].filter(Boolean).join('。')}\n`;
+    });
+  } else if(tab === 'trauma') {
+    r += '\n＜所見（外傷）＞\n';
+    [['頭部・顔面',EMS_TRA_GROUPS.head,'head'],['頸部',EMS_TRA_GROUPS.neck,'neck'],['胸部',EMS_TRA_GROUPS.chest,'chest'],['腹部',EMS_TRA_GROUPS.abd,'abd'],['骨盤',EMS_TRA_GROUPS.pelvis,'pelvis'],['四肢',EMS_TRA_GROUPS.limb,'limb']].forEach(([title,arr,key]) => {
+      const s = extractFindings(arr, state.ems.chips);
+      const m = state.ems.memos?.trauma?.[key];
+      if(s || m) r += `【${title}】${[s,m].filter(Boolean).join('。')}\n`;
+    });
+  } else if(tab === 'cpa') {
+    r += '\n＜所見（CPA）＞\n';
+    [['初期波形',EMS_CPA_GROUPS.rhythm],['目撃/バイスタンダー',EMS_CPA_GROUPS.witness],['気道',EMS_CPA_GROUPS.airway],['循環',EMS_CPA_GROUPS.circulation],['胸腹部',EMS_CPA_GROUPS.chest]].forEach(([title,arr]) => {
+      const s = extractFindings(arr, state.ems.chips);
+      if(s) r += `【${title}】${s}\n`;
+    });
+    if(state.ems.memos.cpa?.memo) r += `メモ：${state.ems.memos.cpa.memo}\n`;
+  } else if(tab === 'stroke') {
+    r += '\n＜所見（脳卒中）＞\n';
+    [['意識',EMS_STR_GROUPS.conscious],['顔面・発語',EMS_STR_GROUPS.face],['運動',EMS_STR_GROUPS.motor],['その他',EMS_STR_GROUPS.other]].forEach(([title,arr]) => {
+      const s = extractFindings(arr, state.ems.chips);
+      if(s) r += `【${title}】${s}\n`;
+    });
+    if(state.ems.stroke_onset) r += `発症時刻：${state.ems.stroke_onset}\n`;
+    if(state.ems.memos.stroke?.memo) r += `メモ：${state.ems.memos.stroke.memo}\n`;
+  }
+  
+  const emsProc = state.ems.procedures_items.filter(k => state.ems.procedures[k]);
+  if(emsProc.length > 0 || state.ems.procedures_detail) {
+    r += '\n＜処置＞\n';
+    if(emsProc.length > 0) r += emsProc.map(p => p === '酸素投与' && state.ems.procedures['酸素投与'] && state.ems.o2_flow ? `${p}(${state.ems.o2_flow})` : p).join('、') + '\n';
+    if(state.ems.procedures_detail) r += state.ems.procedures_detail + '\n';
+  }
+  r += '\n';
+  
+  r += '【ドクターカーチーム活動】\n';
+  // ドクターカーのタイムライン
+  if(state.car.request_time || state.car.departure || state.car.scene_arrival || state.car.cardr_contact || state.car.activity_place) {
+    r += '＜タイムライン＞\n';
+    if(state.car.request_time) r += `要請時刻：${state.car.request_time}\n`;
+    if(state.car.departure) r += `ドクターカー出動：${state.car.departure}\n`;
+    if(state.car.scene_arrival) r += `現場/RP到着：${state.car.scene_arrival}\n`;
+    if(state.car.cardr_contact) r += `ドクターカーチーム接触：${state.car.cardr_contact}\n`;
+    if(state.car.activity_place) r += `活動場所：${state.car.activity_place}\n`;
+    r += '\n';
+  }
+  
+  if(state.cardr.vitals.length > 0) {
+    r += '＜バイタル＞\n';
+    state.cardr.vitals.forEach(v => {
+      const gcsV = v.gcs.v === 'T' ? 'T' : v.gcs.v;
+      const gcsSum = v.gcs.v === 'T' ? `${v.gcs.e + parseInt(v.gcs.m)}T` : (v.gcs.e + parseInt(v.gcs.v) + parseInt(v.gcs.m));
+      const gcs = `E${v.gcs.e}V${gcsV}M${v.gcs.m}(${gcsSum})`;
+      const spo2 = v.spo2 === 0 ? '測定不能' : `${v.spo2}%`;
+      r += `[${v.time}] BP:${v.sbp}/${v.dbp} HR:${v.hr} RR:${v.rr} SpO2:${spo2} BT:${v.bt}℃ GCS:${gcs} JCS:${v.jcs}\n`;
+    });
+  }
+  
+  const cardrTab = state.cardr.exam_tab;
+  if(cardrTab === 'general') {
+    r += '\n＜身体所見＞\n';
+    [['頭頚部',CARDR_GEN_GROUPS.head,'head'],['呼吸器',CARDR_GEN_GROUPS.resp,'resp'],['循環器',CARDR_GEN_GROUPS.card,'card'],['腹部',CARDR_GEN_GROUPS.abd,'abd'],['四肢',CARDR_GEN_GROUPS.limb,'limb'],['神経',CARDR_GEN_GROUPS.neuro,'neuro']].forEach(([title,def,key]) => {
+      const s = extractFindings(def, state.cardr.chips);
+      const m = state.cardr.memos?.general?.[key];
+      if(s || m) r += `【${title}】${[s,m].filter(Boolean).join('。')}\n`;
+    });
+  } else if(cardrTab === 'trauma') {
+    r += '\n＜身体所見（外傷）＞\n';
+    [['頭部・顔面',CARDR_TRA_GROUPS.head,'head'],['頸部',CARDR_TRA_GROUPS.neck,'neck'],['胸部',CARDR_TRA_GROUPS.chest,'chest'],['腹部',CARDR_TRA_GROUPS.abd,'abd'],['骨盤',CARDR_TRA_GROUPS.pelvis,'pelvis'],['四肢',CARDR_TRA_GROUPS.limb,'limb']].forEach(([title,arr,key]) => {
+      const s = extractFindings(arr, state.cardr.chips);
+      const m = state.cardr.memos?.trauma?.[key];
+      if(s || m) r += `【${title}】${[s,m].filter(Boolean).join('。')}\n`;
+    });
+  } else if(cardrTab === 'stroke') {
+    r += '\n＜身体所見（脳卒中）＞\n';
+    
+    // 脳神経所見チップ
+    const cnFindings = extractFindings(CARDR_STR_GROUPS.cn, state.cardr.chips);
+    const cnMemo = state.cardr.memos?.stroke?.cn || '';
+    if(cnFindings || cnMemo) r += `【脳神経】${[cnFindings, cnMemo].filter(Boolean).join('。')}\n`;
+    
+    // 瞳孔・眼球
+    const str = state.cardr.stroke || {};
+    let eyeFindings = [];
+    if(str.pupilL || str.pupilR) eyeFindings.push(`瞳孔径 L:${str.pupilL ?? '-'}mm R:${str.pupilR ?? '-'}mm`);
+    if(str.plrL || str.plrR) eyeFindings.push(`対光反射 L:${str.plrL || '-'} R:${str.plrR || '-'}`);
+    if(str.gaze) eyeFindings.push(`共同偏視:${str.gaze}`);
+    if(str.nyst) eyeFindings.push(`眼振:${str.nyst}`);
+    if(eyeFindings.length > 0) r += `【瞳孔・眼】${eyeFindings.join('、')}\n`;
+    
+    // MMT
+    if(str.mmt) {
+      r += `【運動MMT】右上肢:${str.mmt.ru ?? 5} 左上肢:${str.mmt.lu ?? 5} 右下肢:${str.mmt.rl ?? 5} 左下肢:${str.mmt.ll ?? 5}\n`;
+    }
+    
+    // 反射
+    let reflexFindings = [];
+    if(str.btr) reflexFindings.push(`BTR:${str.btr}`);
+    if(str.ptr) reflexFindings.push(`PTR:${str.ptr}`);
+    if(str.babinski) reflexFindings.push('Babinski陽性');
+    if(str.chaddock) reflexFindings.push('Chaddock陽性');
+    if(reflexFindings.length > 0) r += `【反射】${reflexFindings.join('、')}\n`;
+    
+    // 高次脳機能
+    const higherFindings = extractFindings(CARDR_STR_GROUPS.higher, state.cardr.chips);
+    const higherMemo = state.cardr.memos?.stroke?.higher || '';
+    if(higherFindings || higherMemo) r += `【高次脳機能】${[higherFindings, higherMemo].filter(Boolean).join('。')}\n`;
+    
+    // NIHSS
+    if(str.nihss && Object.keys(str.nihss).length > 0) {
+      let nihssSum = 0;
+      NIHSS_ITEMS.forEach(item => nihssSum += str.nihss[item.id] || 0);
+      r += `【NIHSS】${nihssSum}点\n`;
+      if(str.nihssMemo) r += `NIHSSメモ：${str.nihssMemo}\n`;
+    }
+  } else if(cardrTab === 'cpa') {
+    r += '\n＜CPA記録＞\n';
+    if(state.cardr.cpaEvents && state.cardr.cpaEvents.length > 0) {
+      state.cardr.cpaEvents.forEach((cpa, idx) => {
+        if(state.cardr.cpaEvents.length > 1) r += `\n【心停止イベント ${idx + 1}${idx > 0 ? '（再心停止）' : ''}】\n`;
+        
+        // イベント1（初回）の場合
+        if(idx === 0) {
+          if(cpa.arrestTime) r += `心停止時刻：${cpa.arrestTime}\n`;
+          if(cpa.rhythm) r += `初期波形：${cpa.rhythm}\n`;
+          r += `目撃：${cpa.witnessed ? 'あり' : 'なし'}\n`;
+          r += `バイスタンダーCPR：${cpa.bystander ? 'あり' : 'なし'}\n`;
+          if(cpa.cprStart) r += `胸骨圧迫開始：${cpa.cprStart}\n`;
+          if(cpa.ivTime) r += `末梢確保：${cpa.ivTime}\n`;
+          if(cpa.adrenalineTimes && cpa.adrenalineTimes.length > 0) {
+            r += `アドレナリン投与：${cpa.adrenalineTimes.map((t,i) => `${i+1}回目 ${t}`).join('、')}\n`;
+          }
+          if(cpa.lt) r += `LT挿入：実施\n`;
+          if(cpa.intubation) r += `気管挿管：${state.cardr.procedures['気管挿管'] ? (state.cardr.intubation.time || '実施') + ' (' + state.cardr.intubation.size + 'mm)' : '実施'}\n`;
+          if(cpa.pericardio) r += `心膜腔穿刺：${cpa.pericardioTime || '実施'}\n`;
+          if(cpa.roscTime) r += `心拍再開(ROSC)：${cpa.roscTime}\n`;
+          
+          // Flow Time計算
+          if(cpa.arrestTime && cpa.cprStart) {
+            const noFlow = calcTimeDiffMinutes(cpa.arrestTime, cprStart);
+            if(noFlow >= 0) r += `No Flow Time：${noFlow}分\n`;
+          }
+          if(cpa.cprStart && cpa.roscTime) {
+            const lowFlow = calcTimeDiffMinutes(cprStart, cpa.roscTime);
+            if(lowFlow >= 0) r += `Low Flow Time：${lowFlow}分\n`;
+          }
+        } else {
+          // イベント2以降（再心停止）の場合
+          if(cpa.arrestTime) r += `心停止時刻：${cpa.arrestTime}\n`;
+          if(cpa.rhythm) r += `波形：${cpa.rhythm}\n`;
+          if(cpa.adrenalineTimes && cpa.adrenalineTimes.length > 0) {
+            r += `アドレナリン投与：${cpa.adrenalineTimes.map((t,i) => `${i+1}回目 ${t}`).join('、')}\n`;
+          }
+          if(cpa.roscTime) r += `心拍再開(ROSC)：${cpa.roscTime}\n`;
+          
+          // Low Flow Time = 心停止からROSCまで
+          if(cpa.arrestTime && cpa.roscTime) {
+            const lowFlow = calcTimeDiffMinutes(cpa.arrestTime, cpa.roscTime);
+            if(lowFlow >= 0) r += `Low Flow Time：${lowFlow}分\n`;
+          }
+        }
+        
+        if(cpa.memo) r += `メモ：${cpa.memo}\n`;
+      });
+    } else {
+      r += 'データなし\n';
+    }
+  }
+  
+  if((state.cardr.exams?.bs && state.cardr.bs) || state.cardr.abg_type || Object.values(state.cardr.exams || {}).some(v=>v) || state.cardr.exam_detail) {
+    r += '\n＜検査＞\n';
+    if(state.cardr.exams?.bs && state.cardr.bs) r += `血糖：${state.cardr.bs} mg/dL\n`;
+    if(state.cardr.abg_type && state.cardr.abg_type !== '') {
+      r += `血ガス：${state.cardr.abg_type}\n`;
+      if(state.cardr.abg_data.length > 0) {
+        r += state.cardr.abg_data.filter(x=>x.val).map(x => `${x.item} ${x.val}${x.unit}`).join(', ') + '\n';
+      }
+    }
+    ['ucg','us_abd','us_lung','us_neck','ecg','fast','efast'].forEach(t => {
+      if(state.cardr.exams[t] && state.cardr.exam_texts[t]) {
+        const labels = {ucg:'UCG',us_abd:'腹部US',us_lung:'肺US',us_neck:'頸部血管US',ecg:'12誘導心電図',fast:'FAST',efast:'eFAST'};
+        r += `${labels[t]}：${state.cardr.exam_texts[t]}\n`;
+      }
+    });
+    if(state.cardr.exam_detail) r += state.cardr.exam_detail + '\n';
+  }
+  
+  const cardrProc = state.cardr.procedures_items.filter(k => state.cardr.procedures[k]);
+  if(cardrProc.length > 0 || state.cardr.procedure_detail) {
+    r += '\n＜処置＞\n';
+    if(cardrProc.length > 0) {
+      const procWithDetails = cardrProc.map(p => {
+        if(p === '気管挿管' && state.cardr.procedures['気管挿管'] && state.cardr.intubation?.time) {
+          return `${p}(${state.cardr.intubation.time}、${state.cardr.intubation.size}mm)`;
+        }
+        return p;
+      });
+      r += procWithDetails.join('、') + '\n';
+    }
+    if(state.cardr.procedure_detail) r += state.cardr.procedure_detail + '\n';
+  }
+  
+  const cardrDrugs = state.cardr.drugs_items.filter(k => state.cardr.drugs[k]);
+  if(cardrDrugs.length > 0 || state.cardr.drug_detail) {
+    r += '\n＜薬剤＞\n';
+    if(cardrDrugs.length > 0) {
+      const drugsWithDetails = cardrDrugs.map(d => {
+        if(['生食', 'ソルアセトF', 'ブドウ糖液'].includes(d) && state.cardr.drugs[d]) {
+             // 点滴・輸液の場合
+             const detail = state.cardr.drug_details[d]?.[0];
+             return detail ? `${d}(${detail.time}、開始)` : `${d}（開始）`;
+        }
+        
+        if(state.cardr.drugs[d] && state.cardr.drug_details && state.cardr.drug_details[d]) {
+          const details = state.cardr.drug_details[d];
+          if(details.length > 1) {
+            // 複数回投与の場合、詳細を列挙
+            return `${d}：${details.map(det => `${det.time} (${det.amount}mg)`).join('、')}`;
+          } else if (details.length === 1) {
+            // 1回投与の場合
+            return `${d}(${details[0].time}、${details[0].amount}mg)`;
+          }
+        }
+        return d;
+      });
+      r += drugsWithDetails.filter(Boolean).join('、') + '\n';
+    }
+    if(state.cardr.drug_detail) r += state.cardr.drug_detail + '\n';
+  }
+  r += '\n';
+  
+  r += '【評価】\n';
+  if(state.problems.length > 0) {
+    r += '＜プロブレム＞\n';
+    state.problems.forEach((p, i) => r += `#${i+1} ${p}\n`);
+  }
+  if(state.consideration) r += `＜考察＞\n${state.consideration}\n`;
+  if(state.triage !== null) {
+    r += `JTAS${state.triage}\n`;
+  }
+  if(state.severity !== null) {
+    r += `NACA${state.severity}\n`;
+  }
+  r += '\n';
+  
+  r += '【搬送先】\n';
+  const hospitalName = state.destination.custom || state.destination.hospital || '（未選択）';
+  r += `医療機関：${hospitalName}\n`;
+  if(state.destination.reason) r += `選定理由：${state.destination.reason}\n`;
+  // 搬送方法から病院着までのタイムライン情報
+  if(state.car.transport_method || state.car.scene_departure || state.car.hospital_arrival) {
+    r += `搬送方法：${state.car.transport_method || '（未選択）'}\n`;
+    // Iターン以外は現場出発と病院着を記載
+    if(state.car.transport_method !== 'Iターン') {
+      if(state.car.scene_departure) r += `現場出発：${state.car.scene_departure}\n`;
+      if(state.car.hospital_arrival) r += `病院着：${state.car.hospital_arrival}\n`;
+    }
+  }
+  r += '\n';
+  
+  // 症状詳記
+  if(state.symptom_detail) {
+    r += '【呼吸循環監視　詳記】\n';
+    r += state.symptom_detail + '\n';
+  }
+  
+  r += '\n━━━━━━━━━━━━━━━━━━━━\n';
+  r += '記録作成：' + new Date().toLocaleString('ja-JP') + '\n';
+  
+  return r;
+}
+
+// 保存・読込関数群 (変更なし)
+window.saveData = () => { // グローバル化
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ドクターカー記録_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+};
+
+window.loadData = () => { // グローバル化
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if(file) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const loadedState = JSON.parse(ev.target.result);
+          
+          // 互換性チェックと移行
+          if(loadedState.heli && !loadedState.car) loadedState.car = loadedState.heli;
+          if(loadedState.ems?.lz && !loadedState.ems.rp) loadedState.ems.rp = loadedState.ems.lz;
+          if(loadedState.fd && !loadedState.cardr) loadedState.cardr = loadedState.fd;
+          if(loadedState.car?.fd_contact && !loadedState.car.cardr_contact) loadedState.car.cardr_contact = loadedState.car.fd_contact;
+          
+          state = loadedState;
+
+          // ロード後のデータ構造の堅牢化 (最新のマスタ定義を適用)
+          initializeStateDataStructure();
+          
+          restoreUI();
+        } catch(err) { 
+          alert('読込エラー: ファイルが破損しているか、フォーマットが正しくありません。'); 
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+  input.click();
+};
+
+// アプリを更新（キャッシュをクリアしてリロード）
+window.reloadApp = () => {
+  if(!confirm('アプリを最新版に更新しますか？\n\n入力データは保持されますが、ページがリロードされます。')) return;
+  
+  // キャッシュをクリアしてリロード
+  // クエリパラメータにタイムスタンプを追加してキャッシュを回避
+  const url = new URL(window.location.href);
+  url.searchParams.set('_t', Date.now());
+  window.location.href = url.toString();
+};
+
+window.resetData = () => { // グローバル化
+  if(!confirm('すべての入力データをリセットしますか？\n\nこの操作は取り消せません。')) return;
+  
+  localStorage.removeItem('doctorCarV1');
+  
+  state = {
+    request: {type:'', detail:'', age:'', sex:'', ems_team:'', content:''},
+    patient: {history:'', medication:'', allergy:'', lastWell:'', lastMeal:'', hospital:'', history_chips:{}, anticoagulant:'', anticoagulant_drugs:[], antiplatelet:'', antiplatelet_drugs:[], food_allergy:'', drug_allergy:''},
+    car: {request_time:'', departure:'', scene_arrival:'', cardr_contact:'', activity_place:'', scene_departure:'', hospital_arrival:'', transport_method:'Uターン'},
+    ems: {
+      request_time:'', aware:'', arrival:'', contact:'', rp:'',
+      vitals: [],
+      exam_tab: 'general',
+      chips: {},
+      memos: {general:{head:'',resp:'',card:'',abd:'',limb:'',neuro:''},trauma:{head:'',neck:'',chest:'',abd:'',pelvis:'',limb:''},stroke:{memo:''},cpa:{memo:''}},
+      stroke_onset: '',
+      procedures: {},
+      procedures_items: ['頚椎カラー','全身固定','吸引','酸素投与','BVM換気','気管挿管','LT挿入','静脈路確保','ブドウ糖投与','ショック輸液','圧迫止血','胸骨圧迫','LUCAS装着','除細動','アドレナリン'],
+      o2_flow:'', procedures_detail:''
+    },
+    cardr: {
+      vitals: [],
+      exam_tab: 'general',
+      chips: {},
+      memos: {general:{head:'',resp:'',card:'',abd:'',limb:'',neuro:''},trauma:{head:'',neck:'',chest:'',abd:'',pelvis:'',limb:''},stroke:{neuro:'',motor:'',eye:'',higher:''},cpa:{body:'',head:'',trunk:''}},
+      exams: {bs:false, ucg:false, us_abd:false, us_lung:false, us_neck:false, ecg:false, fast:false, efast:false},
+      exam_texts: {ucg:'', us_abd:'', us_lung:'', us_neck:'', ecg:'', fast:'', efast:''},
+      bs:120, abg_type:'', abg_data: [], exam_detail:'',
+      cpaEvents: [],
+      stroke: {
+        pupilL:3.0, pupilR:3.0, plrL:'', plrR:'', gaze:'', nyst:'',
+        mmt:{ru:5, lu:5, rl:5, ll:5},
+        btr:'', ptr:'', babinski:false, chaddock:false,
+        nihss:{}, nihssMemo:''
+      },
+      procedures: {},
+      procedures_items: ['酸素投与','BVM','気管挿管','胸腔ドレナージ','開胸','輸液','輸血','骨盤固定','止血処置','CPR','除細動','経皮ペーシング'],
+      procedure_detail:'',
+      drugs: {},
+      drugs_items: ['生食','ソルアセトF','アドレナリン','ミダゾラム','ジアゼパム','アトロピン','ロクロニウム','メイロン','レペタン','トランサミン','アセリオ','メトクロプラミド','エスラックス','ブドウ糖液'],
+      drug_detail:'',
+      intubation: {time: '', size: '7.0'},
+      drug_details: {}
+    },
+    problems: [],
+    consideration: '',
+    destination: {hospital:'', custom:'', reason:''},
+    hospitals: {
+      '鹿児島市': ['鹿児島市立病院','鹿児島大学病院','鹿児島医療センター','米盛病院','いまきいれ総合病院','今村総合病院','中央病院','鹿児島徳洲会病院','南風病院','鹿児島生協病院','厚地脳神経外科病院','池田病院','いじゅういん脳神経外科','上町いまきいれ病院','いづろ今村病院','岩尾病院','植村病院','大勝病院','小田代病院','鹿児島厚生連病院','鹿児島こども病院','鹿児島市医師会病院','鹿児島赤十字病院','河井脳神経外科','かわはら脳神経外科クリニック','木村外科内科','共立病院','キラメキテラスヘルスケアホスピタル','馬場病院','健翔会病院','済生会鹿児島病院','桜島病院','三愛病院','新成病院','豊島病院','中野脳神経外科','新村病院','林内科胃腸科病院','日高病院','増田整形外科病院','三船病院','三宅病院','みらいリハビリテーション病院']
+    }
+  };
+  
+  location.reload();
+};
+
+function restoreUI() {
+  // HTML要素への値の復元
+  $('#request_type').value = state.request.type || '';
+  // 要請内容が選択されている場合は、それを使用、そうでなければ既存のdetailを使用
+  if (state.request.content) {
+    $('#request_detail').value = state.request.content;
+  } else {
+    $('#request_detail').value = state.request.detail || '';
+  }
+  $('#cardr_request_time').value = state.car.request_time || '';
+  $('#patient_history').value = state.patient?.history || '';
+  // 既往歴チップ状態を同期して再レンダリング
+  syncHistoryChipsFromText();
+  renderHistoryChips();
+  $('#patient_medication').value = state.patient?.medication || '';
+  // 常用薬チップをレンダリング
+  if (!state.patient.anticoagulant) state.patient.anticoagulant = '';
+  if (!state.patient.antiplatelet) state.patient.antiplatelet = '';
+  if (!state.patient.anticoagulant_drugs) state.patient.anticoagulant_drugs = [];
+  if (!state.patient.antiplatelet_drugs) state.patient.antiplatelet_drugs = [];
+  renderMedicationChips();
+  $('#patient_allergy').value = state.patient?.allergy || '';
+  // アレルギーチップをレンダリング
+  if (!state.patient.food_allergy) state.patient.food_allergy = '';
+  if (!state.patient.drug_allergy) state.patient.drug_allergy = '';
+  renderAllergyChips();
+  // 要請情報チップをレンダリング
+  if (!state.request.age) state.request.age = '';
+  if (!state.request.sex) state.request.sex = '';
+  if (!state.request.ems_team) state.request.ems_team = '';
+  if (!state.request.content) state.request.content = '';
+  renderRequestInfoChips();
+  renderRequestContentChips();
+  $('#last_well_time').value = state.patient?.lastWell || '';
+  $('#last_meal_time').value = state.patient?.lastMeal || '';
+  $('#patient_hospital').value = state.patient?.hospital || '';
+  $('#car_departure').value = state.car?.departure || '';
+  $('#scene_arrival').value = state.car?.scene_arrival || '';
+  $('#cardr_contact').value = state.car?.cardr_contact || ''; 
+  $('#activity_place').value = state.car?.activity_place || '';
+  if($('#transport_method')) {
+    $('#transport_method').value = state.car?.transport_method || 'Uターン';
+    toggleTransportTimes();
+  }
+  $('#scene_departure').value = state.car?.scene_departure || '';
+  $('#hospital_arrival').value = state.car?.hospital_arrival || '';
+  $('#ems_aware').value = state.ems.aware || '';
+  $('#ems_arrival').value = state.ems.arrival || '';
+  $('#ems_contact').value = state.ems.contact || '';
+  $('#ems_pickup').value = state.ems.pickup || '';
+  $('#ems_departure').value = state.ems.departure || '';
+  $('#ems_rp').value = state.ems.rp || ''; 
+  if($('#ems_o2_flow')) $('#ems_o2_flow').value = state.ems.o2_flow || '';
+  $('#ems_procedures_detail').value = state.ems.procedures_detail || '';
+  if($('#ems_stroke_onset')) $('#ems_stroke_onset').value = state.ems.stroke_onset || '';
+  
+  $('#cardr_bs').value = state.cardr.bs || 120; 
+  $('#cardr_bs_display').textContent = state.cardr.bs || 120;
+  
+  const abgTypeEl = $('#cardr_abg_type');
+  if (abgTypeEl) abgTypeEl.value = state.cardr.abg_type || ''; 
+  const abgAreaEl = $('#abg_area');
+  const isAbgSelected = state.cardr.abg_type === 'ABG' || state.cardr.abg_type === 'VBG';
+  if (abgAreaEl) abgAreaEl.style.display = isAbgSelected ? 'block' : 'none';
+
+  // 検査チップとテキストエリア
+  renderExamChips();
+  
+  const examBsAreaEl = $('#exam_bs_area');
+  if (examBsAreaEl) examBsAreaEl.style.display = state.cardr.exams?.bs ? 'block' : 'none';
+  
+  ['ucg','us_abd','us_lung','us_neck','ecg','fast','efast'].forEach(t => {
+    const txtEl = $(`#exam_${t}_txt`);
+    if (txtEl) {
+      txtEl.style.display = state.cardr.exams[t] ? 'block' : 'none';
+      txtEl.value = state.cardr.exam_texts[t] || '';
+    }
+  });
+  $('#cardr_exam_detail').value = state.cardr.exam_detail || ''; 
+  $('#cardr_procedure_detail').value = state.cardr.procedure_detail || ''; 
+  $('#cardr_drug_detail').value = state.cardr.drug_detail || ''; 
+  
+  // CPA情報復元
+  renderCpaEvents();
+  
+  // 脳卒中情報復元
+  if(state.cardr.stroke && $('#plrL')) {
+    $('#pupilL_display').textContent = state.cardr.stroke.pupilL?.toFixed(1) || '3.0';
+    $('#pupilR_display').textContent = state.cardr.stroke.pupilR?.toFixed(1) || '3.0';
+    $('#plrL').value = state.cardr.stroke.plrL || '';
+    $('#plrR').value = state.cardr.stroke.plrR || '';
+    $('#str_gaze').value = state.cardr.stroke.gaze || '';
+    $('#str_nyst').value = state.cardr.stroke.nyst || '';
+    if(state.cardr.stroke.mmt) {
+      $('#mmt_ru_display').textContent = state.cardr.stroke.mmt.ru ?? 5;
+      $('#mmt_lu_display').textContent = state.cardr.stroke.mmt.lu ?? 5;
+      $('#mmt_rl_display').textContent = state.cardr.stroke.mmt.rl ?? 5;
+      $('#mmt_ll_display').textContent = state.cardr.stroke.mmt.ll ?? 5;
+    }
+    $('#str_btr').value = state.cardr.stroke.btr || '';
+    $('#str_ptr').value = state.cardr.stroke.ptr || '';
+    $('#str_babinski').checked = state.cardr.stroke.babinski || false;
+    $('#str_chaddock').checked = state.cardr.stroke.chaddock || false;
+    if($('#nihss_memo')) $('#nihss_memo').value = state.cardr.stroke.nihssMemo || '';
+    renderNihss();
+  }
+  
+  $('#consideration').value = state.consideration || '';
+  $('#outputReason').value = state.symptom_detail || '';
+  // トリアージと重症度分類の初期化
+  if (state.triage === undefined) state.triage = null;
+  if (state.severity === undefined) state.severity = null;
+  renderTriageChips();
+  renderSeverityChips();
+  $('#destination_custom').value = state.destination.custom || '';
+  $('#selection_reason').value = state.destination.reason || '';
+  
+  // 各種レンダリングとバインド
+  renderEmsVitals();
+  renderCarDrVitals();
+  renderProcedureChips('ems_procedures', state.ems.procedures_items, state.ems.procedures);
+  renderProcedureChips('cardr_procedures', state.cardr.procedures_items, state.cardr.procedures); 
+  renderProcedureChips('cardr_drugs', state.cardr.drugs_items, state.cardr.drugs); 
+  renderExamChips();
+  renderAbgPills();
+  renderProblems();
+  renderHospitalChips();
+  bindMemos();
+  
+  // 身体所見タブの復元
+  if (state.cardr && state.cardr.exam_tab) {
+    const examTab = $(`#cardr_examTabs .exam-tab[data-exam="${state.cardr.exam_tab}"]`);
+    if (examTab) {
+      $$('#cardr_examTabs .exam-tab').forEach(t => t.classList.remove('active'));
+      examTab.classList.add('active');
+      const card = examTab.closest('.card');
+      if (card) {
+        card.querySelectorAll('.exam-pane').forEach(p => p.classList.remove('active'));
+        const pane = card.querySelector(`.exam-pane[data-pane="${state.cardr.exam_tab}"]`);
+        if (pane) pane.classList.add('active');
+      }
+    }
+  }
+  
+  // EMS身体所見タブの復元
+  if (state.ems && state.ems.exam_tab) {
+    const examTab = $(`#ems_examTabs .exam-tab[data-exam="${state.ems.exam_tab}"]`);
+    if (examTab) {
+      $$('#ems_examTabs .exam-tab').forEach(t => t.classList.remove('active'));
+      examTab.classList.add('active');
+      const card = examTab.closest('.card');
+      if (card) {
+        card.querySelectorAll('.exam-pane').forEach(p => p.classList.remove('active'));
+        const pane = card.querySelector(`.exam-pane[data-pane="${state.ems.exam_tab}"]`);
+        if (pane) pane.classList.add('active');
+      }
+    }
+  }
+  
+  if(state.ems.procedures['酸素投与']) {
+    const o2AmountEl = $('#ems_o2_amount');
+    if (o2AmountEl) {
+      o2AmountEl.style.display = 'block';
+      const o2FlowEl = $('#o2_flow_display');
+      if(o2FlowEl) o2FlowEl.textContent = state.ems.o2_flow || '－';
+    }
+  }
+  
+  render();
+}
+
+/**
+ * 状態データ構造の不足しているプロパティを初期化する
+ */
+function initializeStateDataStructure() {
+    // マスタを更新
+    state.hospitals = {
+      '鹿児島市': ['鹿児島市立病院','鹿児島大学病院','鹿児島医療センター','米盛病院','いまきいれ総合病院','今村総合病院','中央病院','鹿児島徳洲会病院','南風病院','鹿児島生協病院','厚地脳神経外科病院','池田病院','いじゅういん脳神経外科','上町いまきいれ病院','いづろ今村病院','岩尾病院','植村病院','大勝病院','小田代病院','鹿児島厚生連病院','鹿児島こども病院','鹿児島市医師会病院','鹿児島赤十字病院','河井脳神経外科','かわはら脳神経外科クリニック','木村外科内科','共立病院','キラメキテラスヘルスケアホスピタル','馬場病院','健翔会病院','済生会鹿児島病院','桜島病院','三愛病院','新成病院','豊島病院','中野脳神経外科','新村病院','林内科胃腸科病院','日高病院','増田整形外科病院','三船病院','三宅病院','みらいリハビリテーション病院']
+    };
+    state.ems.procedures_items = ['頚椎カラー','全身固定','吸引','酸素投与','BVM換気','気管挿管','LT挿入','静脈路確保','ブドウ糖投与','ショック輸液','圧迫止血','胸骨圧迫','LUCAS装着','除細動','アドレナリン'];
+    state.cardr.procedures_items = ['酸素投与','BVM','気管挿管','胸腔ドレナージ','開胸','輸液','輸血','骨盤固定','止血処置','CPR','除細動','経皮ペーシング'];
+    state.cardr.drugs_items = ['生食','ソルアセトF','アドレナリン','ミダゾラム','ジアゼパム','アトロピン','ロクロニウム','メイロン','レペタン','トランサミン','アセリオ','メトクロプラミド','エスラックス','ブドウ糖液'];
+
+    // ネストされたオブジェクトの初期化
+    if (!state.request.age) state.request.age = '';
+    if (!state.request.sex) state.request.sex = '';
+    if (!state.request.ems_team) state.request.ems_team = '';
+    if (!state.patient.history_chips) state.patient.history_chips = {};
+    if (!state.patient.anticoagulant) state.patient.anticoagulant = '';
+    if (!state.patient.antiplatelet) state.patient.antiplatelet = '';
+    if (!state.patient.anticoagulant_drugs) state.patient.anticoagulant_drugs = [];
+    if (!state.patient.antiplatelet_drugs) state.patient.antiplatelet_drugs = [];
+    if (!state.patient.food_allergy) state.patient.food_allergy = '';
+    if (!state.patient.drug_allergy) state.patient.drug_allergy = '';
+    if (!state.cardr.intubation) state.cardr.intubation = {time: '', size: '7.0'};
+    if (!state.cardr.drug_details) state.cardr.drug_details = {};
+    if (!state.cardr.exams) state.cardr.exams = {bs:false, ucg:false, us_abd:false, us_lung:false, us_neck:false, ecg:false, fast:false, efast:false};
+    if (!state.cardr.exam_texts) state.cardr.exam_texts = {ucg:'', us_abd:'', us_lung:'', us_neck:'', ecg:'', fast:'', efast:''};
+    if (!state.cardr.abg_data) state.cardr.abg_data = [];
+    if (!state.cardr.cpaEvents) state.cardr.cpaEvents = [];
+    if (!state.cardr.exam_tab) state.cardr.exam_tab = 'general';
+    if (!state.ems.exam_tab) state.ems.exam_tab = 'general';
+
+    if (!state.cardr.stroke) state.cardr.stroke = {};
+    if (state.cardr.stroke.pupilL === undefined) state.cardr.stroke.pupilL = 3.0;
+    if (state.cardr.stroke.pupilR === undefined) state.cardr.stroke.pupilR = 3.0;
+    if (!state.cardr.stroke.mmt) state.cardr.stroke.mmt = {ru:5, lu:5, rl:5, ll:5};
+    if (!state.cardr.stroke.nihss) state.cardr.stroke.nihss = {};
+    if (state.cardr.stroke.babinski === undefined) state.cardr.stroke.babinski = false;
+    if (state.cardr.stroke.chaddock === undefined) state.cardr.stroke.chaddock = false;
+    
+    // CPAメモが古い形式の場合の対応（新しい形式に合わせる）
+    if (state.ems.memos.cpa && typeof state.ems.memos.cpa === 'string') {
+        state.ems.memos.cpa = {memo: state.ems.memos.cpa};
+    }
+}
+
+// 酸素流量ダイヤル (変更なし)
+window.openO2FlowDial = () => { // グローバル化
+  const flows = ['1L/min', '2L/min', '3L/min', '4L/min', '5L/min', '6L/min', '8L/min', '10L/min', '12L/min', '15L/min', 'リザーバー10L', 'リザーバー15L'];
+  const options = flows.map(f => ({label: f, value: f}));
+  const selectedFlow = state.ems.o2_flow || '1L/min';
+  
+  openDial('酸素流量', [
+    {options: options, selected: selectedFlow}
+  ], (vals) => {
+    state.ems.o2_flow = vals[0];
+    const o2FlowEl = $('#o2_flow_display');
+    if (o2FlowEl) o2FlowEl.textContent = vals[0] || '－';
+    updateState();
+  });
+};
+
+// 気管挿管ダイヤル (変更なし)
+window.openIntubationDial = () => { // グローバル化
+  // state.cardr.intubationの存在を保証
+  if (!state.cardr.intubation) state.cardr.intubation = {time: '', size: '7.0'};
+  
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const currentTime = state.cardr.intubation.time || `${hh}:${mm}`;
+  const [h, m] = currentTime.split(':');
+  
+  const sizes = [];
+  for(let i = 3.5; i <= 8.5; i += 0.5) {
+    sizes.push(i.toFixed(1)); // valueとして数値文字列を保持
+  }
+  const currentSize = state.cardr.intubation.size || '7.0';
+  
+  const hoursOptions = Array.from({length: 24}, (_, i) => ({label: String(i).padStart(2, '0'), value: String(i).padStart(2, '0')}));
+  const minutesOptions = Array.from({length: 60}, (_, i) => ({label: String(i).padStart(2, '0'), value: String(i).padStart(2, '0')}));
+  const sizeOptions = sizes.map(s => ({label: s + 'mm', value: s}));
+  
+  openDial('気管挿管', [
+    {options: hoursOptions, selected: h, unit: ':'},
+    {options: minutesOptions, selected: m},
+    {options: sizeOptions, selected: currentSize, unit:'mm'}
+  ], (vals) => {
+    state.cardr.intubation.time = `${vals[0]}:${vals[1]}`;
+    state.cardr.intubation.size = vals[2];
+    renderProcedureChips('cardr_procedures', state.cardr.procedures_items, state.cardr.procedures); // 更新を反映
+    updateState();
+  });
+};
+
+// 薬剤投与詳細ダイヤル (大幅修正)
+window.openDrugDetailDial = (drugName, isEditMode) => { // グローバル化
+  // state.cardr.drug_detailsの存在を保証
+  if(!state.cardr.drug_details) state.cardr.drug_details = {};
+  if(!state.cardr.drug_details[drugName]) state.cardr.drug_details[drugName] = [];
+
+  const drugDetails = state.cardr.drug_details[drugName];
+  
+  // 薬剤ごとの設定
+  let amountConfig = {};
+  let defaultAmount = '';
+  
+  switch(drugName) {
+    case 'アドレナリン':
+      amountConfig = {min: 0.1, max: 2.0, step: 0.1, decimals: 1};
+      defaultAmount = 1.0;
+      break;
+    case 'ミダゾラム':
+    case 'ジアゼパム':
+    case 'アトロピン':
+      amountConfig = {min: 0.1, max: 10.0, step: 0.1, decimals: 1};
+      defaultAmount = 1.0; // 基準値1.0mg
+      break;
+    case 'エスラックス':
+    case 'ロクロニウム':
+      amountConfig = {min: 1, max: 100, step: 1, decimals: 0};
+      defaultAmount = 50;
+      break;
+    default:
+      amountConfig = {min: 0.1, max: 20.0, step: 0.1, decimals: 1};
+      defaultAmount = 1.0;
+  }
+  
+  // 投与回数表示
+  let detailListHtml = '';
+  if (drugDetails.length > 0) {
+      detailListHtml = `<div style="max-height:100px; overflow-y:auto; border:1px solid var(--line); border-radius:8px; padding:8px; margin-bottom:12px">
+          <h4 style="margin:0 0 4px; font-size:14px; color:var(--muted)">投与履歴:</h4>
+          ${drugDetails.map((d, i) => 
+              `<div style="font-size:14px; display:flex; justify-content:space-between; margin-bottom:4px; padding-right:10px;">
+                  <span>${i + 1}回目: ${d.time} (${d.amount}mg)</span>
+                  <button style="color:#dc2626; border:none; background:none; cursor:pointer; padding:0" onclick="removeDrugDose('${drugName}', ${i})">削除</button>
+              </div>`
+          ).join('')}
+      </div>`;
+  }
+  
+  // 投与詳細ダイアログの本体を生成
+  const showDrugDial = (initialTime, initialAmount) => {
+      const [h, m] = initialTime.split(':').map(String);
+      const currentAmount = parseFloat(initialAmount || defaultAmount);
+      
+      const hoursOptions = Array.from({length: 24}, (_, i) => ({label: String(i).padStart(2, '0'), value: String(i).padStart(2, '0')}));
+      const minutesOptions = Array.from({length: 60}, (_, i) => ({label: String(i).padStart(2, '0'), value: String(i).padStart(2, '0')}));
+      
+      const amounts = [];
+      for(let i = amountConfig.min; i <= amountConfig.max; i = parseFloat((i + amountConfig.step).toFixed(amountConfig.decimals))) {
+          const val = i.toFixed(amountConfig.decimals);
+          amounts.push(val);
+      }
+      const amountOptions = amounts.map(a => ({label: a + 'mg', value: a}));
+      
+      const wheels = [
+          {options: hoursOptions, selected: h, unit: ':'},
+          {options: minutesOptions, selected: m},
+          {options: amountOptions, selected: currentAmount.toFixed(amountConfig.decimals), unit: 'mg'}
+      ];
+      
+      openDial(drugName + ' 投与設定', wheels, (vals) => {
+          const newTime = `${vals[0]}:${vals[1]}`;
+          const newAmount = vals[2];
+          
+          drugDetails.push({
+              time: newTime,
+              amount: newAmount
+          });
+          
+          // 投与後、再度チップレンダリングと状態更新
+          renderProcedureChips('cardr_drugs', state.cardr.drugs_items, state.cardr.drugs);
+          updateState();
+      });
+  };
+  
+  if (isEditMode) {
+      // 複数回投与モードのカスタムUI
+      const now = new Date();
+      const nextTime = drugDetails.length > 0 ? addMinutesToTime(drugDetails[drugDetails.length - 1].time, 4) : `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      
+      // デフォルト量を文字列として渡す
+      const defaultAmountStr = defaultAmount.toFixed(amountConfig.decimals || 0);
+
+      const customDialog = `
+          <div id="drug-custom-dialog" style="padding:20px; text-align:center;">
+              <h3 style="margin-top:0; font-size:18px;">${drugName}</h3>
+              ${detailListHtml}
+              <p style="font-size:14px; margin-bottom:15px; color:var(--muted);">次回の投与設定、または記録の解除を行ってください。</p>
+              
+              <button class="btn" style="background:#4ade80; margin-bottom:10px;" onclick="closeDial(); showDrugDialFunction('${nextTime}', '${defaultAmountStr}');">
+                  ＋ 追加投与 (${nextTime} 頃)
+              </button>
+              <button class="btn ghost" style="color:#dc2626; border:1px solid #dc2626;" onclick="closeDial(); removeDrugAll('${drugName}');">
+                  記録を全て解除 (チップOFF)
+              </button>
+          </div>
+      `;
+      // グローバル関数としてshowDrugDialをラップして渡す
+      window.showDrugDialFunction = showDrugDial;
+      
+      // openDialはホイール表示が必要なので、ここでは直接DOMを操作してカスタムモーダルを表示
+      $('#dialOverlay').classList.add('show');
+      $('#dialBody').innerHTML = customDialog;
+      $('#dialTitle').textContent = `${drugName} 投与履歴`;
+      
+      // カスタムUIでは完了ボタンを非表示
+      const doneBtn = $('#dialDone');
+      if (doneBtn) doneBtn.style.display = 'none';
+
+  } else {
+      // 初回投与
+      const now = new Date();
+      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      showDrugDial(currentTime, defaultAmount);
+  }
+};
+
+// 薬剤の全削除
+window.removeDrugAll = (drugName) => {
+    delete state.cardr.drug_details[drugName];
+    state.cardr.drugs[drugName] = false;
+    renderProcedureChips('cardr_drugs', state.cardr.drugs_items, state.cardr.drugs);
+    updateState();
+    closeDial();
+};
+
+// 薬剤の個別削除
+window.removeDrugDose = (drugName, index) => {
+    if (state.cardr.drug_details[drugName]) {
+        state.cardr.drug_details[drugName].splice(index, 1);
+        // 投与記録がなくなったら、チップをOFFにする
+        if (state.cardr.drug_details[drugName].length === 0) {
+            removeDrugAll(drugName);
+        } else {
+            // 再描画とUI更新 (再帰的にopenDrugDetailDialを呼び出す)
+            closeDial();
+            openDrugDetailDial(drugName, true); 
+            renderProcedureChips('cardr_drugs', state.cardr.drugs_items, state.cardr.drugs);
+            updateState();
+        }
+    }
+};
+
+
+window.openIVStartDial = (drugName) => {
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    
+    // 時間と分のホイールを定義
+    const hoursOptions = Array.from({length: 24}, (_, i) => ({label: String(i).padStart(2, '0'), value: String(i).padStart(2, '0')}));
+    const minutesOptions = Array.from({length: 60}, (_, i) => ({label: String(i).padStart(2, '0'), value: String(i).padStart(2, '0')}));
+    
+    const [h, m] = currentTime.split(':').map(String);
+
+    const wheels = [
+        {options: hoursOptions, selected: h, unit: ':'},
+        {options: minutesOptions, selected: m}
+    ];
+
+    openDial(`${drugName} 開始時刻`, wheels, (vals) => {
+        const newTime = `${vals[0]}:${vals[1]}`;
+        
+        // 記録をリセットして新しい開始時刻を1回目として格納 (量='開始'と仮定)
+        state.cardr.drug_details[drugName] = [{
+            time: newTime,
+            amount: '開始'
+        }];
+        
+        // チップの状態をONに確定
+        state.cardr.drugs[drugName] = true;
+        
+        renderProcedureChips('cardr_drugs', state.cardr.drugs_items, state.cardr.drugs);
+        updateState();
+    });
+};
+
+
+function init() {
+  // 1. localStorageからの復元とデータ構造の統合
+  const saved = localStorage.getItem('doctorCarV1');
+  if(saved) {
+    try { 
+        const loadedState = JSON.parse(saved);
+        
+        // 互換性チェックと移行
+        if(loadedState.heli && !loadedState.car) loadedState.car = loadedState.heli;
+        if(loadedState.ems?.lz && !loadedState.ems.rp) loadedState.ems.rp = loadedState.ems.lz;
+        if(loadedState.fd && !loadedState.cardr) loadedState.cardr = loadedState.fd;
+        if(loadedState.car?.fd_contact && !loadedState.car.cardr_contact) loadedState.car.cardr_contact = loadedState.car.fd_contact;
+        
+        state = loadedState;
+        
+    } catch(e) {
+      console.error('Failed to load state from localStorage:', e);
+    }
+  }
+  
+  // 2. 状態データ構造の堅牢化 (最新のマスタ定義を適用し、不足しているプロパティを初期化)
+  initializeStateDataStructure();
+  
+  // 3. UIの初期設定とイベントリスナーの設定
+  
+  // タブイベント
+  $$('.tab-bar-item').forEach(el => el.addEventListener('click', () => switchTab(el.dataset.tab)));
+  
+  // スワイプ機能の初期化
+  const mainElement = $('main');
+  if (mainElement) {
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const tabs = ['patient', 'car-time', 'ems', 'doctor', 'exam', 'assess', 'consider', 'symptom', 'output'];
+    
+    function getCurrentTabIndex() {
+      const activeTab = $('.tab-bar-item.active');
+      if (!activeTab) return 0;
+      const tabId = activeTab.dataset.tab;
+      return tabs.indexOf(tabId);
+    }
+    
+    function switchTabBySwipe(direction) {
+      const currentIndex = getCurrentTabIndex();
+      let newIndex;
+      if (direction === 'left' && currentIndex < tabs.length - 1) {
+        newIndex = currentIndex + 1;
+      } else if (direction === 'right' && currentIndex > 0) {
+        newIndex = currentIndex - 1;
+      } else {
+        return; // 範囲外
+      }
+      switchTab(tabs[newIndex]);
+    }
+    
+    mainElement.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+
+    mainElement.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].clientX;
+      const diff = touchStartX - touchEndX;
+      const minSwipeDistance = 50; // 最小スワイプ距離
+      
+      if (Math.abs(diff) > minSwipeDistance) {
+        if (diff > 0) {
+          // 左にスワイプ（次のタブ）
+          switchTabBySwipe('left');
+        } else {
+          // 右にスワイプ（前のタブ）
+          switchTabBySwipe('right');
+        }
+      }
+    }, { passive: true });
+  }
+  
+  // チップマウント
+  mountChips('#ems-gen-head', EMS_GEN_GROUPS.head, 'ems');
+  mountChips('#ems-gen-resp', EMS_GEN_GROUPS.resp, 'ems');
+  mountChips('#ems-gen-card', EMS_GEN_GROUPS.card, 'ems');
+  mountChips('#ems-gen-abd', EMS_GEN_GROUPS.abd, 'ems');
+  mountChips('#ems-gen-limb', EMS_GEN_GROUPS.limb, 'ems');
+  mountChips('#ems-gen-neuro', EMS_GEN_GROUPS.neuro, 'ems');
+  mountChips('#ems-tra-head', EMS_TRA_GROUPS.head, 'ems');
+  mountChips('#ems-tra-neck', EMS_TRA_GROUPS.neck, 'ems');
+  mountChips('#ems-tra-chest', EMS_TRA_GROUPS.chest, 'ems');
+  mountChips('#ems-tra-abd', EMS_TRA_GROUPS.abd, 'ems');
+  mountChips('#ems-tra-pelvis', EMS_TRA_GROUPS.pelvis, 'ems');
+  mountChips('#ems-tra-limb', EMS_TRA_GROUPS.limb, 'ems');
+  mountChips('#ems-cpa-rhythm', EMS_CPA_GROUPS.rhythm, 'ems');
+  mountChips('#ems-cpa-witness', EMS_CPA_GROUPS.witness, 'ems');
+  mountChips('#ems-cpa-airway', EMS_CPA_GROUPS.airway, 'ems');
+  mountChips('#ems-cpa-circulation', EMS_CPA_GROUPS.circulation, 'ems');
+  mountChips('#ems-cpa-chest', EMS_CPA_GROUPS.chest, 'ems');
+  mountChips('#ems-str-conscious', EMS_STR_GROUPS.conscious, 'ems');
+  mountChips('#ems-str-face', EMS_STR_GROUPS.face, 'ems');
+  mountChips('#ems-str-motor', EMS_STR_GROUPS.motor, 'ems');
+  mountChips('#ems-str-other', EMS_STR_GROUPS.other, 'ems');
+  
+  mountChips('#cardr-gen-head', CARDR_GEN_GROUPS.head, 'cardr');
+  mountChips('#cardr-gen-resp', CARDR_GEN_GROUPS.resp, 'cardr');
+  mountChips('#cardr-gen-card', CARDR_GEN_GROUPS.card, 'cardr');
+  mountChips('#cardr-gen-abd', CARDR_GEN_GROUPS.abd, 'cardr');
+  mountChips('#cardr-gen-limb', CARDR_GEN_GROUPS.limb, 'cardr');
+  mountChips('#cardr-gen-neuro', CARDR_GEN_GROUPS.neuro, 'cardr');
+  mountChips('#cardr-tra-head', CARDR_TRA_GROUPS.head, 'cardr');
+  mountChips('#cardr-tra-neck', CARDR_TRA_GROUPS.neck, 'cardr');
+  mountChips('#cardr-tra-chest', CARDR_TRA_GROUPS.chest, 'cardr');
+  mountChips('#cardr-tra-abd', CARDR_TRA_GROUPS.abd, 'cardr');
+  mountChips('#cardr-tra-pelvis', CARDR_TRA_GROUPS.pelvis, 'cardr');
+  mountChips('#cardr-tra-limb', CARDR_TRA_GROUPS.limb, 'cardr');
+  mountChips('#cardr-str-cn', CARDR_STR_GROUPS.cn, 'cardr');
+  mountChips('#cardr-str-higher', CARDR_STR_GROUPS.higher, 'cardr');
+  
+  renderProcedureChips('ems_procedures', state.ems.procedures_items, state.ems.procedures);
+  renderProcedureChips('cardr_procedures', state.cardr.procedures_items, state.cardr.procedures);
+  renderProcedureChips('cardr_drugs', state.cardr.drugs_items, state.cardr.drugs);
+  
+  // 既往歴チップをマウント（復元前にチップ状態を同期）
+  if (state.patient?.history && !state.patient.history_chips) {
+    state.patient.history_chips = {};
+  }
+  syncHistoryChipsFromText();
+  renderHistoryChips();
+  
+  // 常用薬チップをマウント
+  if (!state.patient.anticoagulant) state.patient.anticoagulant = '';
+  if (!state.patient.antiplatelet) state.patient.antiplatelet = '';
+  if (!state.patient.anticoagulant_drugs) state.patient.anticoagulant_drugs = [];
+  if (!state.patient.antiplatelet_drugs) state.patient.antiplatelet_drugs = [];
+  renderMedicationChips();
+  
+  // アレルギーチップをマウント
+  if (!state.patient.food_allergy) state.patient.food_allergy = '';
+  if (!state.patient.drug_allergy) state.patient.drug_allergy = '';
+  renderAllergyChips();
+  
+  // 要請情報チップをマウント
+  if (!state.request.age) state.request.age = '';
+  if (!state.request.sex) state.request.sex = '';
+  if (!state.request.ems_team) state.request.ems_team = '';
+  if (!state.request.content) state.request.content = '';
+  renderRequestInfoChips();
+  renderRequestContentChips();
+  
+  renderHospitalChips();
+  renderProblems();
+  renderTriageChips();
+  renderSeverityChips();
+  // 症状詳記のデータリスト初期化
+  // triggersとsuspicionsはオブジェクト構造なので、すべての値を取得してフラット化
+  const allTriggers = [];
+  Object.values(MedicalReasonGenerator.triggers).forEach(category => {
+    Object.values(category).forEach(items => {
+      items.forEach(item => {
+        if (!allTriggers.includes(item)) {
+          allTriggers.push(item);
+        }
+      });
+    });
+  });
+  const triggerOpts = allTriggers.map(t => `<option value="${t}">`).join('');
+  const triggerList = $('#triggerList');
+  if(triggerList) triggerList.innerHTML = triggerOpts;
+  
+  const allSuspicions = [];
+  Object.values(MedicalReasonGenerator.suspicions).forEach(category => {
+    Object.values(category).forEach(items => {
+      items.forEach(item => {
+        if (!allSuspicions.includes(item)) {
+          allSuspicions.push(item);
+        }
+      });
+    });
+  });
+  const suspOpts = allSuspicions.map(s => `<option value="${s}">`).join('');
+  const suspicionList = $('#suspicionList');
+  if(suspicionList) suspicionList.innerHTML = suspOpts;
+  
+  renderAbgPills();
+  renderNihss();
+  bindMemos();
+  
+  const transportMethodEl = $('#transport_method');
+  if (transportMethodEl) transportMethodEl.onchange = toggleTransportTimes;
+  
+  const destinationCustomEl = $('#destination_custom');
+  if (destinationCustomEl) destinationCustomEl.oninput = updateState;
+  
+  const newProblemEl = $('#new_problem');
+  if (newProblemEl) newProblemEl.onkeypress = e => { if(e.key === 'Enter') { e.preventDefault(); addProblem(); } };
+  
+  ['ucg','us_abd','us_lung','us_neck','ecg','fast','efast'].forEach(t => {
+    const txtEl = $(`#exam_${t}_txt`);
+    if(txtEl) {
+      txtEl.oninput = () => { 
+        if(state.cardr.exam_texts) state.cardr.exam_texts[t] = txtEl.value; 
+        updateState(); 
+      };
+    }
+  });
+
+  // 既往歴テキストエリアの手動変更時にチップ状態を同期
+  const patientHistoryEl = $('#patient_history');
+  if (patientHistoryEl) {
+    patientHistoryEl.oninput = () => {
+      syncHistoryChipsFromText();
+      renderHistoryChips();
+      updateState();
+    };
+  }
+  
+  // 常用薬テキストエリアの手動変更時（チップで更新された値は除外）
+  const patientMedicationEl = $('#patient_medication');
+  if (patientMedicationEl) {
+    let isUpdatingFromChip = false;
+    const originalInput = patientMedicationEl.oninput;
+    patientMedicationEl.oninput = () => {
+      if (!isUpdatingFromChip) {
+        updateState();
+      }
+    };
+    // updateMedicationTextareaでフラグを設定
+    const originalUpdateMedicationTextarea = window.updateMedicationTextarea;
+    window.updateMedicationTextarea = function() {
+      isUpdatingFromChip = true;
+      originalUpdateMedicationTextarea();
+      isUpdatingFromChip = false;
+    };
+  }
+  
+  // アレルギーテキストエリアの手動変更時（チップで更新された値は除外）
+  const patientAllergyEl = $('#patient_allergy');
+  if (patientAllergyEl) {
+    let isUpdatingFromChip = false;
+    patientAllergyEl.oninput = () => {
+      if (!isUpdatingFromChip) {
+        updateState();
+      }
+    };
+    // updateAllergyTextareaでフラグを設定
+    const originalUpdateAllergyTextarea = window.updateAllergyTextarea;
+    window.updateAllergyTextarea = function() {
+      isUpdatingFromChip = true;
+      originalUpdateAllergyTextarea();
+      isUpdatingFromChip = false;
+    };
+  }
+  
+  // その他の入力フィールドのバインド
+  $$('input:not([type="time"]):not([type="checkbox"]), textarea, select').forEach(el => {
+    if(!el.onchange && !el.oninput && el.id !== 'patient_history' && el.id !== 'patient_medication' && el.id !== 'patient_allergy') el.oninput = updateState;
+  });
+  
+  // input type="time" の onchange も updateState に設定
+  $$('input[type="time"], select:not(#transport_method):not(#cardr_abg_type)').forEach(el => {
+      if(!el.onchange) el.onchange = updateState;
+  });
+  
+  // コピーボタンの設定
+  const copyOutEl = $('#copyOut');
+  if (copyOutEl) {
+    copyOutEl.onclick = () => {
+      navigator.clipboard.writeText($('#outText')?.textContent || '').then(() => {
+        const btn = $('#copyOut');
+        if (btn) {
+          btn.textContent = '✓ コピー完了';
+          setTimeout(() => { if (btn) btn.textContent = '📋 コピー'; }, 2000);
+        }
+      });
+    };
+  }
+  
+  // 4. UI状態の復元と描画
+  restoreUI();
+  
+  // 身体所見タブのイベントリスナーを設定（restoreUIの後）
+  setupExamTabs('ems');
+  setupExamTabs('cardr');
+  
+  render();
+  
+  // 初期タブのヘッダーを更新
+  const initialTab = $('.tab-content.active')?.dataset.tab || 'patient';
+  const tabNames = {
+    'patient': '患者',
+    'car-time': 'カー時刻',
+    'ems': '救急隊',
+    'doctor': '所見',
+    'exam': '検査',
+    'assess': '評価',
+    'consider': '搬送先',
+    'output': '出力'
+  };
+  const headerTitle = $('header h1');
+  if (headerTitle && tabNames[initialTab]) {
+    headerTitle.textContent = `🚗 ドクターカー - ${tabNames[initialTab]}`;
+  }
+  
+  // チェックボックスに光るエフェクトを追加
+  $$('input[type="checkbox"]').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const parent = this.closest('.time-row') || this.closest('label'); // 親要素を修正
+      if(parent) {
+        parent.classList.remove('check-flash');
+        void parent.offsetWidth; // 強制リフロー
+        parent.classList.add('check-flash');
+        setTimeout(() => parent.classList.remove('check-flash'), 400);
+      }
+    });
+  });
+}
+
+init();
+</script>
+</body>
+</html>

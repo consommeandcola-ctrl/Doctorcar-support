@@ -17,13 +17,16 @@
 <!-- 2026/04/15 | v3.6 | 出力：【評価】見出しを出さない（プロブレム等の本文は維持） -->
 <!-- 2026/04/15 | v3.6 | 要請内容チップに「頭痛」を追加 -->
 <!-- 2026/04/15 | v3.6 | 心電図フォームカードのレイアウトをコンパクト化 -->
+<!-- 2026/07/03 | v3.6 hotfix | 紹介状生成時にプロブレム・考察を確実に反映 -->
 <html lang="ja">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#2563eb">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
 <title>ドクターカー活動記録 v3.6 (2026/04/15) - タブ版</title>
 <style>
 :root{
@@ -4666,10 +4669,52 @@ function renderExamChips() {
 }
 
 // プロブレム関数群
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[ch]));
+}
+
+function normalizeProblemText(value) {
+  if (value === undefined || value === null) return '';
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'object') {
+    return String(value.text ?? value.name ?? value.problem ?? value.label ?? '').trim();
+  }
+  return String(value).trim();
+}
+
+function normalizeProblemList(value) {
+  const source = Array.isArray(value)
+    ? value
+    : (typeof value === 'string' ? value.split(/\r?\n/) : []);
+  return source.map(normalizeProblemText).filter(Boolean);
+}
+
+function syncAssessmentState(options = {}) {
+  const { commitDraftProblem = false } = options;
+  state.problems = normalizeProblemList(state.problems);
+
+  const input = $('#new_problem');
+  const draftProblem = normalizeProblemText(input?.value || '');
+  if (commitDraftProblem && draftProblem) {
+    state.problems.push(draftProblem);
+    if (input) input.value = '';
+  }
+
+  state.consideration = $('#consideration')?.value || state.consideration || '';
+  renderProblems();
+}
+
 window.addProblem = () => { // グローバル化
   const input = $('#new_problem');
-  const text = input?.value.trim();
+  const text = normalizeProblemText(input?.value || '');
   if(text) {
+    state.problems = normalizeProblemList(state.problems);
     state.problems.push(text);
     if(input) input.value = '';
     renderProblems();
@@ -4677,14 +4722,22 @@ window.addProblem = () => { // グローバル化
   }
 };
 
+window.removeProblem = (index) => {
+  state.problems = normalizeProblemList(state.problems);
+  state.problems.splice(index, 1);
+  renderProblems();
+  updateState();
+};
+
 function renderProblems() {
   const c = $('#problems');
   if (!c) return;
+  state.problems = normalizeProblemList(state.problems);
   
   c.innerHTML = state.problems.map((p, i) => `
     <div class="problem-item">
-      <span>#${i+1} ${p}</span>
-      <button class="del-btn" onclick="state.problems.splice(${i},1);renderProblems();updateState()">削除</button>
+      <span>#${i+1} ${escapeHtml(p)}</span>
+      <button class="del-btn" onclick="removeProblem(${i})">削除</button>
     </div>
   `).join('');
 }
@@ -4916,7 +4969,7 @@ function updateState() {
     state.cardr.stroke.nihssMemo = $('#nihss_memo')?.value || '';
   }
   
-  state.consideration = $('#consideration')?.value || '';
+  syncAssessmentState();
   state.symptom_detail = $('#outputReason')?.value || '';
   
   const customHospital = $('#destination_custom')?.value.trim() || '';
@@ -5125,6 +5178,8 @@ function stripJtasNacaLinesFromText(text) {
 }
 
 function generateDrCarReferralText(data) {
+  data.problems = normalizeProblemList(data.problems);
+  data.consideration = data.consideration || '';
   const today = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' });
   const destName = referralSafeGet(data, 'destination.custom') || referralSafeGet(data, 'destination.hospital') || '＿＿＿＿病院';
   const requestType = referralSafeGet(data, 'request.type', '');
@@ -5240,11 +5295,15 @@ ${consideration}`;
 
 window.renderReferralLetter = function() {
   updateState();
+  syncAssessmentState({commitDraftProblem: true});
+  localStorage.setItem('doctorCarV1', JSON.stringify(state));
+  render();
   const el = $('#referralText');
   if (el) el.textContent = generateDrCarReferralText(state);
 };
 
 window.sendReferralEmail = function() {
+  renderReferralLetter();
   const el = $('#referralText');
   const text = el ? el.textContent : '';
   if (!text || !String(text).trim()) {
@@ -6101,6 +6160,8 @@ function initializeStateDataStructure() {
     if (!state.request.age) state.request.age = '';
     if (!state.request.sex) state.request.sex = '';
     if (!state.request.ems_team) state.request.ems_team = '';
+    state.problems = normalizeProblemList(state.problems);
+    if (typeof state.consideration !== 'string') state.consideration = '';
     if (!state.patient.history_chips) state.patient.history_chips = {};
     if (!state.patient.anticoagulant) state.patient.anticoagulant = '';
     if (!state.patient.antiplatelet) state.patient.antiplatelet = '';
@@ -6979,6 +7040,14 @@ function init() {
 }
 
 init();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => {
+      console.warn('Service worker registration failed:', err);
+    });
+  });
+}
 </script>
 </body>
 </html>
