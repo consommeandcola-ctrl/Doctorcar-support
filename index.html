@@ -6325,10 +6325,9 @@ window.openIntubationDial = () => { // グローバル化
   // state.cardr.intubationの存在を保証
   if (!state.cardr.intubation) state.cardr.intubation = {time: '', size: '7.0'};
   
-  const now = new Date();
-  const hh = String(now.getHours()).padStart(2, '0');
-  const mm = String(now.getMinutes()).padStart(2, '0');
-  const currentTime = state.cardr.intubation.time || `${hh}:${mm}`;
+  const drContact = document.getElementById('cardr_contact');
+  const fallback = (drContact && drContact.value) ? drContact.value : `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`;
+  const currentTime = state.cardr.intubation.time || fallback;
   const [h, m] = currentTime.split(':');
   
   const sizes = [];
@@ -6650,8 +6649,9 @@ window.openDrugDetailDial = (drugName, isEditMode) => { // グローバル化
   
   if (isEditMode) {
       // 複数回投与モードのカスタムUI
-      const now = new Date();
-      const nextTime = drugDetails.length > 0 ? addMinutesToTime(drugDetails[drugDetails.length - 1].time, 4) : `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const drContact = document.getElementById('cardr_contact');
+      const fallback = (drContact && drContact.value) ? drContact.value : `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`;
+      const nextTime = drugDetails.length > 0 ? addMinutesToTime(drugDetails[drugDetails.length - 1].time, 4) : fallback;
       
       // デフォルト量を文字列として渡す
       const defaultAmountStr = discreteAmounts
@@ -6686,8 +6686,8 @@ window.openDrugDetailDial = (drugName, isEditMode) => { // グローバル化
 
   } else {
       // 初回投与
-      const now = new Date();
-      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const drContact = document.getElementById('cardr_contact');
+      const currentTime = (drContact && drContact.value) ? drContact.value : `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`;
       showDrugDial(currentTime, defaultAmount);
   }
 };
@@ -6720,8 +6720,8 @@ window.removeDrugDose = (drugName, index) => {
 
 
 window.openIVStartDial = (drugName) => {
-    const now = new Date();
-    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const drContact = document.getElementById('cardr_contact');
+    const currentTime = (drContact && drContact.value) ? drContact.value : `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`;
     
     // 時間と分のホイールを定義
     const hoursOptions = Array.from({length: 24}, (_, i) => ({label: String(i).padStart(2, '0'), value: String(i).padStart(2, '0')}));
