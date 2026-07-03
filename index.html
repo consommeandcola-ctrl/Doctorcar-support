@@ -408,6 +408,13 @@ body.dial-open{
   font-size:14px;color:var(--muted);
   align-self:center;
 }
+.dial-wheel--digit{width:44px;min-width:44px;flex-shrink:0}
+.dial-sep{
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:700;color:var(--muted);
+  padding:0 2px;align-self:center;height:200px;
+}
+.dial-body--compact{flex-wrap:wrap;gap:4px 6px;max-width:100%;padding:16px 12px;}
 
 /* 所見タブ */
 .exam-tabs{
@@ -2190,7 +2197,7 @@ let dialWheels = [];
 
 let scrollPosition = 0;
 
-function openDial(title, wheels, callback) {
+function openDial(title, wheels, callback, opts) {
   // 背景スクロール防止
   scrollPosition = window.pageYOffset;
   document.body.classList.add('dial-open');
@@ -2201,10 +2208,19 @@ function openDial(title, wheels, callback) {
   $('#dialTitle').textContent = title;
   const body = $('#dialBody');
   body.innerHTML = '';
+  body.className = opts && opts.compact ? 'dial-body dial-body--compact' : 'dial-body';
   
   wheels.forEach((w, wi) => {
+    if(w.sepBefore) {
+      const sep = document.createElement('span');
+      sep.className = 'dial-sep';
+      sep.textContent = w.sepBefore;
+      sep.setAttribute('aria-hidden', 'true');
+      body.appendChild(sep);
+    }
+    
     const wheel = document.createElement('div');
-    wheel.className = 'dial-wheel';
+    wheel.className = 'dial-wheel' + (w.narrow ? ' dial-wheel--digit' : '');
     wheel.innerHTML = '<div class="dial-highlight"></div>';
     
     const scroll = document.createElement('div');
@@ -2473,18 +2489,38 @@ window.openVitalDial = (type, idx, field) => { // グローバル化
   const v = state[type].vitals[idx];
   let wheels = [];
   let title = '';
+  let opts = null;
+  
+  const getDigitWheels = (val, digits, maxHundreds) => {
+    let numStr = String(val);
+    if(numStr === 'undefined' || numStr === 'null' || numStr === '') numStr = '0';
+    numStr = numStr.padStart(digits, '0');
+    const parts = numStr.split('');
+    const d09 = Array.from({length:10}, (_,i)=>({label:i.toString(), value:i.toString()}));
+    const wArr = [];
+    if (digits >= 3) wArr.push({ narrow: true, options: Array.from({length:maxHundreds+1}, (_,i)=>({label:i.toString(), value:i.toString()})), selected: parts[parts.length-3] });
+    if (digits >= 2) wArr.push({ narrow: true, options: d09, selected: parts[parts.length-2] });
+    wArr.push({ narrow: true, options: d09, selected: parts[parts.length-1] });
+    return wArr;
+  };
   
   switch(field) {
     case 'bp':
       title = '血圧';
-      wheels = [
-        {options: genRange(0, 250, 1), selected: v.sbp, unit: '/'},
-        {options: genRange(0, 150, 1), selected: v.dbp, unit: 'mmHg'}
-      ];
+      const sbpWheels = getDigitWheels(v.sbp || 120, 3, 2);
+      const dbpWheels = getDigitWheels(v.dbp || 80, 3, 2);
+      sbpWheels[2].unit = '/';
+      dbpWheels[0].sepBefore = ' ';
+      dbpWheels[2].unit = 'mmHg';
+      wheels = [...sbpWheels, ...dbpWheels];
+      opts = { compact: true };
       break;
     case 'hr':
       title = '心拍数';
-      wheels = [{options: genRange(0, 250, 1), selected: v.hr, unit: 'bpm'}];
+      const hrWheels = getDigitWheels(v.hr || 80, 3, 2);
+      hrWheels[2].unit = 'bpm';
+      wheels = hrWheels;
+      opts = { compact: true };
       break;
     case 'rr':
       title = '呼吸数';
@@ -2522,8 +2558,13 @@ window.openVitalDial = (type, idx, field) => { // グローバル化
   
   openDial(title, wheels, vals => {
     switch(field) {
-      case 'bp': v.sbp = vals[0]; v.dbp = vals[1]; break;
-      case 'hr': v.hr = vals[0]; break;
+      case 'bp': 
+        v.sbp = parseInt(vals.slice(0,3).join(''), 10); 
+        v.dbp = parseInt(vals.slice(3,6).join(''), 10); 
+        break;
+      case 'hr': 
+        v.hr = parseInt(vals.join(''), 10); 
+        break;
       case 'rr': v.rr = vals[0]; break;
       case 'spo2': v.spo2 = vals[0]; break;
       case 'bt': v.bt = vals[0]; break;
@@ -2535,7 +2576,7 @@ window.openVitalDial = (type, idx, field) => { // グローバル化
     if(type === 'ems') renderEmsVitals();
     else renderCarDrVitals();
     updateState();
-  });
+  }, opts);
 };
 
 function genRangeBT() {
