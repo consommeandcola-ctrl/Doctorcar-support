@@ -1,5 +1,5 @@
 // Stale-while-revalidate service worker
-const CACHE_NAME = 'doctorcar-pwa-v3.7.0';
+const CACHE_NAME = 'doctorcar-pwa-v3.7.1';
 const ASSETS = [
   './',
   './index.html',

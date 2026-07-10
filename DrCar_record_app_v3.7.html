@@ -22,6 +22,7 @@
 <!-- 2026/07/10 | v3.7 | バイタル欠損値: HR/SpO2/BTでも未測定・× -->
 <!-- 2026/07/10 | v3.7 | バイタル時刻の初期値をタイムライン入力から設定 -->
 <!-- 2026/07/10 | v3.7 | NPPV等ダイアログ完了ボタン id=dialDone 修正 -->
+<!-- 2026/07/10 | v3.7.1 | メトリクス APP_NAME を drcar に修正（GAS バリデーション合わせ） -->
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -1513,7 +1514,7 @@ main {
 
 // ====== 利用メトリクス収集機能 ======
 const METRICS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzk4tnPmpKU20y-Fa-DSDmzIHZ3A4j-x6JdWa-S2jO43xkfOl1nBykEy1uIKuTudHgHyg/exec';
-const APP_NAME = 'dcard';
+const APP_NAME = 'drcar';
 
 function countMetricsActiveFlags(obj) {
   if (!obj || typeof obj !== 'object') return 0;
