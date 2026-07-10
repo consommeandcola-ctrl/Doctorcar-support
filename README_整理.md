@@ -1,21 +1,24 @@
 # ドクターカー記録アプリ ディレクトリ整理メモ
 
-このディレクトリは、2026-07-03 に以下の方針で整理しました。
+このディレクトリは、2026-07-03 に以下の方針で整理しました。2026-07-10 に v3.7 を追加しています。
 
 ## 最新版_デプロイ正本
 
-- `DrCar_record_app_v3.6.html`
-- `index.html`
+- `DrCar_record_app_v3.7.html`（新正本）
+- `index.html`（GitHub Pages 公開用。v3.7 と同一内容）
 - `manifest.json`
-- `sw.js`
+- `sw.js`（キャッシュ名 `doctorcar-pwa-v3.7.0`）
 - `icon-192.png`
 - `icon-512.png`
 - `icon-512-maskable.png`
 - `apple-touch-icon.png`
-- 更新日時: 2026-04-15 02:23:44
-- GitHub Pages の `Doctorcar-support/index.html` と、改行コード正規化後に同一内容
+- `scripts/_test_metrics_counts_drcar.js`（メトリクス集計テスト）
 
-今後の機能修正や正本確認は、まずこのフォルダを基準にします。`index.html` は GitHub Pages へそのまま配置するための公開名コピーです。
+今後の機能修正や正本確認は、まず `DrCar_record_app_v3.7.html` を基準にします。`index.html` は GitHub Pages へそのまま配置するための公開名コピーです。
+
+## ロールバック用
+
+- `DrCar_record_app_v3.6.html`（v3.6 正本。v3.7 以前の参照用に保持）
 
 ## それ以外_アーカイブ
 
@@ -30,5 +33,4 @@
 
 - `.git`
 - `.gitignore`
-- `.DS_Store`
 - `README_整理.md`
