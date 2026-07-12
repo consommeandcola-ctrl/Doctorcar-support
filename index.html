@@ -23,6 +23,7 @@
 <!-- 2026/07/10 | v3.7 | バイタル時刻の初期値をタイムライン入力から設定 -->
 <!-- 2026/07/10 | v3.7 | NPPV等ダイアログ完了ボタン id=dialDone 修正 -->
 <!-- 2026/07/10 | v3.7.1 | メトリクス APP_NAME を drcar に修正（GAS バリデーション合わせ） -->
+<!-- 2026/07/12 | v3.8 | 利用メトリクスv2: 匿名ID・イベント種別・実操作時間・完成率・オフラインキュー・重複排除（ヘリ v5.1.8 と同仕様） -->
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -32,7 +33,7 @@
 <meta name="theme-color" content="#2563eb">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
-<title>ドクターカー活動記録 v3.7 (2026/07/10) - タブ版</title>
+<title>ドクターカー活動記録 v3.8 (2026/07/12) - タブ版</title>
 <style>
 :root{
   --ink:#111827;--muted:#6b7280;--bg:#f2f2f7;--card:#fff;
@@ -1512,9 +1513,109 @@ main {
 
 <script>
 
-// ====== 利用メトリクス収集機能 ======
+// ====== 利用メトリクス収集機能 v2 ======
 const METRICS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzk4tnPmpKU20y-Fa-DSDmzIHZ3A4j-x6JdWa-S2jO43xkfOl1nBykEy1uIKuTudHgHyg/exec';
 const APP_NAME = 'drcar';
+const METRICS_SCHEMA_VERSION = 2;
+const METRICS_QUEUE_KEY = 'metrics_queue_v2';
+const METRICS_INSTALLATION_KEY = 'metrics_installation_id_v2';
+const METRICS_CASE_KEY = 'metrics_case_id_v2';
+const METRICS_CASE_START_KEY = 'metrics_case_start_ts_v2';
+const METRICS_ACTIVE_KEY = 'metrics_active_ms_v2';
+const METRICS_LAST_ACTIVITY_KEY = 'metrics_last_activity_ts_v2';
+const METRICS_FIRST_INPUT_KEY = 'metrics_first_input_case_v2';
+const METRICS_COMPLETED_KEY = 'metrics_completed_case_v2';
+const METRICS_ACTIVE_TIMEOUT_MS = 5 * 60 * 1000;
+const METRICS_CASE_EXPIRY_MS = 12 * 60 * 60 * 1000;
+
+function createMetricsId() {
+  try { if (crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID(); } catch (e) {}
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
+function getOrCreateMetricsStorageId(key) {
+  let value = '';
+  try { value = localStorage.getItem(key) || ''; } catch (e) {}
+  if (!value) {
+    value = createMetricsId();
+    try { localStorage.setItem(key, value); } catch (e) {}
+  }
+  return value;
+}
+
+const metricsRuntime = {
+  installationId: getOrCreateMetricsStorageId(METRICS_INSTALLATION_KEY),
+  appSessionId: createMetricsId(),
+  sending: false,
+  firstInputSent: false,
+  openedTabs: new Set()
+};
+
+function initMetricsSession() {
+  let caseId = '';
+  try {
+    caseId = localStorage.getItem(METRICS_CASE_KEY) || '';
+    const lastActivity = Number(localStorage.getItem(METRICS_LAST_ACTIVITY_KEY) || 0);
+    if (caseId && lastActivity && Date.now() - lastActivity > METRICS_CASE_EXPIRY_MS) {
+      [METRICS_CASE_KEY, METRICS_CASE_START_KEY, METRICS_ACTIVE_KEY, METRICS_LAST_ACTIVITY_KEY,
+        METRICS_FIRST_INPUT_KEY, METRICS_COMPLETED_KEY, 'metrics_start_ts', 'metrics_session_id']
+        .forEach(key => localStorage.removeItem(key));
+      caseId = '';
+    }
+  } catch (e) {}
+  if (!caseId) {
+    caseId = createMetricsId();
+    const now = new Date().toISOString();
+    try {
+      localStorage.setItem(METRICS_CASE_KEY, caseId);
+      localStorage.setItem(METRICS_CASE_START_KEY, now);
+      localStorage.setItem(METRICS_ACTIVE_KEY, '0');
+      localStorage.setItem(METRICS_LAST_ACTIVITY_KEY, String(Date.now()));
+      // 旧版キーも維持し、更新途中の端末でduration計算が壊れないようにする。
+      localStorage.setItem('metrics_start_ts', now);
+      localStorage.setItem('metrics_session_id', caseId);
+    } catch (e) {}
+    trackMetricsEvent('case_start');
+  }
+  return caseId;
+}
+
+function registerMetricsActivity() {
+  const now = Date.now();
+  let last = 0;
+  let activeMs = 0;
+  try {
+    last = Number(localStorage.getItem(METRICS_LAST_ACTIVITY_KEY) || 0);
+    activeMs = Number(localStorage.getItem(METRICS_ACTIVE_KEY) || 0);
+    const gap = last ? now - last : 0;
+    if (gap > 0 && gap <= METRICS_ACTIVE_TIMEOUT_MS) activeMs += gap;
+    localStorage.setItem(METRICS_ACTIVE_KEY, String(activeMs));
+    localStorage.setItem(METRICS_LAST_ACTIVITY_KEY, String(now));
+  } catch (e) {}
+}
+
+function handleMetricsInteraction() {
+  const caseId = initMetricsSession();
+  registerMetricsActivity();
+  let firstInputCase = '';
+  try { firstInputCase = localStorage.getItem(METRICS_FIRST_INPUT_KEY) || ''; } catch (e) {}
+  if (!metricsRuntime.firstInputSent && firstInputCase !== caseId) {
+    metricsRuntime.firstInputSent = true;
+    try { localStorage.setItem(METRICS_FIRST_INPUT_KEY, caseId); } catch (e) {}
+    trackMetricsEvent('first_input');
+  }
+}
+
+document.addEventListener('input', handleMetricsInteraction);
+document.addEventListener('change', handleMetricsInteraction);
+document.addEventListener('click', (e) => {
+  const target = e.target;
+  if (!target || !target.tagName) return;
+  const t = target.tagName;
+  if (t === 'BUTTON' || t === 'INPUT' || t === 'SELECT' || target.closest('.chip')) {
+    handleMetricsInteraction();
+  }
+});
 
 function countMetricsActiveFlags(obj) {
   if (!obj || typeof obj !== 'object') return 0;
@@ -1538,76 +1639,163 @@ function collectDrCarMetricsCounts(state) {
   return { vital_count, proc_count };
 }
 
+function collectDrCarMetricsProperties(extra = {}) {
+  const s = typeof state !== 'undefined' ? state : null;
+  const counts = collectDrCarMetricsCounts(s);
+  const emsVitals = Array.isArray(s?.ems?.vitals) ? s.ems.vitals.length : 0;
+  const doctorVitals = Array.isArray(s?.cardr?.vitals) ? s.cardr.vitals.length : 0;
+  const emsProcedures = countMetricsActiveFlags(s?.ems?.procedures);
+  const doctorProcedures = countMetricsActiveFlags(s?.cardr?.procedures);
+  const sections = {
+    request: !!(s?.request?.type || s?.request?.detail || s?.request?.content),
+    patient: !!(s?.request?.age || s?.patient?.history || s?.patient?.medication || s?.patient?.allergy),
+    ems_vitals: emsVitals > 0,
+    doctor_vitals: doctorVitals > 0,
+    findings: !!(Object.values(s?.ems?.chips || {}).some(Boolean) || Object.values(s?.cardr?.chips || {}).some(Boolean) || Object.values(s?.cardr?.exams || {}).some(Boolean)),
+    procedures: counts.proc_count > 0,
+    assessment: !!((s?.problems || []).length || s?.consideration || s?.triage || s?.severity),
+    destination: !!(s?.destination?.custom || s?.destination?.hospital)
+  };
+  const completedSections = Object.keys(sections).filter(key => sections[key]);
+  return Object.assign({
+    ems_vital_rows: emsVitals,
+    doctor_vital_rows: doctorVitals,
+    ems_procedure_count: emsProcedures,
+    doctor_procedure_count: doctorProcedures,
+    completed_section_count: completedSections.length,
+    total_section_count: Object.keys(sections).length,
+    completion_rate: Math.round((completedSections.length / Object.keys(sections).length) * 100) / 100,
+    completed_sections: completedSections
+  }, extra);
+}
+
 function getDrCarMetricsMode() {
   return 'normal';
 }
 
-function initMetricsSession() {
-  if (!localStorage.getItem('metrics_start_ts')) {
-    localStorage.setItem('metrics_start_ts', new Date().toISOString());
-    localStorage.setItem('metrics_session_id', Math.random().toString(36).substring(2, 10));
+function getMetricsTiming() {
+  let startTs = '';
+  let activeMs = 0;
+  try {
+    startTs = localStorage.getItem(METRICS_CASE_START_KEY) || localStorage.getItem('metrics_start_ts') || '';
+    activeMs = Number(localStorage.getItem(METRICS_ACTIVE_KEY) || 0);
+  } catch (e) {}
+  return {
+    elapsed_sec: startTs ? Math.max(0, Math.floor((Date.now() - new Date(startTs).getTime()) / 1000)) : null,
+    active_sec: Math.max(0, Math.floor(activeMs / 1000))
+  };
+}
+
+function readMetricsQueue() {
+  try {
+    const queue = JSON.parse(localStorage.getItem(METRICS_QUEUE_KEY) || '[]');
+    return Array.isArray(queue) ? queue : [];
+  } catch (e) { return []; }
+}
+
+function writeMetricsQueue(queue) {
+  try { localStorage.setItem(METRICS_QUEUE_KEY, JSON.stringify(queue.slice(-200))); } catch (e) {}
+}
+
+async function flushMetricsQueue() {
+  if (metricsRuntime.sending || !METRICS_ENDPOINT) return;
+  metricsRuntime.sending = true;
+  try {
+    let queue = readMetricsQueue();
+    while (queue.length) {
+      const item = queue[0];
+      const outgoing = Object.assign({}, item.payload, { queued: item.attempts > 0 ? 1 : 0 });
+      try {
+        await fetch(METRICS_ENDPOINT, {
+          method: 'POST', mode: 'no-cors', keepalive: true,
+          headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(outgoing)
+        });
+        // 送信中に別イベントが追加されるため、古い配列で上書きせず最新キューから送信済みIDだけを除く。
+        queue = readMetricsQueue().filter(entry => entry?.payload?.event_id !== item.payload.event_id);
+        writeMetricsQueue(queue);
+      } catch (e) {
+        queue = readMetricsQueue();
+        const failedItem = queue.find(entry => entry?.payload?.event_id === item.payload.event_id);
+        if (failedItem) failedItem.attempts = (failedItem.attempts || 0) + 1;
+        writeMetricsQueue(queue);
+        break;
+      }
+    }
+  } finally {
+    metricsRuntime.sending = false;
   }
 }
-document.addEventListener('input', initMetricsSession);
-document.addEventListener('change', initMetricsSession);
-document.addEventListener('click', (e) => {
-  const t = e.target.tagName;
-  if (t === 'BUTTON' || t === 'INPUT' || t === 'SELECT' || e.target.closest('.chip')) {
-    initMetricsSession();
-  }
-});
 
-async function sendMetrics(action) {
+function trackMetricsEvent(eventName, properties = {}) {
   if (!METRICS_ENDPOINT) return;
-  const startTs = localStorage.getItem('metrics_start_ts');
-  const duration_sec = startTs ? Math.floor((Date.now() - new Date(startTs).getTime()) / 1000) : null;
-  const session_id = localStorage.getItem('metrics_session_id') || '';
-  const app_version = document.title;
-  const { vital_count, proc_count } = collectDrCarMetricsCounts(typeof state !== 'undefined' ? state : null);
+  let caseId = '';
+  try { caseId = localStorage.getItem(METRICS_CASE_KEY) || ''; } catch (e) {}
+  if (!caseId && eventName !== 'case_start') caseId = initMetricsSession();
+  if (!caseId) {
+    try { caseId = localStorage.getItem(METRICS_CASE_KEY) || ''; } catch (e) {}
+  }
+  const timing = getMetricsTiming();
+  const counts = collectDrCarMetricsCounts(typeof state !== 'undefined' ? state : null);
+  const legacyAction = eventName === 'mail_open' ? 'mail' :
+    (eventName === 'report_copy' || eventName === 'referral_copy' ? 'copy' : '');
   const payload = {
+    schema_version: METRICS_SCHEMA_VERSION,
+    event_id: createMetricsId(),
+    installation_id: metricsRuntime.installationId,
+    app_session_id: metricsRuntime.appSessionId,
+    case_id: caseId,
     client_ts: new Date().toISOString(),
     app: APP_NAME,
-    action: action,
-    duration_sec: duration_sec,
-    vital_count: vital_count,
-    proc_count: proc_count,
+    app_version: document.title,
+    event_name: eventName,
+    action: legacyAction,
     mode: getDrCarMetricsMode(),
-    session_id: session_id,
-    app_version: app_version,
+    session_id: caseId,
+    duration_sec: timing.elapsed_sec,
+    elapsed_sec: timing.elapsed_sec,
+    active_sec: timing.active_sec,
+    vital_count: counts.vital_count,
+    proc_count: counts.proc_count,
+    properties: collectDrCarMetricsProperties(properties),
     queued: 0
   };
-  const queueKey = 'metrics_queue_v1';
-  let queue = [];
-  try { queue = JSON.parse(localStorage.getItem(queueKey) || '[]'); } catch (e) {}
-  queue.push(payload);
-  if (queue.length > 100) queue = queue.slice(queue.length - 100);
-  localStorage.setItem(queueKey, JSON.stringify(queue));
-  const doFetch = async (data) => {
-    return fetch(METRICS_ENDPOINT, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(data)
-    });
-  };
-  (async () => {
-    let currentQueue = JSON.parse(localStorage.getItem(queueKey) || '[]');
-    let successIndices = [];
-    for (let i = 0; i < currentQueue.length; i++) {
-      let qData = currentQueue[i];
-      qData.queued = (i < currentQueue.length - 1) ? 1 : 0;
-      try {
-        await doFetch(qData);
-        successIndices.push(i);
-      } catch (e) { break; }
-    }
-    if (successIndices.length > 0) {
-      let finalQueue = JSON.parse(localStorage.getItem(queueKey) || '[]');
-      finalQueue.splice(0, successIndices.length);
-      localStorage.setItem(queueKey, JSON.stringify(finalQueue));
-    }
-  })();
+  const queue = readMetricsQueue();
+  queue.push({ payload, attempts: 0 });
+  writeMetricsQueue(queue);
+  flushMetricsQueue();
 }
+
+function sendMetrics(action) {
+  const eventName = action === 'mail' ? 'mail_open' : 'report_copy';
+  trackMetricsEvent(eventName);
+  if (eventName === 'report_copy') trackMetricsCaseCompletion('activity_report');
+}
+
+function trackMetricsCaseCompletion(source) {
+  let caseId = '';
+  let completedCase = '';
+  try {
+    caseId = localStorage.getItem(METRICS_CASE_KEY) || '';
+    completedCase = localStorage.getItem(METRICS_COMPLETED_KEY) || '';
+  } catch (e) {}
+  if (!caseId || completedCase === caseId) return;
+  try { localStorage.setItem(METRICS_COMPLETED_KEY, caseId); } catch (e) {}
+  trackMetricsEvent('case_complete', { completion_source: source || 'activity_report' });
+}
+
+function resetMetricsCase() {
+  trackMetricsEvent('case_reset');
+  try {
+    [METRICS_CASE_KEY, METRICS_CASE_START_KEY, METRICS_ACTIVE_KEY, METRICS_LAST_ACTIVITY_KEY,
+      METRICS_FIRST_INPUT_KEY, METRICS_COMPLETED_KEY,
+      'metrics_start_ts', 'metrics_session_id'].forEach(key => localStorage.removeItem(key));
+  } catch (e) {}
+  metricsRuntime.firstInputSent = false;
+  metricsRuntime.openedTabs.clear();
+}
+
+window.addEventListener('online', flushMetricsQueue);
+setTimeout(flushMetricsQueue, 1000);
 // ===================================
 
 const $ = s => document.querySelector(s);
@@ -1634,14 +1822,25 @@ window.switchTab = (tab) => {
   
   content.classList.add('active');
   navItem.classList.add('active');
-  
+
+  try {
+    const caseStarted = !!localStorage.getItem(METRICS_CASE_KEY);
+    if (caseStarted && !metricsRuntime.openedTabs.has(tab)) {
+      metricsRuntime.openedTabs.add(tab);
+      trackMetricsEvent('tab_open', { tab });
+    }
+  } catch (e) {}
+
   // タブバーのアクティブなタブが画面内に表示されるようにスクロール
   setTimeout(() => {
     navItem.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   }, 50);
-  
+
   if (tab === 'output') render();
-  if (tab === 'referral') renderReferralLetter();
+  if (tab === 'referral') {
+    trackMetricsEvent('referral_open');
+    renderReferralLetter();
+  }
   
   // ヘッダーのタイトルを更新
   const tabNames = {
@@ -6227,10 +6426,9 @@ window.reloadApp = () => {
 
 window.resetData = () => { // グローバル化
   if(!confirm('すべての入力データをリセットしますか？\n\nこの操作は取り消せません。')) return;
-  
+
+  resetMetricsCase();
   localStorage.removeItem('doctorCarV1');
-  localStorage.removeItem('metrics_start_ts');
-  localStorage.removeItem('metrics_session_id');
   
   state = {
     request: {type:'', detail:'', age:'', sex:'', ems_team:'', content:''},
@@ -7378,7 +7576,7 @@ function init() {
   if (copyRefEl) {
     copyRefEl.onclick = () => {
       const t = $('#referralText')?.textContent || '';
-      sendMetrics('copy');
+      trackMetricsEvent('referral_copy');
       navigator.clipboard.writeText(t).then(() => {
         copyRefEl.textContent = '✓ コピー完了';
         setTimeout(() => { copyRefEl.textContent = '📋 コピー'; }, 2000);
