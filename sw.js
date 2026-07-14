@@ -1,5 +1,6 @@
 // Stale-while-revalidate service worker
-const CACHE_NAME = 'doctorcar-pwa-v3.7.1';
+// 2026-07-14 v3.9: 要請キャンセル終了と搬送方法別の必要書類判定を反映
+const CACHE_NAME = 'doctorcar-pwa-v3.9.0';
 const ASSETS = [
   './',
   './index.html',
