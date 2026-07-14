@@ -25,6 +25,7 @@
 <!-- 2026/07/10 | v3.7.1 | メトリクス APP_NAME を drcar に修正（GAS バリデーション合わせ） -->
 <!-- 2026/07/12 | v3.8 | 利用メトリクスv2: 匿名ID・イベント種別・実操作時間・完成率・オフラインキュー・重複排除（ヘリ v5.1.8 と同仕様） -->
 <!-- 2026/07/14 | v3.9 | 要請キャンセル終了、搬送方法別の必要書類判定・メトリクスを追加 -->
+<!-- 2026/07/14 | v3.9.1 | 要請キャンセル操作を要請情報ヘッダーへ移動 -->
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -34,7 +35,7 @@
 <meta name="theme-color" content="#2563eb">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
-<title>ドクターカー活動記録 v3.9 (2026/07/14) - タブ版</title>
+<title>ドクターカー活動記録 v3.9.1 (2026/07/14) - タブ版</title>
 <style>
 :root{
   --ink:#111827;--muted:#6b7280;--bg:#f2f2f7;--card:#fff;
@@ -632,7 +633,7 @@ main {
 <body>
 <header>
   <h1>🚗 ドクターカー</h1>
-  <div class="version">v3.9 (2026/07/14)</div>
+  <div class="version">v3.9.1 (2026/07/14)</div>
 </header>
 
 <main>
@@ -642,6 +643,7 @@ main {
       <span>📞 要請情報</span>
       <div style="display:flex;gap:6px;align-items:center">
         <button class="btn ghost" onclick="reloadApp()" style="padding:6px 12px;font-size:12px;color:#2563eb;width:auto;flex-shrink:0">🔄 更新</button>
+        <button type="button" class="btn ghost" onclick="cancelRequestAndReset()" title="要請キャンセルとして終了" style="padding:6px 10px;font-size:12px;color:#dc2626;border:1px solid rgba(220,38,38,.35);width:auto;flex-shrink:0">要請キャンセル</button>
         <button class="btn ghost" onclick="resetData()" style="padding:6px 12px;font-size:12px;color:#dc2626;width:auto;flex-shrink:0">🗑 リセット</button>
       </div>
     </div>
@@ -661,8 +663,6 @@ main {
       <label>要請内容</label>
       <div class="chips" id="request_content_chips"></div>
       <textarea id="request_detail" placeholder="要請の詳細内容を記載"></textarea>
-      <button type="button" class="btn ghost" onclick="cancelRequestAndReset()" style="margin-top:12px;color:#dc2626;border:1px solid rgba(220,38,38,.35)">要請キャンセルとして終了</button>
-      
       <h3>患者情報</h3>
       <label>既往歴</label>
       <div class="chips" id="patient_history_chips"></div>
