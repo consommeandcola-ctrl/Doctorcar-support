@@ -31,6 +31,12 @@ check(html.includes("sendMetrics('mail')"), 'referral mail send is tracked');
 check(html.includes("trackMetricsEvent('referral_open')"), 'referral tab open is tracked');
 check(html.includes("trackMetricsEvent('case_reset')"), 'case reset is recorded');
 check(html.includes("trackMetricsEvent('case_complete'"), 'case completion is recorded');
+check(html.includes("trackMetricsEvent('case_cancel'"), 'request cancellation is recorded separately');
+check(html.includes("transport_scheme: transportScheme || null"), 'transport scheme is included in properties');
+check(html.includes("referral_required: transportScheme ? transportScheme !== 'Uターン' : null"), 'U-turn referral requirement is false');
+check(html.includes('function ensureTransportSchemeSelected()'), 'report output requires a selected transport scheme');
+check(html.includes('function ensureReferralRequired()'), 'referral output checks whether a referral is required');
+check(html.includes('onclick="cancelRequestAndReset()"'), 'request card has a dedicated cancellation action');
 check(html.includes('METRICS_CASE_EXPIRY_MS'), 'stale cases expire automatically');
 check(html.includes('METRICS_FIRST_INPUT_KEY'), 'first input is deduplicated across reloads');
 check(html.includes("metricsRuntime.openedTabs.has(tab)"), 'tab events are deduplicated per page session');
@@ -39,7 +45,7 @@ check(html.includes('resetMetricsCase();'), 'resetData clears the metrics case')
 check(html.includes("state.cardr?.vitals"), 'doctor vitals come from cardr state');
 check(!html.includes("getDrCarMetricsMode() {\n  return 'mci'"), 'mode is always normal for drcar');
 
-const resetStart = html.indexOf('function resetMetricsCase()');
+const resetStart = html.indexOf('function resetMetricsCase(');
 const resetEnd = html.indexOf("window.addEventListener('online'", resetStart);
 const resetCode = html.slice(resetStart, resetEnd);
 check(resetCode.includes('METRICS_CASE_KEY'), 'reset clears the v2 case id');

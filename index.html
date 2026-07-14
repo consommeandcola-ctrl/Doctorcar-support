@@ -24,6 +24,7 @@
 <!-- 2026/07/10 | v3.7 | NPPV等ダイアログ完了ボタン id=dialDone 修正 -->
 <!-- 2026/07/10 | v3.7.1 | メトリクス APP_NAME を drcar に修正（GAS バリデーション合わせ） -->
 <!-- 2026/07/12 | v3.8 | 利用メトリクスv2: 匿名ID・イベント種別・実操作時間・完成率・オフラインキュー・重複排除（ヘリ v5.1.8 と同仕様） -->
+<!-- 2026/07/14 | v3.9 | 要請キャンセル終了、搬送方法別の必要書類判定・メトリクスを追加 -->
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -33,7 +34,7 @@
 <meta name="theme-color" content="#2563eb">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
-<title>ドクターカー活動記録 v3.8 (2026/07/12) - タブ版</title>
+<title>ドクターカー活動記録 v3.9 (2026/07/14) - タブ版</title>
 <style>
 :root{
   --ink:#111827;--muted:#6b7280;--bg:#f2f2f7;--card:#fff;
@@ -631,7 +632,7 @@ main {
 <body>
 <header>
   <h1>🚗 ドクターカー</h1>
-  <div class="version">v3.7 (2026/07/10)</div>
+  <div class="version">v3.9 (2026/07/14)</div>
 </header>
 
 <main>
@@ -660,6 +661,7 @@ main {
       <label>要請内容</label>
       <div class="chips" id="request_content_chips"></div>
       <textarea id="request_detail" placeholder="要請の詳細内容を記載"></textarea>
+      <button type="button" class="btn ghost" onclick="cancelRequestAndReset()" style="margin-top:12px;color:#dc2626;border:1px solid rgba(220,38,38,.35)">要請キャンセルとして終了</button>
       
       <h3>患者情報</h3>
       <label>既往歴</label>
@@ -1350,7 +1352,7 @@ main {
       
       <h3>搬送方法</h3>
       <select id="transport_method" onchange="toggleTransportTimes()">
-        <option value="">（未選択）</option>
+        <option value="">選択してください</option>
         <option value="Uターン">Uターン</option>
         <option value="Jターン">Jターン</option>
         <option value="Iターン">Iターン</option>
@@ -1657,6 +1659,7 @@ function collectDrCarMetricsProperties(extra = {}) {
     destination: !!(s?.destination?.custom || s?.destination?.hospital)
   };
   const completedSections = Object.keys(sections).filter(key => sections[key]);
+  const transportScheme = String(s?.car?.transport_method || '').trim();
   return Object.assign({
     ems_vital_rows: emsVitals,
     doctor_vital_rows: doctorVitals,
@@ -1665,7 +1668,12 @@ function collectDrCarMetricsProperties(extra = {}) {
     completed_section_count: completedSections.length,
     total_section_count: Object.keys(sections).length,
     completion_rate: Math.round((completedSections.length / Object.keys(sections).length) * 100) / 100,
-    completed_sections: completedSections
+    completed_sections: completedSections,
+    transport_scheme: transportScheme || null,
+    scheme_selected: !!transportScheme,
+    cancelled: false,
+    report_required: true,
+    referral_required: transportScheme ? transportScheme !== 'Uターン' : null
   }, extra);
 }
 
@@ -1783,8 +1791,19 @@ function trackMetricsCaseCompletion(source) {
   trackMetricsEvent('case_complete', { completion_source: source || 'activity_report' });
 }
 
-function resetMetricsCase() {
-  trackMetricsEvent('case_reset');
+function resetMetricsCase(options = {}) {
+  if (options.cancelled) {
+    trackMetricsEvent('case_cancel', {
+      close_reason: 'request_cancelled',
+      transport_scheme: null,
+      scheme_selected: false,
+      cancelled: true,
+      report_required: false,
+      referral_required: false
+    });
+  } else {
+    trackMetricsEvent('case_reset');
+  }
   try {
     [METRICS_CASE_KEY, METRICS_CASE_START_KEY, METRICS_ACTIVE_KEY, METRICS_LAST_ACTIVITY_KEY,
       METRICS_FIRST_INPUT_KEY, METRICS_COMPLETED_KEY,
@@ -1804,6 +1823,7 @@ const $$ = s => document.querySelectorAll(s);
 // グローバルスコープに関数を定義して、インラインイベントハンドラからアクセスできるようにする
 window.switchTab = (tab) => {
   if (!tab) return;
+  if (tab === 'referral' && !ensureReferralRequired()) return;
   
   $$('.tab-content').forEach(el => el.classList.remove('active'));
   $$('.tab-bar-item').forEach(el => el.classList.remove('active'));
@@ -5885,16 +5905,18 @@ ${consideration}`;
 }
 
 window.renderReferralLetter = function() {
+  if (!ensureReferralRequired()) return false;
   updateState();
   syncAssessmentState({commitDraftProblem: true});
   localStorage.setItem('doctorCarV1', JSON.stringify(state));
   render();
   const el = $('#referralText');
   if (el) el.textContent = generateDrCarReferralText(state);
+  return true;
 };
 
 window.sendReferralEmail = function() {
-  renderReferralLetter();
+  if (!renderReferralLetter()) return;
   const el = $('#referralText');
   const text = el ? el.textContent : '';
   if (!text || !String(text).trim()) {
@@ -6500,6 +6522,33 @@ window.resetData = () => { // グローバル化
   
   location.reload();
 };
+
+window.cancelRequestAndReset = () => {
+  if(!confirm('要請キャンセルとして終了します。\n活動記録・診療情報提供書は作成せず、入力データを消去します。よろしいですか？')) return;
+  resetMetricsCase({ cancelled: true });
+  localStorage.removeItem('doctorCarV1');
+  location.reload();
+};
+
+function getSelectedTransportScheme() {
+  return String($('#transport_method')?.value || state?.car?.transport_method || '').trim();
+}
+
+function ensureTransportSchemeSelected() {
+  if (getSelectedTransportScheme()) return true;
+  alert('活動記録・診療情報提供書を作成する前に、搬送方法（I・J・Uターン）を選択してください。');
+  switchTab('consider');
+  setTimeout(() => $('#transport_method')?.focus(), 0);
+  return false;
+}
+
+function ensureReferralRequired() {
+  if (!ensureTransportSchemeSelected()) return false;
+  if (getSelectedTransportScheme() !== 'Uターン') return true;
+  alert('Uターン症例では診療情報提供書は作成しません。活動記録のみ出力してください。');
+  switchTab('consider');
+  return false;
+}
 
 function restoreUI() {
   // HTML要素への値の復元
@@ -7562,6 +7611,8 @@ function init() {
   const copyOutEl = $('#copyOut');
   if (copyOutEl) {
     copyOutEl.onclick = () => {
+      if (!ensureTransportSchemeSelected()) return;
+      updateState();
       sendMetrics('copy');
       navigator.clipboard.writeText($('#outText')?.textContent || '').then(() => {
         const btn = $('#copyOut');
@@ -7575,6 +7626,7 @@ function init() {
   const copyRefEl = $('#copyReferral');
   if (copyRefEl) {
     copyRefEl.onclick = () => {
+      if (!ensureReferralRequired()) return;
       const t = $('#referralText')?.textContent || '';
       trackMetricsEvent('referral_copy');
       navigator.clipboard.writeText(t).then(() => {
