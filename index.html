@@ -26,6 +26,7 @@
 <!-- 2026/07/12 | v3.8 | 利用メトリクスv2: 匿名ID・イベント種別・実操作時間・完成率・オフラインキュー・重複排除（ヘリ v5.1.8 と同仕様） -->
 <!-- 2026/07/14 | v3.9 | 要請キャンセル終了、搬送方法別の必要書類判定・メトリクスを追加 -->
 <!-- 2026/07/14 | v3.9.1 | 要請キャンセル操作を要請情報ヘッダーへ移動 -->
+<!-- 2026/07/15 | v3.9.2 | 要請方法「現着後要請」の表示誤字を修正 -->
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -35,7 +36,7 @@
 <meta name="theme-color" content="#2563eb">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
-<title>ドクターカー活動記録 v3.9.1 (2026/07/14) - タブ版</title>
+<title>ドクターカー活動記録 v3.9.2 (2026/07/15) - タブ版</title>
 <style>
 :root{
   --ink:#111827;--muted:#6b7280;--bg:#f2f2f7;--card:#fff;
@@ -633,7 +634,7 @@ main {
 <body>
 <header>
   <h1>🚗 ドクターカー</h1>
-  <div class="version">v3.9.1 (2026/07/14)</div>
+  <div class="version">v3.9.2 (2026/07/15)</div>
 </header>
 
 <main>
@@ -652,7 +653,7 @@ main {
       <select id="request_type">
         <option value="">選択してください</option>
         <option value="キーワード要請">キーワード要請</option>
-        <option value="現着後要請">現着後要選項</option>
+        <option value="現着後要請">現着後要請</option>
       </select>
       <label>年代</label>
       <div class="chips" id="patient_age_chips"></div>
