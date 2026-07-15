@@ -36,6 +36,8 @@ check(html.includes("transport_scheme: transportScheme || null"), 'transport sch
 check(html.includes("referral_required: transportScheme ? transportScheme !== 'Uターン' : null"), 'U-turn referral requirement is false');
 check(html.includes('function ensureTransportSchemeSelected()'), 'report output requires a selected transport scheme');
 check(html.includes('function ensureReferralRequired()'), 'referral output checks whether a referral is required');
+check(html.includes('<option value="現着後要請">現着後要請</option>'), 'on-scene request label matches its stored value');
+check(!html.includes('現着後要選項'), 'incorrect on-scene request label is absent');
 check(html.includes('onclick="cancelRequestAndReset()"'), 'request card has a dedicated cancellation action');
 check(html.includes('METRICS_CASE_EXPIRY_MS'), 'stale cases expire automatically');
 check(html.includes('METRICS_FIRST_INPUT_KEY'), 'first input is deduplicated across reloads');

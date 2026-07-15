@@ -1,6 +1,6 @@
 // Stale-while-revalidate service worker
-// 2026-07-14 v3.9.1: 要請キャンセル操作を要請情報ヘッダーへ移動
-const CACHE_NAME = 'doctorcar-pwa-v3.9.1';
+// 2026-07-15 v3.9.2: 要請方法「現着後要請」の表示誤字を修正
+const CACHE_NAME = 'doctorcar-pwa-v3.9.2';
 const ASSETS = [
   './',
   './index.html',
