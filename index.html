@@ -26,6 +26,7 @@
 <!-- 2026/07/12 | v3.8 | 利用メトリクスv2: 匿名ID・イベント種別・実操作時間・完成率・オフラインキュー・重複排除（ヘリ v5.1.8 と同仕様） -->
 <!-- 2026/07/14 | v3.9 | 要請キャンセル終了、搬送方法別の必要書類判定・メトリクスを追加 -->
 <!-- 2026/07/14 | v3.9.1 | 要請キャンセル操作を要請情報ヘッダーへ移動 -->
+<!-- 2026/07/15 | v3.9.2 | 施設間搬送・ドクターデリバリーを搬送方法の選択対象外に変更 -->
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -35,7 +36,7 @@
 <meta name="theme-color" content="#2563eb">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
-<title>ドクターカー活動記録 v3.9.1 (2026/07/14) - タブ版</title>
+<title>ドクターカー活動記録 v3.9.2 (2026/07/15) - タブ版</title>
 <style>
 :root{
   --ink:#111827;--muted:#6b7280;--bg:#f2f2f7;--card:#fff;
@@ -633,7 +634,7 @@ main {
 <body>
 <header>
   <h1>🚗 ドクターカー</h1>
-  <div class="version">v3.9.1 (2026/07/14)</div>
+  <div class="version">v3.9.2 (2026/07/15)</div>
 </header>
 
 <main>
@@ -649,10 +650,12 @@ main {
     </div>
     <div class="card-body">
       <label>要請方法</label>
-      <select id="request_type">
+      <select id="request_type" onchange="syncRequestModeUI(); updateState()">
         <option value="">選択してください</option>
         <option value="キーワード要請">キーワード要請</option>
         <option value="現着後要請">現着後要選項</option>
+        <option value="施設間搬送">施設間搬送</option>
+        <option value="ドクターデリバリー">ドクターデリバリー</option>
       </select>
       <label>年代</label>
       <div class="chips" id="patient_age_chips"></div>
@@ -1350,6 +1353,7 @@ main {
       <label style="margin-top:12px">選定理由</label>
       <textarea id="selection_reason" placeholder="搬送先選定の理由"></textarea>
       
+      <div id="transport_scheme_block">
       <h3>搬送方法</h3>
       <select id="transport_method" onchange="toggleTransportTimes()">
         <option value="">選択してください</option>
@@ -1375,6 +1379,7 @@ main {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   </div>
@@ -1659,7 +1664,9 @@ function collectDrCarMetricsProperties(extra = {}) {
     destination: !!(s?.destination?.custom || s?.destination?.hospital)
   };
   const completedSections = Object.keys(sections).filter(key => sections[key]);
-  const transportScheme = String(s?.car?.transport_method || '').trim();
+  const requestType = String(s?.request?.type || '').trim();
+  const schemeRequired = !isTransportSchemeExemptRequestType(requestType);
+  const transportScheme = schemeRequired ? String(s?.car?.transport_method || '').trim() : '';
   return Object.assign({
     ems_vital_rows: emsVitals,
     doctor_vital_rows: doctorVitals,
@@ -1671,9 +1678,10 @@ function collectDrCarMetricsProperties(extra = {}) {
     completed_sections: completedSections,
     transport_scheme: transportScheme || null,
     scheme_selected: !!transportScheme,
+    scheme_required: schemeRequired,
     cancelled: false,
     report_required: true,
-    referral_required: transportScheme ? transportScheme !== 'Uターン' : null
+    referral_required: schemeRequired ? (transportScheme ? transportScheme !== 'Uターン' : null) : false
   }, extra);
 }
 
@@ -6530,11 +6538,36 @@ window.cancelRequestAndReset = () => {
   location.reload();
 };
 
+function isTransportSchemeExemptRequestType(type) {
+  return type === '施設間搬送' || type === 'ドクターデリバリー';
+}
+
+function getSelectedRequestType() {
+  return String($('#request_type')?.value || state?.request?.type || '').trim();
+}
+
+function syncRequestModeUI() {
+  const exempt = isTransportSchemeExemptRequestType(getSelectedRequestType());
+  const block = $('#transport_scheme_block');
+  if (block) block.style.display = exempt ? 'none' : '';
+  const method = $('#transport_method');
+  const times = $('#transport_times');
+  if (exempt) {
+    if (method) method.value = '';
+    if (state?.car) state.car.transport_method = null;
+    if (times) times.style.display = 'none';
+  } else if (times) {
+    times.style.display = method?.value === 'Iターン' ? 'none' : 'block';
+  }
+}
+
 function getSelectedTransportScheme() {
+  if (isTransportSchemeExemptRequestType(getSelectedRequestType())) return '';
   return String($('#transport_method')?.value || state?.car?.transport_method || '').trim();
 }
 
 function ensureTransportSchemeSelected() {
+  if (isTransportSchemeExemptRequestType(getSelectedRequestType())) return true;
   if (getSelectedTransportScheme()) return true;
   alert('活動記録・診療情報提供書を作成する前に、搬送方法（I・J・Uターン）を選択してください。');
   switchTab('consider');
@@ -6543,6 +6576,11 @@ function ensureTransportSchemeSelected() {
 }
 
 function ensureReferralRequired() {
+  if (isTransportSchemeExemptRequestType(getSelectedRequestType())) {
+    alert('施設間搬送・ドクターデリバリーでは診療情報提供書は作成しません。活動記録のみ出力してください。');
+    switchTab('patient');
+    return false;
+  }
   if (!ensureTransportSchemeSelected()) return false;
   if (getSelectedTransportScheme() !== 'Uターン') return true;
   alert('Uターン症例では診療情報提供書は作成しません。活動記録のみ出力してください。');
@@ -6591,8 +6629,10 @@ function restoreUI() {
   $('#cardr_contact').value = state.car?.cardr_contact || ''; 
   $('#activity_place').value = state.car?.activity_place || '';
   if($('#transport_method')) {
+    if (isTransportSchemeExemptRequestType(state.request.type)) state.car.transport_method = null;
     $('#transport_method').value = state.car?.transport_method != null && state.car.transport_method !== '' ? state.car.transport_method : '';
-    toggleTransportTimes();
+    syncRequestModeUI();
+    if (!isTransportSchemeExemptRequestType(state.request.type)) toggleTransportTimes();
   }
   $('#scene_departure').value = state.car?.scene_departure || '';
   $('#hospital_arrival').value = state.car?.hospital_arrival || '';

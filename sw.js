@@ -1,6 +1,6 @@
 // Stale-while-revalidate service worker
-// 2026-07-14 v3.9.1: 要請キャンセル操作を要請情報ヘッダーへ移動
-const CACHE_NAME = 'doctorcar-pwa-v3.9.1';
+// 2026-07-15 v3.9.2: 施設間搬送・ドクターデリバリーを搬送方法の選択対象外に変更
+const CACHE_NAME = 'doctorcar-pwa-v3.9.2';
 const ASSETS = [
   './',
   './index.html',
