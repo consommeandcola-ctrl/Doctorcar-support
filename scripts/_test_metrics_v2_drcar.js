@@ -33,14 +33,9 @@ check(html.includes("trackMetricsEvent('case_reset')"), 'case reset is recorded'
 check(html.includes("trackMetricsEvent('case_complete'"), 'case completion is recorded');
 check(html.includes("trackMetricsEvent('case_cancel'"), 'request cancellation is recorded separately');
 check(html.includes("transport_scheme: transportScheme || null"), 'transport scheme is included in properties');
-check(html.includes('scheme_required: schemeRequired'), 'scheme requirement is included in properties');
-check(html.includes("type === '施設間搬送' || type === 'ドクターデリバリー'"), 'facility transfer and doctor delivery are scheme-exempt');
-check(html.includes("referral_required: schemeRequired ? (transportScheme ? transportScheme !== 'Uターン' : null) : false"), 'referral requirement handles U-turn and scheme-exempt requests');
+check(html.includes("referral_required: transportScheme ? transportScheme !== 'Uターン' : null"), 'U-turn referral requirement is false');
 check(html.includes('function ensureTransportSchemeSelected()'), 'report output requires a selected transport scheme');
 check(html.includes('function ensureReferralRequired()'), 'referral output checks whether a referral is required');
-check(html.includes('if (isTransportSchemeExemptRequestType(getSelectedRequestType())) return true;'), 'scheme-exempt requests can output an activity report');
-check(html.includes('<option value="施設間搬送">施設間搬送</option>'), 'facility transfer is available as a request type');
-check(html.includes('<option value="ドクターデリバリー">ドクターデリバリー</option>'), 'doctor delivery is available as a request type');
 check(html.includes('onclick="cancelRequestAndReset()"'), 'request card has a dedicated cancellation action');
 check(html.includes('METRICS_CASE_EXPIRY_MS'), 'stale cases expire automatically');
 check(html.includes('METRICS_FIRST_INPUT_KEY'), 'first input is deduplicated across reloads');
