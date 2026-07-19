@@ -28,6 +28,7 @@
 <!-- 2026/07/14 | v3.9.1 | 要請キャンセル操作を要請情報ヘッダーへ移動 -->
 <!-- 2026/07/19 | v3.9.3 | メトリクス信頼性: case_start自己修復・完了属性同梱・同一event_idの遅延再送 -->
 <!-- 2026/07/19 | v3.9.4 | 入力済み臨床時刻と搬送スキーム別活動終了時刻を匿名メトリクスへ追加 -->
+<!-- 2026/07/19 | v3.9.5 | Iターンは活動終了時刻を自動推定せず欠損理由を記録 -->
 <!-- 2026/07/15 | v3.9.2 | 要請方法「現着後要請」の表示誤字を修正 -->
 <html lang="ja">
 <head>
@@ -38,7 +39,7 @@
 <meta name="theme-color" content="#2563eb">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
-<title>ドクターカー活動記録 v3.9.4 (2026/07/19) - タブ版</title>
+<title>ドクターカー活動記録 v3.9.5 (2026/07/19) - タブ版</title>
 <style>
 :root{
   --ink:#111827;--muted:#6b7280;--bg:#f2f2f7;--card:#fff;
@@ -636,7 +637,7 @@ main {
 <body>
 <header>
   <h1>🚗 ドクターカー</h1>
-  <div class="version">v3.9.4 (2026/07/19)</div>
+  <div class="version">v3.9.5 (2026/07/19)</div>
 </header>
 
 <main>
@@ -1674,9 +1675,8 @@ function collectDrCarMetricsCounts(state) {
       activityEndSource = hospitalArrivalTime ? 'hospital_arrival' : null;
       activityEndMissingReason = hospitalArrivalTime ? null : 'hospital_arrival_missing';
     } else if (scheme === 'Iターン') {
-      activityEndTime = emsDepartureTime;
-      activityEndSource = emsDepartureTime ? 'ems_departure' : null;
-      activityEndMissingReason = emsDepartureTime ? null : 'ems_departure_missing';
+      // 先行救急隊の現発はRPへの出発も含み得るため、活動終了には使用しない。
+      activityEndMissingReason = 'i_turn_not_observable';
     } else {
       activityEndMissingReason = 'transport_scheme_missing';
     }
