@@ -1,4 +1,4 @@
-/** DrCar 利用メトリクス v2 の静的・構造テスト
+/** DrCar 利用メトリクスの静的・構造テスト
  * 実行: node scripts/_test_metrics_v2_drcar.js
  */
 const fs = require('fs');
@@ -13,7 +13,7 @@ function check(condition, message) {
   else { console.error(`FAIL: ${message}`); failed++; }
 }
 
-check(html.includes("const METRICS_SCHEMA_VERSION = 2"), 'schema version is v2');
+check(html.includes("const METRICS_SCHEMA_VERSION = 3"), 'schema version is v3');
 check(html.includes("const APP_NAME = 'drcar'"), 'app name is drcar');
 check(html.includes("event_id: createMetricsId()"), 'each event receives an event_id');
 check(html.includes("installation_id: metricsRuntime.installationId"), 'installation_id is included');
@@ -21,10 +21,13 @@ check(html.includes("app_session_id: metricsRuntime.appSessionId"), 'app_session
 check(html.includes("case_id: caseId"), 'case_id is included');
 check(html.includes("active_sec: timing.active_sec"), 'active time is included');
 check(html.includes("properties: collectDrCarMetricsProperties(properties)"), 'workflow properties are included');
-check(html.includes("queue.push({ payload, attempts: 0 })"), 'events enter the durable queue');
+check(html.includes("queue.push({ payload, attempts: 0, next_attempt_ts: 0 })"), 'events enter the durable retry queue');
 check(html.includes("item.attempts > 0 ? 1 : 0"), 'retried events are marked queued');
-check(html.includes('readMetricsQueue().filter'), 'successful send reconciles against the latest queue');
+check(html.includes('function scheduleMetricsFlush('), 'queued events schedule delayed retries');
 check(html.includes('event_id !== item.payload.event_id'), 'only the acknowledged event is removed');
+check(html.includes('METRICS_CASE_START_SENT_KEY'), 'case start delivery self-heals across reloads');
+check(html.includes('clinical_time_capture_version: 1'), 'clinical milestone metrics are included');
+check(html.includes("activityEndMissingReason = 'i_turn_not_observable'"), 'I-turn activity end is not inferred from EMS departure');
 check(html.includes("trackMetricsEvent('referral_copy')"), 'referral copies have a distinct event');
 check(html.includes("action === 'mail' ? 'mail_open'"), 'mail action maps to mail_open');
 check(html.includes("sendMetrics('mail')"), 'referral mail send is tracked');
@@ -58,4 +61,4 @@ if (failed) {
   console.error(`\n${failed} failed`);
   process.exit(1);
 }
-console.log('\nAll DrCar metrics v2 tests passed');
+console.log('\nAll DrCar metrics tests passed');
