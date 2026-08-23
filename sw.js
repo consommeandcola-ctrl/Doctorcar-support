@@ -1,9 +1,10 @@
+// 2026-08-24 v3.9.6: 既往歴・常用薬の「なし」チップを反映
 // 2026-07-19 v3.9.5: Iターン活動終了の誤推定を停止
 // Stale-while-revalidate service worker
 // 2026-07-19 v3.9.4: 臨床時刻メトリクス追加版を確実に配信
 // 2026-07-19 v3.9.3: メトリクス信頼性改善版を確実に配信
 // 2026-07-15 v3.9.2: 要請方法「現着後要請」の表示誤字を修正
-const CACHE_NAME = 'doctorcar-pwa-v3.9.5';
+const CACHE_NAME = 'doctorcar-pwa-v3.9.6';
 const ASSETS = [
   './',
   './index.html',

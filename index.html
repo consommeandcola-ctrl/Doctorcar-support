@@ -30,6 +30,7 @@
 <!-- 2026/07/19 | v3.9.4 | 入力済み臨床時刻と搬送スキーム別活動終了時刻を匿名メトリクスへ追加 -->
 <!-- 2026/07/19 | v3.9.5 | Iターンは活動終了時刻を自動推定せず欠損理由を記録 -->
 <!-- 2026/07/15 | v3.9.2 | 要請方法「現着後要請」の表示誤字を修正 -->
+<!-- 2026/08/24 | v3.9.6 | 患者情報：既往歴・常用薬に排他的な「なし」チップを追加（ヘリ記録と同仕様） -->
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -39,7 +40,7 @@
 <meta name="theme-color" content="#2563eb">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
-<title>ドクターカー活動記録 v3.9.5 (2026/07/19) - タブ版</title>
+<title>ドクターカー活動記録 v3.9.6 (2026/08/24) - タブ版</title>
 <style>
 :root{
   --ink:#111827;--muted:#6b7280;--bg:#f2f2f7;--card:#fff;
@@ -637,7 +638,7 @@ main {
 <body>
 <header>
   <h1>🚗 ドクターカー</h1>
-  <div class="version">v3.9.5 (2026/07/19)</div>
+  <div class="version">v3.9.6 (2026/08/24)</div>
 </header>
 
 <main>
@@ -4354,6 +4355,12 @@ function renderProcedureChips(containerId, items, stateObj) {
   });
 }
 
+const PATIENT_HISTORY_ITEMS = ['なし', '高血圧', '糖尿病', '脂質異常症', '虚血性心疾患', '脳血管障害', '喘息', 'COPD', '悪性腫瘍', 'てんかん', '緑内障'];
+
+function parsePatientListText(value) {
+  return (value || '').split('、').map(item => item.trim()).filter(Boolean);
+}
+
 // 既往歴のテキストからチップ状態を同期する関数
 function syncHistoryChipsFromText() {
   if (!state.patient.history_chips) {
@@ -4363,17 +4370,16 @@ function syncHistoryChipsFromText() {
   const historyTextarea = $('#patient_history');
   if (!historyTextarea) return;
   
-  const historyItems = ['高血圧', '糖尿病', '脂質異常症', '虚血性心疾患', '脳血管障害', '喘息', 'COPD', '悪性腫瘍', 'てんかん', '緑内障'];
   const currentValue = historyTextarea.value || state.patient.history || '';
   
   if (currentValue) {
-    const items = currentValue.split('、').map(item => item.trim());
-    historyItems.forEach(item => {
+    const items = parsePatientListText(currentValue);
+    PATIENT_HISTORY_ITEMS.forEach(item => {
       state.patient.history_chips[item] = items.includes(item);
     });
   } else {
     // テキストが空の場合はすべてfalse
-    historyItems.forEach(item => {
+    PATIENT_HISTORY_ITEMS.forEach(item => {
       state.patient.history_chips[item] = false;
     });
   }
@@ -4386,34 +4392,35 @@ function renderHistoryChips() {
   
   c.innerHTML = '';
   
-  const historyItems = ['高血圧', '糖尿病', '脂質異常症', '虚血性心疾患', '脳血管障害', '喘息', 'COPD', '悪性腫瘍', 'てんかん', '緑内障'];
-  
   if (!state.patient.history_chips) {
     state.patient.history_chips = {};
   }
   
-  historyItems.forEach(item => {
+  PATIENT_HISTORY_ITEMS.forEach(item => {
     const chip = document.createElement('div');
     chip.className = 'chip';
     
     const isSelected = state.patient.history_chips[item] || false;
-    if (isSelected) chip.classList.add('on');
+    if (isSelected) chip.dataset.state = 'proc';
     chip.textContent = item;
     
     chip.onclick = () => {
-      // トグル処理
-      const currentState = state.patient.history_chips[item] || false;
-      state.patient.history_chips[item] = !currentState;
-      
-      // チップの表示を更新
-      if (state.patient.history_chips[item]) {
-        chip.classList.add('on');
+      const historyTextarea = $('#patient_history');
+      const selectedItems = new Set(parsePatientListText(historyTextarea?.value));
+      if (selectedItems.has(item)) {
+        selectedItems.delete(item);
+      } else if (item === 'なし') {
+        selectedItems.clear();
+        selectedItems.add(item);
       } else {
-        chip.classList.remove('on');
+        selectedItems.delete('なし');
+        selectedItems.add(item);
       }
-      
-      // テキストエリアに反映
-      updateHistoryTextarea();
+      const newValue = Array.from(selectedItems).join('、');
+      if (historyTextarea) historyTextarea.value = newValue;
+      state.patient.history = newValue;
+      syncHistoryChipsFromText();
+      renderHistoryChips();
       updateState();
     };
     
@@ -4426,8 +4433,6 @@ function updateHistoryTextarea() {
   const historyTextarea = $('#patient_history');
   if (!historyTextarea) return;
   
-  const historyItems = ['高血圧', '糖尿病', '脂質異常症', '虚血性心疾患', '脳血管障害', '喘息', 'COPD', '悪性腫瘍', 'てんかん', '緑内障'];
-  
   // 選択されているチップのリストを取得
   const selectedItems = Object.keys(state.patient.history_chips || {})
     .filter(key => state.patient.history_chips[key]);
@@ -4436,8 +4441,8 @@ function updateHistoryTextarea() {
   const currentValue = historyTextarea.value || '';
   
   // 既存の値からチップ項目を抽出（手動入力された項目を保持）
-  const existingItems = currentValue.split('、').map(item => item.trim()).filter(item => item);
-  const manualItems = existingItems.filter(item => !historyItems.includes(item));
+  const existingItems = parsePatientListText(currentValue);
+  const manualItems = existingItems.filter(item => !PATIENT_HISTORY_ITEMS.includes(item));
   
   // 選択されたチップ項目と手動入力項目を結合
   const allItems = [...new Set([...selectedItems, ...manualItems])];
@@ -4460,6 +4465,31 @@ function renderMedicationChips() {
   if (!state.patient.antiplatelet) state.patient.antiplatelet = '';
   if (!state.patient.anticoagulant_drugs) state.patient.anticoagulant_drugs = [];
   if (!state.patient.antiplatelet_drugs) state.patient.antiplatelet_drugs = [];
+
+  const medicationTextarea = $('#patient_medication');
+  const getMedicationItems = () => parsePatientListText(medicationTextarea?.value);
+  const removeMedicationNone = () => {
+    if (!medicationTextarea) return;
+    medicationTextarea.value = getMedicationItems().filter(item => item !== 'なし').join('、');
+  };
+
+  // ヘリ記録と同じ、常用薬全体の「なし」チップ
+  const noneChip = document.createElement('div');
+  noneChip.className = 'chip';
+  if (getMedicationItems().includes('なし')) noneChip.dataset.state = 'proc';
+  noneChip.textContent = 'なし';
+  noneChip.onclick = () => {
+    const selected = getMedicationItems().includes('なし');
+    state.patient.anticoagulant = '';
+    state.patient.anticoagulant_drugs = [];
+    state.patient.antiplatelet = '';
+    state.patient.antiplatelet_drugs = [];
+    if (medicationTextarea) medicationTextarea.value = selected ? '' : 'なし';
+    state.patient.medication = medicationTextarea?.value || '';
+    renderMedicationChips();
+    updateState();
+  };
+  c.appendChild(noneChip);
   
   // 抗凝固薬チップ
   const anticoagulantChip = document.createElement('div');
@@ -4467,7 +4497,7 @@ function renderMedicationChips() {
   const anticoagulantState = state.patient.anticoagulant || '';
   if (anticoagulantState === 'なし') {
     // 緑点灯
-    anticoagulantChip.classList.add('on');
+    anticoagulantChip.dataset.state = 'on';
   } else if (anticoagulantState === 'あり') {
     // 赤点灯
     anticoagulantChip.style.background = '#fee2e2';
@@ -4476,6 +4506,7 @@ function renderMedicationChips() {
   }
   anticoagulantChip.textContent = '抗凝固薬' + (anticoagulantState ? `(${anticoagulantState})` : '');
   anticoagulantChip.onclick = () => {
+    removeMedicationNone();
     // 初期 -> なし -> あり -> 初期の3状態トグル
     const current = state.patient.anticoagulant || '';
     if (current === '') {
@@ -4500,7 +4531,7 @@ function renderMedicationChips() {
   const antiplateletState = state.patient.antiplatelet || '';
   if (antiplateletState === 'なし') {
     // 緑点灯
-    antiplateletChip.classList.add('on');
+    antiplateletChip.dataset.state = 'on';
   } else if (antiplateletState === 'あり') {
     // 赤点灯
     antiplateletChip.style.background = '#fee2e2';
@@ -4509,6 +4540,7 @@ function renderMedicationChips() {
   }
   antiplateletChip.textContent = '抗血小板薬' + (antiplateletState ? `(${antiplateletState})` : '');
   antiplateletChip.onclick = () => {
+    removeMedicationNone();
     // 初期 -> なし -> あり -> 初期の3状態トグル
     const current = state.patient.antiplatelet || '';
     if (current === '') {
@@ -7611,6 +7643,7 @@ function init() {
     const originalInput = patientMedicationEl.oninput;
     patientMedicationEl.oninput = () => {
       if (!isUpdatingFromChip) {
+        renderMedicationChips();
         updateState();
       }
     };
