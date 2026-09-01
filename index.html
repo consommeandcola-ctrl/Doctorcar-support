@@ -1537,13 +1537,26 @@ const METRICS_FIRST_INPUT_KEY = 'metrics_first_input_case_v2';
 const METRICS_COMPLETED_KEY = 'metrics_completed_case_v2';
 const METRICS_ACTIVE_TIMEOUT_MS = 5 * 60 * 1000;
 const METRICS_CASE_EXPIRY_MS = 12 * 60 * 60 * 1000;
+const METRICS_COLLECTION_END_MS = 1788793199999; // 2026-09-07T23:59:59.999+09:00
+const METRICS_STORAGE_KEYS = Object.freeze([
+  METRICS_QUEUE_KEY, METRICS_INSTALLATION_KEY, METRICS_CASE_KEY,
+  METRICS_CASE_START_SENT_KEY, METRICS_CASE_START_KEY, METRICS_ACTIVE_KEY,
+  METRICS_LAST_ACTIVITY_KEY, METRICS_FIRST_INPUT_KEY, METRICS_COMPLETED_KEY,
+  'metrics_queue_v1', 'metrics_start_ts', 'metrics_session_id'
+]);
+
+function isMetricsCollectionOpen(nowMs = Date.now()) {
+  return Number(nowMs) <= METRICS_COLLECTION_END_MS;
+}
 
 function createMetricsId() {
+  if (!isMetricsCollectionOpen()) return '';
   try { if (crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID(); } catch (e) {}
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 }
 
 function getOrCreateMetricsStorageId(key) {
+  if (!isMetricsCollectionOpen()) return '';
   let value = '';
   try { value = localStorage.getItem(key) || ''; } catch (e) {}
   if (!value) {
@@ -1558,11 +1571,53 @@ const metricsRuntime = {
   appSessionId: createMetricsId(),
   sending: false,
   retryTimer: null,
+  closureTimer: null,
+  collectionClosedHandled: false,
   firstInputSent: false,
   openedTabs: new Set()
 };
 
+function clearMetricsStorageAfterClosure(nowMs = Date.now()) {
+  if (isMetricsCollectionOpen(nowMs)) return false;
+  if (metricsRuntime.retryTimer) clearTimeout(metricsRuntime.retryTimer);
+  if (metricsRuntime.closureTimer) clearTimeout(metricsRuntime.closureTimer);
+  metricsRuntime.retryTimer = null;
+  metricsRuntime.closureTimer = null;
+  metricsRuntime.sending = false;
+  metricsRuntime.installationId = '';
+  metricsRuntime.appSessionId = '';
+  metricsRuntime.firstInputSent = false;
+  metricsRuntime.openedTabs.clear();
+  if (metricsRuntime.collectionClosedHandled) return true;
+  metricsRuntime.collectionClosedHandled = true;
+  METRICS_STORAGE_KEYS.forEach(key => {
+    try { localStorage.removeItem(key); } catch (e) {}
+  });
+  return true;
+}
+
+function ensureMetricsCollectionOpen() {
+  if (isMetricsCollectionOpen()) return true;
+  clearMetricsStorageAfterClosure();
+  return false;
+}
+
+function scheduleMetricsCollectionClosure() {
+  if (!isMetricsCollectionOpen()) {
+    clearMetricsStorageAfterClosure();
+    return;
+  }
+  if (metricsRuntime.closureTimer) clearTimeout(metricsRuntime.closureTimer);
+  const delay = Math.max(0, Math.min(METRICS_COLLECTION_END_MS + 1 - Date.now(), 2147483647));
+  metricsRuntime.closureTimer = setTimeout(() => {
+    metricsRuntime.closureTimer = null;
+    if (isMetricsCollectionOpen()) scheduleMetricsCollectionClosure();
+    else clearMetricsStorageAfterClosure();
+  }, delay);
+}
+
 function initMetricsSession() {
+  if (!ensureMetricsCollectionOpen()) return '';
   let caseId = '';
   let lastActivity = 0;
   let startSentForCase = '';
@@ -1602,6 +1657,7 @@ function initMetricsSession() {
   return caseId;
 }
 function registerMetricsActivity() {
+  if (!ensureMetricsCollectionOpen()) return;
   const now = Date.now();
   let last = 0;
   let activeMs = 0;
@@ -1616,6 +1672,7 @@ function registerMetricsActivity() {
 }
 
 function handleMetricsInteraction() {
+  if (!ensureMetricsCollectionOpen()) return;
   const caseId = initMetricsSession();
   registerMetricsActivity();
   let firstInputCase = '';
@@ -1750,6 +1807,7 @@ function getMetricsTiming() {
 }
 
 function readMetricsQueue() {
+  if (!ensureMetricsCollectionOpen()) return [];
   try {
     const queue = JSON.parse(localStorage.getItem(METRICS_QUEUE_KEY) || '[]');
     return Array.isArray(queue) ? queue : [];
@@ -1757,10 +1815,12 @@ function readMetricsQueue() {
 }
 
 function writeMetricsQueue(queue) {
+  if (!ensureMetricsCollectionOpen()) return;
   try { localStorage.setItem(METRICS_QUEUE_KEY, JSON.stringify(queue.slice(-200))); } catch (e) {}
 }
 
 function scheduleMetricsFlush(queue = readMetricsQueue()) {
+  if (!ensureMetricsCollectionOpen()) return;
   if (metricsRuntime.retryTimer) clearTimeout(metricsRuntime.retryTimer);
   if (!queue.length) {
     metricsRuntime.retryTimer = null;
@@ -1775,6 +1835,7 @@ function scheduleMetricsFlush(queue = readMetricsQueue()) {
 }
 
 async function flushMetricsQueue() {
+  if (!ensureMetricsCollectionOpen()) return;
   if (metricsRuntime.sending || !METRICS_ENDPOINT) return;
   let queue = readMetricsQueue();
   if (!queue.length) return;
@@ -1813,7 +1874,7 @@ async function flushMetricsQueue() {
   }
 }
 function trackMetricsEvent(eventName, properties = {}) {
-  if (!METRICS_ENDPOINT) return;
+  if (!ensureMetricsCollectionOpen() || !METRICS_ENDPOINT) return;
   let caseId = '';
   try { caseId = localStorage.getItem(METRICS_CASE_KEY) || ''; } catch (e) {}
   if (!caseId && eventName !== 'case_start') caseId = initMetricsSession();
@@ -1852,6 +1913,7 @@ function trackMetricsEvent(eventName, properties = {}) {
 }
 
 function sendMetrics(action) {
+  if (!ensureMetricsCollectionOpen()) return;
   const eventName = action === 'mail' ? 'mail_open' : 'report_copy';
   if (eventName === 'report_copy') {
     trackMetricsEvent(eventName, {
@@ -1866,6 +1928,7 @@ function sendMetrics(action) {
 }
 
 function trackMetricsCaseCompletion(source) {
+  if (!ensureMetricsCollectionOpen()) return;
   let caseId = '';
   let completedCase = '';
   try {
@@ -1878,6 +1941,7 @@ function trackMetricsCaseCompletion(source) {
 }
 
 function resetMetricsCase(options = {}) {
+  if (!ensureMetricsCollectionOpen()) return;
   if (options.cancelled) {
     trackMetricsEvent('case_cancel', {
       close_reason: 'request_cancelled',
@@ -1900,7 +1964,8 @@ function resetMetricsCase(options = {}) {
 }
 
 window.addEventListener('online', flushMetricsQueue);
-setTimeout(flushMetricsQueue, 1000);
+scheduleMetricsCollectionClosure();
+if (isMetricsCollectionOpen()) setTimeout(flushMetricsQueue, 1000);
 // ===================================
 
 const $ = s => document.querySelector(s);

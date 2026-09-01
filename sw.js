@@ -4,7 +4,8 @@
 // 2026-07-19 v3.9.4: 臨床時刻メトリクス追加版を確実に配信
 // 2026-07-19 v3.9.3: メトリクス信頼性改善版を確実に配信
 // 2026-07-15 v3.9.2: 要請方法「現着後要請」の表示誤字を修正
-const CACHE_NAME = 'doctorcar-pwa-v3.9.6';
+const CACHE_PREFIX = 'doctorcar-pwa-';
+const CACHE_NAME = 'doctorcar-pwa-v3.9.6-metrics-stop-20260908';
 const ASSETS = [
   './',
   './index.html',
@@ -25,7 +26,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
-      keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+      keys.filter(k => k.startsWith(CACHE_PREFIX) && k !== CACHE_NAME).map(k => caches.delete(k))
     ))
   );
   self.clients.claim();
