@@ -5,7 +5,7 @@
                                        
                                          
 const CACHE_PREFIX = 'doctorcar-pwa-';
-const CACHE_NAME = 'doctorcar-pwa-v3.10.4';
+const CACHE_NAME = 'doctorcar-pwa-v3.10.5';
 const ASSETS = [
   './',
   './index.html',

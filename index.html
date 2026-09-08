@@ -40,7 +40,7 @@
 <meta name="theme-color" content="#2563eb">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
-<title>ドクターカー活動記録 v3.10.4 (2026/09/06) - タブ版</title>
+<title>ドクターカー活動記録 v3.10.5 (2026/09/08) - タブ版</title>
 <style>
 :root{
   --ink:#111827;--muted:#6b7280;--bg:#f2f2f7;--card:#fff;
@@ -647,7 +647,7 @@ main {
 <body>
 <header>
   <h1>🚗 ドクターカー</h1>
-  <div class="version">v3.10.4 (2026/09/06)</div>
+  <div class="version">v3.10.5 (2026/09/08)</div>
 </header>
 <div class="record-safety"><button type="button" id="recordSaveStatus" onclick="openRecordStoragePanel()" aria-live="polite">保存・復元</button></div>
 <dialog id="recordStoragePanel" style="max-width:90vw;width:480px;border:1px solid #cbd5e1;border-radius:12px;padding:18px">
@@ -6133,9 +6133,8 @@ const REFERRAL_FINDING_DICTIONARY = {
 "心音聴取不可":{"region":"trunk","concept":"心音聴取不可","name":"心音聴取不可","polarity":1,"verb":"認め","sentence":null},
 "呼吸音聴取不可":{"region":"trunk","concept":"呼吸音聴取不可","name":"呼吸音聴取不可","polarity":1,"verb":"認め","sentence":null}
 };
-function buildReferralChipNarrative(chips) {
-  const observations = new Map();
-  const review = [];
+function collectClinicalFindingObservations(chips) {
+  const observations = new Map(), entries = [], review = [];
   for (const [label, raw] of Object.entries(chips || {})) {
     if (raw === '' || raw === false || raw == null) continue;
     const value = String(raw).trim().toLowerCase();
@@ -6145,34 +6144,118 @@ function buildReferralChipNarrative(chips) {
       review.push(`【要確認】所見の原記録：${label}（${String(raw)}）`);
       continue;
     }
-    const polarity = sign * entry.polarity;
     const id = entry.concept;
     if (!observations.has(id)) observations.set(id, []);
-    observations.get(id).push({...entry, polarity, raw: `${label}（${String(raw)}）`});
+    observations.get(id).push({...entry, label, polarity:sign * entry.polarity, raw:`${label}（${String(raw)}）`});
   }
-  const regions = new Map();
-  for (const entries of observations.values()) {
-    if (new Set(entries.map(e => e.polarity)).size > 1) {
-      review.push('【要確認】所見が競合しています：' + entries.map(e => e.raw).join('／'));
-      continue;
+  for (const group of observations.values()) {
+    if (new Set(group.map(e => e.polarity)).size > 1) {
+      review.push('【要確認】所見が競合しています：' + group.map(e => e.raw).join('／'));
+    } else entries.push(group[0]);
+  }
+  return {entries, review};
+}
+
+function clinicalFindingRegionTitle(region) {
+  const titles = {head:'頭顔面',neck:'頸部',resp:'呼吸器',card:'循環器',chest:'胸部',abd:'腹部',pelvis:'骨盤',limb:'四肢',neuro:'神経',cn:'脳神経',motor:'運動',eye:'眼',higher:'高次機能',reflex:'反射',body:'全身',airway:'気道',circulation:'循環',trunk:'体幹',rhythm:'心電図波形',witness:'目撃・蘇生',memo:'自由記載'};
+  return Object.prototype.hasOwnProperty.call(titles, region) ? titles[region] : region;
+}
+
+function clinicalFindingRegionOrder(regions) {
+  return [...new Set(['head','neck','resp','card','chest','abd','pelvis','limb','neuro','cn','motor','eye','higher','reflex','body','airway','circulation','trunk','rhythm','witness','memo', ...regions])];
+}
+
+function clinicalFindingName(entry) {
+  return entry.region === 'abd' && entry.name === '圧痛' ? '腹部圧痛' : entry.name;
+}
+
+function collectClinicalFindingMemos(section) {
+  const result = [];
+  for (const [group, memos] of Object.entries(section.memos || {})) {
+    if (!memos || typeof memos !== 'object') continue;
+    for (const [key, memo] of Object.entries(memos)) {
+      if (typeof memo !== 'string' || !memo.trim()) continue;
+      const region = key === 'memo' ? (group === 'stroke' ? 'neuro' : group === 'cpa' ? 'body' : 'memo') : key;
+      result.push({region, text:memo});
     }
-    const entry = entries[0];
-    if (!regions.has(entry.region)) regions.set(entry.region, []);
-    regions.get(entry.region).push(entry);
   }
-  const lines = [];
-  for (const region of ['head','neck','resp','card','chest','abd','pelvis','limb','neuro','body','airway','circulation','trunk','rhythm','witness']) {
-    const entries = regions.get(region) || [];
-    const sentences = entries.filter(e => e.sentence).map(e => e.sentence);
-    for (const verb of ['聴取','認め']) {
-      const positive = entries.filter(e => !e.sentence && e.polarity === 1 && e.verb === verb).map(e => e.name);
-      if (positive.length) sentences.push(positive.join('、') + 'を' + (verb === '聴取' ? '聴取しました。' : '認めました。'));
+  return result;
+}
+
+function formatClinicalReferralMemo(memo) {
+  const explicitRegion = /頭|顔|眼|目|耳|鼻|口|歯|頸|頚|胸|呼吸|息切れ|腹|腰|背|骨盤|会陰|尿道|肢|手|足|膝|肩|瞳孔|麻痺/;
+  return memo.region === 'memo' || explicitRegion.test(memo.text)
+    ? memo.text : clinicalFindingRegionTitle(memo.region) + '：' + memo.text;
+}
+
+function formatClinicalRecordFinding(entry) {
+  if (!entry.sentence) return clinicalFindingName(entry) + (entry.polarity === 1 ? 'あり' : 'なし');
+  const normal = {腹部平坦軟:'腹部平坦・軟',呼吸音清左右差なし:'呼吸音清、呼吸音左右差なし',胸郭対称:'胸郭左右対称'};
+  return Object.prototype.hasOwnProperty.call(normal, entry.name) ? normal[entry.name] : entry.name;
+}
+
+function buildReferralChipNarrative(chips, memos = []) {
+  const {entries, review} = collectClinicalFindingObservations(chips);
+  const positive = [];
+  for (const verb of ['認め','聴取']) {
+    const group = entries.filter(e => !e.sentence && e.polarity === 1 && e.verb === verb);
+    if (group.length) positive.push(group.map(clinicalFindingName).join('、') + (verb === '聴取' ? 'を聴取しました。' : 'を認めました。'));
+  }
+  const normal = entries.filter(e => e.sentence).map(e => e.sentence).join('');
+  const doctorTrauma = typeof CARDR_TRA_GROUPS !== 'undefined' ? CARDR_TRA_GROUPS : FD_TRA_GROUPS;
+  const headLabels = new Set([...EMS_TRA_GROUPS.head.abn, ...doctorTrauma.head.abn]);
+  const eyeDetails = new Set(['角膜損傷','眼球偏位','複視']);
+  const head = entries.filter(e => e.region === 'head' && headLabels.has(e.label) && !eyeDetails.has(e.label));
+  const hasHeadPositive = entries.some(e => (['head','eye'].includes(e.region) || headLabels.has(e.label)) && !e.sentence && e.polarity === 1);
+  const hasHeadMemo = memos.some(m => ['head','eye'].includes(m.region) || /頭|顔|眼|頬|鼻|耳|口腔|歯牙|髄液/.test(m.text));
+  const summarizeHead = head.length >= 4 && head.every(e => e.polarity === -1) && !hasHeadPositive && !hasHeadMemo && !review.length;
+  const negative = [];
+  if (summarizeHead) negative.push('記録された頭顔面の外傷所見はいずれも陰性でした。');
+  const negativeNames = [];
+  for (const region of clinicalFindingRegionOrder(entries.map(e => e.region))) {
+    let group = entries.filter(e => e.region === region && !e.sentence && e.polarity === -1 && !(summarizeHead && head.includes(e)));
+    if (region === 'abd' && group.some(e => e.concept === '圧痛') && !entries.some(e => e.region === 'abd' && e.polarity === 1 && /圧痛/.test(e.name))) {
+      group = group.filter(e => !['右上腹部圧痛','左上腹部圧痛','下腹部圧痛'].includes(e.name));
     }
-    const negative = entries.filter(e => !e.sentence && e.polarity === -1).map(e => e.name);
-    if (negative.length) sentences.push(negative.join('、') + 'は認めませんでした。');
-    if (sentences.length) lines.push(sentences.join('').replace('腹部は平坦・軟でした。圧痛を認めました。','腹部は平坦・軟で、圧痛を認めました。'));
+    negativeNames.push(...group.map(clinicalFindingName));
   }
-  return [...lines, ...review];
+  for (let i = 0; i < negativeNames.length; i += 6) negative.push(negativeNames.slice(i, i + 6).join('、') + 'は認めませんでした。');
+  return [...review, positive.join(''), ...memos.map(formatClinicalReferralMemo), normal, negative.join('')].filter(Boolean);
+}
+
+function buildClinicalFindings(section, app, isEms, record) {
+  section = section || {};
+  const memos = collectClinicalFindingMemos(section);
+  const neuro = [];
+  if (isEms && section.stroke_onset) neuro.push('発症時刻：' + section.stroke_onset);
+  if (!isEms) {
+    const stroke = section.stroke || {};
+    const selected = stroke.lvoSelectionManual ? (stroke.lvo || []) : inferStrokeLvoFromFindings(section);
+    neuro.push(...buildReferralNeurology({...stroke, lvo:selected, lvoDerived:!stroke.lvoSelectionManual}, app));
+  }
+  if (isEms && section.stroke_motor && typeof formatEmsStrokeMotorText === 'function') {
+    const text = formatEmsStrokeMotorText(section.stroke_motor);
+    if (text) neuro.push('運動：' + text);
+  }
+  if (!record) {
+    const lines = [...buildReferralChipNarrative(section.chips, memos), ...neuro];
+    return lines.length ? lines.join('\n') : '身体所見の記載はありません。';
+  }
+  const {entries, review} = collectClinicalFindingObservations(section.chips);
+  const lines = [...review];
+  for (const region of clinicalFindingRegionOrder([...entries.map(e => e.region), ...memos.map(m => m.region)])) {
+    const findings = entries.filter(e => e.region === region).map(formatClinicalRecordFinding);
+    const details = [];
+    for (let i = 0; i < findings.length; i += 4) details.push(findings.slice(i, i + 4).join('、') + '。');
+    details.push(...memos.filter(m => m.region === region).map(m => 'メモ：' + m.text));
+    if (region === 'neuro') details.push(...neuro);
+    if (details.length) lines.push(clinicalFindingRegionTitle(region) + '：\n' + details.join('\n'));
+  }
+  return lines.length ? lines.join('\n\n') : '身体所見の記載はありません。';
+}
+
+function buildClinicalRecordFindings(section, app, isEms) {
+  return buildClinicalFindings(section, app, isEms, true);
 }
 
 function buildReferralNeurology(stroke, app) {
@@ -6219,23 +6302,7 @@ function buildReferralNeurology(stroke, app) {
 }
 
 function buildClinicalReferralFindings(section, app, isEms) {
-  const lines = buildReferralChipNarrative(section.chips);
-  if (isEms && section.stroke_onset) lines.push('発症時刻：' + section.stroke_onset);
-  const titles = {head:'頭頚部',neck:'頸部',resp:'呼吸器',card:'循環器',chest:'胸部',abd:'腹部',pelvis:'骨盤',limb:'四肢',neuro:'神経',cn:'脳神経',motor:'運動',eye:'眼',higher:'高次機能',reflex:'反射',body:'全身',trunk:'体幹',memo:'自由記載'};
-  for (const [group, memos] of Object.entries(section.memos || {})) {
-    if (!memos || typeof memos !== 'object') continue;
-    for (const [key,memo] of Object.entries(memos)) if (typeof memo === 'string' && memo.trim()) lines.push(`${({general:'診察',trauma:'外傷',stroke:'神経',cpa:'CPA'})[group] || group}・${titles[key] || key}：${memo}`);
-  }
-  if (!isEms) {
-    const stroke = section.stroke || {};
-    const selected = stroke.lvoSelectionManual ? (stroke.lvo || []) : inferStrokeLvoFromFindings(section);
-    lines.push(...buildReferralNeurology({...stroke, lvo:selected, lvoDerived:!stroke.lvoSelectionManual}, app));
-  }
-  if (isEms && section.stroke_motor && typeof formatEmsStrokeMotorText === 'function') {
-    const text = formatEmsStrokeMotorText(section.stroke_motor);
-    if (text) lines.push('運動：' + text);
-  }
-  return lines.length ? lines.join('\n') : '身体所見の記載はありません。';
+  return buildClinicalFindings(section, app, isEms, false);
 }
 
 function saveReferralDraft() {
@@ -6356,7 +6423,7 @@ function generateReport() {
     });
   }
   
-  r += '\n＜所見＞\n' + buildClinicalReferralFindings(state.ems, 'car', true) + '\n';
+  r += '\n＜所見＞\n' + buildClinicalRecordFindings(state.ems, 'car', true) + '\n';
   const emsProc = state.ems.procedures_items.filter(k => state.ems.procedures[k]);
   if(emsProc.length > 0 || state.ems.procedures_detail) {
     r += '\n＜処置＞\n';
@@ -6385,7 +6452,7 @@ function generateReport() {
   }
   
                                         
-  r += '\n＜身体所見＞\n' + buildClinicalReferralFindings(state.cardr, 'car', false) + '\n';
+  r += '\n＜身体所見＞\n' + buildClinicalRecordFindings(state.cardr, 'car', false) + '\n';
   const cpaLines = buildRecordedCpaLines(state.cardr);
   if (cpaLines.length) r += '\n' + cpaLines.join('\n') + '\n';
   const examLines = buildRecordedExamLines(state.cardr);
