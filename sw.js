@@ -1,57 +1,40 @@
-                                        
-                                     
-                                        
-                                        
-                                       
-                                         
 const CACHE_PREFIX = 'doctorcar-pwa-';
-const CACHE_NAME = 'doctorcar-pwa-v3.10.5';
-const ASSETS = [
-  './',
-  './index.html',
-  './StrokeNotify_v1.0.html',
-  './related-apps.js',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
-  './icon-512-maskable.png',
-  './apple-touch-icon.png'
-];
+const CACHE_NAME = CACHE_PREFIX + 'v3.10.13' + '@' + self.registration.scope;
+const ASSETS = ["./index.html", "./StrokeNotify_v1.0.html", "./related-apps.js", "./manifest.json", "./apple-touch-icon.png", "./icon-192.png", "./icon-512.png", "./icon-512-maskable.png"];
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
-  );
-  self.skipWaiting();
+self.addEventListener('install', event => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.addAll(ASSETS.map(asset => new Request(asset, {cache:'reload'})));
+    await self.skipWaiting();
+  })());
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.filter(k => k.startsWith(CACHE_PREFIX) && k !== CACHE_NAME).map(k => caches.delete(k))
-    ))
-  );
-  self.clients.claim();
+self.addEventListener('activate', event => {
+  event.waitUntil((async () => {
+    for(const key of await caches.keys()) {
+      if(!key.startsWith(CACHE_PREFIX) || key === CACHE_NAME) continue;
+      if(key.includes('@')) {
+        if(key.endsWith('@'+self.registration.scope)) await caches.delete(key);
+      } else {
+        const old = await caches.open(key);
+        const entries = await old.keys();
+        if(entries.length && entries.every(r=>r.url.startsWith(self.registration.scope))) await caches.delete(key);
+      }
+    }
+    await self.clients.claim();
+  })());
 });
 
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
+  if(event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
-  if (event.request.method !== 'GET' || url.origin !== location.origin) return;
-  
-  event.respondWith(
-    caches.match(event.request, {ignoreSearch: event.request.mode === 'navigate'}).then(cachedResponse => {
-      const fetchPromise = fetch(event.request).then(networkResponse => {
-                                  
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, networkResponse.clone());
-        });
-        return networkResponse;
-      }).catch(() => {
-                                   
-      });
-      
-                                             
-      return cachedResponse || fetchPromise;
-    })
-  );
+  const root = new URL('./',self.location.href);
+  if(url.origin !== root.origin || !url.pathname.startsWith(root.pathname)) return;
+  const asset = './' + (url.pathname.slice(root.pathname.length) || 'index.html');
+  if(!ASSETS.includes(asset)) return;
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    return await cache.match(new URL(asset,root).href) || fetch(event.request);
+  })());
 });
